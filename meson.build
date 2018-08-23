@@ -1,0 +1,6 @@
+project('vmn', 'c')
+libconfig = dependency('libconfig')
+menu = dependency('menu')
+mpv = dependency('mpv')
+ncurses = dependency('ncurses')
+executable('vmn', 'main.c', dependencies: [libconfig, menu, mpv, ncurses])
