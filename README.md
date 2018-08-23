@@ -18,7 +18,7 @@ sudo ninja -C build install
 ```
 
 ## Usage
-vmn first needs to know what directory you keep your music files in. It will search the `$USER/.config/vmn/config`, so be sure to create those directories and file first. Then enter in directory that contains your music files like so.
+vmn first needs to know what directory you keep your music files in. It will search the `$USER/.config/vmn/config`, so be sure to create those directories and file first. By default, vmn will search XDG_MUSIC_DIR ($USER/Music) if no library directory is specified. If a different library directory needs to be read then specify it in the config file like so.
 ```
 library = "path/to/music/directory"
 ```

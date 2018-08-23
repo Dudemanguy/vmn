@@ -31,6 +31,18 @@ char *get_cfg_lib() {
 	return path;
 }
 
+const char *cfg_defaults(const char *opt) {
+	char *path;
+	if (strcmp(opt, "library") == 0) {
+		char *home = getenv("HOME");
+		const char *library = "/Music";
+		path = malloc(strlen(home) + strlen(library) + 1);
+		strcpy(path, home);
+		strcat(path, library);
+	}
+	return path;
+}
+
 int check_cfg(char *cfg_file) {
 	config_t cfg;
 	config_init(&cfg);
@@ -49,6 +61,10 @@ const char *read_cfg(char *file, const char *opt) {
 	config_init(&cfg);
 	config_read_file(&cfg, file);
 	const char *output;
-	config_lookup_string(&cfg, opt, &output);
-	return output;
+	if (config_lookup_string(&cfg, opt, &output)) {
+		return output;
+	} else {
+		output = cfg_defaults(opt);
+		return output;
+	}
 }
