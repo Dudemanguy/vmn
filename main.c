@@ -12,7 +12,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int qstrcmp(const void *a, const void *b);
 int ext_valid(char *ext);
 char *get_cfg();
 char *get_cfg_dir();
@@ -22,6 +21,7 @@ void get_music_files(const char *base);
 ITEM **get_lib_items();
 void mpv_queue(mpv_handle *ctx, const char *audio);
 void mpv_wait(mpv_handle *ctx);
+int qstrcmp(const void *a, const void *b);
 void show_library();
 
 int main() {
@@ -46,12 +46,6 @@ int main() {
 	show_library();
 
 	return 0;
-}
-
-int qstrcmp(const void *a, const void *b) {
-	const char *aa = *(const char**)a;
-	const char *bb = *(const char**)b;
-	return strcmp(aa, bb);
 }
 
 int ext_valid(char *ext) {
@@ -183,6 +177,12 @@ ITEM **get_lib_items() {
 	return items;
 }
 
+int qstrcmp(const void *a, const void *b) {
+	const char *aa = *(const char**)a;
+	const char *bb = *(const char**)b;
+	return strcmp(aa, bb);
+}
+
 void show_library() {
 	MENU *menu;
 	int c;
@@ -195,7 +195,7 @@ void show_library() {
 	keypad(stdscr, TRUE);
 
 	menu = new_menu((ITEM **)items);
-	set_menu_format(menu, 50, 0);
+	set_menu_format(menu, LINES, 0);
 	menu_opts_off(menu, O_ONEVALUE);
 	post_menu(menu);
 	refresh();
@@ -213,11 +213,11 @@ void show_library() {
 			break;
 		case KEY_UP:
 		case 'k':
-			menu_driver(menu, REQ_UP_ITEM);
+			menu_driver(menu, REQ_PREV_ITEM);
 			break;
 		case KEY_DOWN:
 		case 'j':
-			menu_driver(menu, REQ_DOWN_ITEM);
+			menu_driver(menu, REQ_NEXT_ITEM);
 			break;
 		case KEY_HOME:
 		case 'g':
