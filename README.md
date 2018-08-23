@@ -14,6 +14,7 @@ Then navigate to that directory.
 mkdir build
 meson build
 ninja -C build
+sudo ninja -C build install
 ```
 
 ## Usage
