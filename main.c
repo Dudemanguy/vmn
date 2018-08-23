@@ -11,11 +11,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "config.h"
 
 int ext_valid(char *ext);
-char *get_cfg();
-char *get_cfg_dir();
-char *get_cfg_lib();
 char *get_file_ext(const char *file);
 void get_music_files(const char *base);
 ITEM **get_lib_items();
@@ -27,25 +25,13 @@ void show_library();
 
 int main() {
 	setlocale(LC_CTYPE, "");
-	const char *library;
-	char *cfg_file = get_cfg();
-
-	config_t cfg;
-	config_init(&cfg);
-
-	if (!config_read_file(&cfg, cfg_file)) {
-		fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg),
-			config_error_line(&cfg), config_error_text(&cfg));
-		config_destroy(&cfg);
-		return(EXIT_FAILURE);
-	}
-
-	config_lookup_string(&cfg, "library", &library);
 	char *lib = get_cfg_lib();
+	char *cfg_file = get_cfg();
+	check_cfg(cfg_file);
+	const char *library = read_cfg(cfg_file, "library");
 	remove(lib);
 	get_music_files(library);
 	show_library();
-
 	return 0;
 }
 
@@ -83,33 +69,6 @@ void mpv_wait(mpv_handle *ctx) {
 		}
 	}
 	mpv_terminate_destroy(ctx);
-}
-
-char *get_cfg() {
-	char *home = getenv("HOME"); 
-	const char *cfg = "/.config/vmn/config";
-	char *path = malloc(strlen(home) + strlen(cfg) + 1);
-	strcpy(path, home);
-	strcat(path, cfg);
-	return path;
-}
-
-char *get_cfg_dir() {
-	char *home = getenv("HOME");
-	const char *cfgdir = "/.config/vmn";
-	char *path = malloc(strlen(home) + strlen(cfgdir) + 1);
-	strcpy(path, home);
-	strcat(path, cfgdir);
-	return path;
-}
-
-char *get_cfg_lib() {
-	char *home = getenv("HOME"); 
-	const char *lib = "/.config/vmn/lib";
-	char *path = malloc(strlen(home) + strlen(lib) + 1);
-	strcpy(path, home);
-	strcat(path, lib);
-	return path;
 }
 
 char *get_file_ext(const char *file) {
