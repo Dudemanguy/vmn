@@ -187,7 +187,9 @@ void show_library() {
 	MENU *menu;
 	int c;
 	int i = 0;
+	int n_sel = 0;
 	ITEM **items = get_lib_items();
+	ITEM *cur;
 	
 	initscr();
 	cbreak();
@@ -209,7 +211,13 @@ void show_library() {
 		switch(c) {
 		case ' ':
 		case 'i':
+			cur = current_item(menu);
 			menu_driver(menu, REQ_TOGGLE_ITEM);
+			if (item_value(cur)) {
+				++n_sel;
+			} else {
+				--n_sel;
+			}
 			break;
 		case KEY_UP:
 		case 'k':
@@ -237,6 +245,11 @@ void show_library() {
 			for (int j = 0; j < item_count(menu); ++j) {
 				if (item_value(items[j])) {
 					name = item_name(items[j]);
+					mpv_queue(ctx, name);
+				}
+				if (n_sel == 0) {
+					cur = current_item(menu);
+					name = item_name(cur);
 					mpv_queue(ctx, name);
 				}
 			}

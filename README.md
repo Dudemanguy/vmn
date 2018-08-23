@@ -31,11 +31,11 @@ Then, simply run the `vmn` executable. Current keybindings are the following.
 * scroll page down: `Page Down`
 * jump to beginning: `Home Key` or `g`
 * jump to end: `End Key` or `G`
-* select track: `i`
-* launch mpv: `Enter`
+* queue track: `i`
+* playback with mpv: `Enter`
 * quit: `q`
 
-All tracks that are selected will be launched by mpv upon hitting enter.
+All tracks that are queued will be played by mpv upon hitting enter. If no tracks are selected, then the currently highlighted track will be played upon hitting enter.
 
 ## License
 GPLv2 or later.
