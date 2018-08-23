@@ -27,6 +27,7 @@ int main() {
 	setlocale(LC_CTYPE, "");
 	char *lib = get_cfg_lib();
 	char *cfg_file = get_cfg();
+	check_dir();
 	check_cfg(cfg_file);
 	const char *library = read_cfg(cfg_file, "library");
 	remove(lib);

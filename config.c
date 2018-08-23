@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "config.h"
 
 char *get_cfg() {
@@ -41,6 +44,14 @@ const char *cfg_defaults(const char *opt) {
 		strcat(path, library);
 	}
 	return path;
+}
+
+void check_dir() {
+	char *cfgdir = get_cfg_dir();
+	struct stat st = {0};
+	if (stat(cfgdir, &st) == -1) {
+		mkdir(cfgdir, 0777);
+	}
 }
 
 int check_cfg(char *cfg_file) {
