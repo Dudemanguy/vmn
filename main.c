@@ -19,6 +19,7 @@ char *get_cfg_lib();
 char *get_file_ext(const char *file);
 void get_music_files(const char *base);
 ITEM **get_lib_items();
+mpv_handle *mpv_generate();
 void mpv_queue(mpv_handle *ctx, const char *audio);
 void mpv_wait(mpv_handle *ctx);
 int qstrcmp(const void *a, const void *b);
@@ -59,6 +60,16 @@ int ext_valid(char *ext) {
 	return 0;
 }
 
+mpv_handle *mpv_generate() {
+	mpv_handle *ctx = mpv_create();
+	mpv_set_option_string(ctx, "input-default-bindings", "yes");
+	mpv_set_option_string(ctx, "input-vo-keyboard", "yes");
+	int val = 1;
+	mpv_set_option(ctx, "osc", MPV_FORMAT_FLAG, &val);
+	mpv_initialize(ctx);
+	return ctx;
+}
+
 void mpv_queue(mpv_handle *ctx, const char *audio) {
 	const char *cmd[] = {"loadfile", audio, "append-play", NULL};
 	mpv_command(ctx, cmd);
@@ -66,7 +77,7 @@ void mpv_queue(mpv_handle *ctx, const char *audio) {
 
 void mpv_wait(mpv_handle *ctx) {
 	while (1) {
-		mpv_event *event = mpv_wait_event(ctx, 10000);
+		mpv_event *event = mpv_wait_event(ctx, 0);
 		if (event->event_id == MPV_EVENT_SHUTDOWN) {
 			break;
 		}
@@ -202,10 +213,7 @@ void show_library() {
 	post_menu(menu);
 	refresh();
 	const char *name;
-	mpv_handle *ctx = mpv_create();
-	mpv_set_option_string(ctx, "input-default-bindings", "yes");
-	mpv_set_option_string(ctx, "input-vo-keyboard", "yes");
-	mpv_initialize(ctx);
+	mpv_handle *ctx;
 
 	while ((c = getch()) != 'q') {
 		switch(c) {
@@ -242,6 +250,7 @@ void show_library() {
 			menu_driver(menu, REQ_SCR_DPAGE);
 			break;
 		case 10:
+			ctx = mpv_generate();
 			for (int j = 0; j < item_count(menu); ++j) {
 				if (item_value(items[j])) {
 					name = item_name(items[j]);
