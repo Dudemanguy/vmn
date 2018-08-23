@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int cmpstr(const void *a, const void *b);
+int qstrcmp(const void *a, const void *b);
 int ext_valid(char *ext);
 char *get_cfg();
 char *get_cfg_dir();
@@ -48,7 +48,7 @@ int main() {
 	return 0;
 }
 
-int cmpstr(const void *a, const void *b) {
+int qstrcmp(const void *a, const void *b) {
 	const char *aa = *(const char**)a;
 	const char *bb = *(const char**)b;
 	return strcmp(aa, bb);
@@ -174,7 +174,7 @@ ITEM **get_lib_items() {
 		lines[i][j+1]='\0';
 	}
     fclose(fp);
-	qsort(lines, i, sizeof(char *), cmpstr);
+	qsort(lines, i, sizeof(char *), qstrcmp);
 	items = (ITEM **)calloc(i + 1, sizeof(ITEM *));
 	for (int k = 0; k < i; ++k) {
 		items[k] = new_item(lines[k], NULL);
