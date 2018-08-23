@@ -7,6 +7,27 @@
 #include <unistd.h>
 #include "config.h"
 
+int check_cfg(char *cfg_file) {
+	config_t cfg;
+	config_init(&cfg);
+
+	if (!config_read_file(&cfg, cfg_file)) {
+		fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg),
+			config_error_line(&cfg), config_error_text(&cfg));
+		config_destroy(&cfg);
+		return(EXIT_FAILURE);
+	}
+	return 0;
+}
+
+void check_dir() {
+	char *cfgdir = get_cfg_dir();
+	struct stat st = {0};
+	if (stat(cfgdir, &st) == -1) {
+		mkdir(cfgdir, 0777);
+	}
+}
+
 char *get_cfg() {
 	char *home = getenv("HOME"); 
 	const char *cfg = "/.config/vmn/config";
@@ -44,27 +65,6 @@ const char *cfg_defaults(const char *opt) {
 		strcat(path, library);
 	}
 	return path;
-}
-
-void check_dir() {
-	char *cfgdir = get_cfg_dir();
-	struct stat st = {0};
-	if (stat(cfgdir, &st) == -1) {
-		mkdir(cfgdir, 0777);
-	}
-}
-
-int check_cfg(char *cfg_file) {
-	config_t cfg;
-	config_init(&cfg);
-
-	if (!config_read_file(&cfg, cfg_file)) {
-		fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg),
-			config_error_line(&cfg), config_error_text(&cfg));
-		config_destroy(&cfg);
-		return(EXIT_FAILURE);
-	}
-	return 0;
 }
 
 const char *read_cfg(char *file, const char *opt) {
