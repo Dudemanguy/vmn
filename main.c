@@ -12,7 +12,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-static int cmpstr(const void *a, const void *b);
+int cmpstr(const void *a, const void *b);
+int ext_valid(char *ext);
 char *get_cfg();
 char *get_cfg_dir();
 char *get_cfg_lib();
@@ -51,6 +52,17 @@ int cmpstr(const void *a, const void *b) {
 	const char *aa = *(const char**)a;
 	const char *bb = *(const char**)b;
 	return strcmp(aa, bb);
+}
+
+int ext_valid(char *ext) {
+	const char *file_type[] = { "aac", "aiff", "alac", "ape", "flac", "m4a", "mp3", "ogg", "opus", "wav" };
+	int len = 10;
+	for (int i = 0; i < len; ++i) {
+		if (strcmp(file_type[i], ext) == 0) {
+			return 1;
+		}
+	}
+	return 0;
 }
 
 void mpv_queue(mpv_handle *ctx, const char *audio) {
@@ -104,7 +116,6 @@ char *get_file_ext(const char *file) {
 }
 
 void get_music_files(const char *library) {
-	const char *name = "flac";
 	struct dirent *dp;
 	DIR *dir = opendir(library);
 	char *lib = get_cfg_lib();
@@ -124,7 +135,7 @@ void get_music_files(const char *library) {
 				get_music_files(path);
 			} else {
 				char *ext = get_file_ext(dp->d_name);
-				if (strcmp(ext, name) == 0) {
+				if (ext_valid(ext)) {
 					fputs(path, fp);
 					fputs("\n", fp);
 				}
