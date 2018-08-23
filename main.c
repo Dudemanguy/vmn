@@ -240,10 +240,10 @@ void show_library() {
 					mpv_queue(ctx, name);
 				}
 			}
+			mpv_wait(ctx);
 			break;
 		}
 	}
-	mpv_wait(ctx);
 
 	unpost_menu(menu);
 	free_menu(menu);

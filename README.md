@@ -33,6 +33,7 @@ Then, simply run the `vmn` executable. Current keybindings are the following.
 * jump to end: `End Key` or `G`
 * select track: `i`
 * launch mpv: `Enter`
+* quit: `q`
 
 All tracks that are selected will be launched by mpv upon hitting enter.
 
