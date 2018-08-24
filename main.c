@@ -13,6 +13,10 @@
 #include <unistd.h>
 #include "config.h"
 
+#ifndef CTRL
+#define CTRL(c) ((c) & 037)
+#endif
+
 int ext_valid(char *ext);
 char *get_file_ext(const char *file);
 void get_music_files(const char *base);
@@ -211,9 +215,11 @@ void show_library() {
 			menu_driver(menu, REQ_LAST_ITEM);
 			break;
 		case KEY_PPAGE:
+		case CTRL('b'):
 			menu_driver(menu, REQ_SCR_UPAGE);
 			break;
 		case KEY_NPAGE:
+		case CTRL('f'):
 			menu_driver(menu, REQ_SCR_DPAGE);
 			break;
 		case 10:

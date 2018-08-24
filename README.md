@@ -27,8 +27,8 @@ Then, simply run the `vmn` executable. Current keybindings are the following.
 
 * scroll up: `Up Arrow` or `k`
 * scroll down: `Down Arrow` or `j`
-* scroll page up: `Page Up`
-* scroll page down: `Page Down`
+* scroll page up: `Page Up` or `CTRL+b`
+* scroll page down: `Page Down` or `CTRL+f`
 * jump to beginning: `Home Key` or `g`
 * jump to end: `End Key` or `G`
 * queue track: `i`
