@@ -19,7 +19,7 @@ void get_music_files(const char *base);
 ITEM **get_lib_items();
 mpv_handle *mpv_generate();
 void mpv_queue(mpv_handle *ctx, const char *audio);
-void mpv_wait(mpv_handle *ctx);
+void mpv_wait(mpv_handle *ctx, int len);
 int qstrcmp(const void *a, const void *b);
 void show_library();
 
@@ -62,11 +62,18 @@ void mpv_queue(mpv_handle *ctx, const char *audio) {
 	mpv_command(ctx, cmd);
 }
 
-void mpv_wait(mpv_handle *ctx) {
+void mpv_wait(mpv_handle *ctx, int len) {
+	int n = 0;
 	while (1) {
 		mpv_event *event = mpv_wait_event(ctx, 0);
 		if (event->event_id == MPV_EVENT_SHUTDOWN) {
 			break;
+		}
+		if (event->event_id == MPV_EVENT_END_FILE) {
+			++n;
+			if (n == len) {
+				break;
+			}
 		}
 	}
 	mpv_terminate_destroy(ctx);
@@ -222,7 +229,11 @@ void show_library() {
 					mpv_queue(ctx, name);
 				}
 			}
-			mpv_wait(ctx);
+			if (n_sel == 0) {
+				mpv_wait(ctx, 1);
+			} else {
+				mpv_wait(ctx, n_sel);
+			}
 			break;
 		}
 	}
