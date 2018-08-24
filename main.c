@@ -224,21 +224,19 @@ void show_library() {
 			break;
 		case 10:
 			ctx = mpv_generate();
-			for (int j = 0; j < item_count(menu); ++j) {
-				if (item_value(items[j])) {
-					name = item_name(items[j]);
-					mpv_queue(ctx, name);
+			if (n_sel) {
+				for (int j = 0; j < item_count(menu); ++j) {
+					if (item_value(items[j])) {
+						name = item_name(items[j]);
+						mpv_queue(ctx, name);
+					}
 				}
-				if (n_sel == 0) {
-					cur = current_item(menu);
-					name = item_name(cur);
-					mpv_queue(ctx, name);
-				}
-			}
-			if (n_sel == 0) {
-				mpv_wait(ctx, 1);
-			} else {
 				mpv_wait(ctx, n_sel);
+			} else {
+				cur = current_item(menu);
+				name = item_name(cur);
+				mpv_queue(ctx, name);
+				mpv_wait(ctx, 1);
 			}
 			break;
 		}
