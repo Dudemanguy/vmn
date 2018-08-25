@@ -32,6 +32,8 @@ Then, simply run the `vmn` executable. Current keybindings are the following.
 * jump to beginning: `Home Key` or `g`
 * jump to end: `End Key` or `G`
 * queue track: `i`
+* queue all tracks: `y`
+* clear queue: `u`
 * playback with mpv: `Enter`
 * quit: `q`
 

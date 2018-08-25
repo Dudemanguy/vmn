@@ -168,7 +168,6 @@ int qstrcmp(const void *a, const void *b) {
 void show_library() {
 	MENU *menu;
 	int c;
-	int i = 0;
 	int n_sel = 0;
 	ITEM **items = get_lib_items();
 	ITEM *cur;
@@ -198,6 +197,20 @@ void show_library() {
 				--n_sel;
 			}
 			break;
+		case 'u':
+			for (int i = 0; i < item_count(menu); ++i) {
+				if (item_value(items[i])) {
+					set_item_value(items[i], false);
+				}
+			}
+			break;
+		case 'y':
+			for (int i = 0; i < item_count(menu); ++i) {
+				if (!item_value(items[i])) {
+					set_item_value(items[i], true);
+				}
+			}
+			break;
 		case KEY_UP:
 		case 'k':
 			menu_driver(menu, REQ_PREV_ITEM);
@@ -225,9 +238,9 @@ void show_library() {
 		case 10:
 			ctx = mpv_generate();
 			if (n_sel) {
-				for (int j = 0; j < item_count(menu); ++j) {
-					if (item_value(items[j])) {
-						name = item_name(items[j]);
+				for (int i = 0; i < item_count(menu); ++i) {
+					if (item_value(items[i])) {
+						name = item_name(items[i]);
 						mpv_queue(ctx, name);
 					}
 				}
@@ -244,6 +257,7 @@ void show_library() {
 
 	unpost_menu(menu);
 	free_menu(menu);
+	int i = 0;
 	while (items[i]) {
 		free_item(items[i]);
 		++i;
