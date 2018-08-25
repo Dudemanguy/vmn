@@ -34,6 +34,7 @@ Then, simply run the `vmn` executable. Current keybindings are the following.
 * queue track: `i`
 * queue all tracks: `y`
 * clear queue: `u`
+* toggle visual selection mode: `v`
 * playback with mpv: `Enter`
 * quit: `q`
 

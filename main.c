@@ -168,7 +168,10 @@ int qstrcmp(const void *a, const void *b) {
 void show_library() {
 	MENU *menu;
 	int c;
-	int n_sel = 0;
+	int init_pos;
+	int end_pos;
+	int select = 0;
+	int select_pos;
 	ITEM **items = get_lib_items();
 	ITEM *cur;
 	
@@ -191,11 +194,6 @@ void show_library() {
 		case 'i':
 			cur = current_item(menu);
 			menu_driver(menu, REQ_TOGGLE_ITEM);
-			if (item_value(cur)) {
-				++n_sel;
-			} else {
-				--n_sel;
-			}
 			break;
 		case 'u':
 			for (int i = 0; i < item_count(menu); ++i) {
@@ -203,6 +201,7 @@ void show_library() {
 					set_item_value(items[i], false);
 				}
 			}
+			select = 0;
 			break;
 		case 'y':
 			for (int i = 0; i < item_count(menu); ++i) {
@@ -211,40 +210,141 @@ void show_library() {
 				}
 			}
 			break;
+		case 'v':
+			if (select) {
+				select = 0;
+				select_pos = 0;
+				set_item_value(items[select_pos], false);
+			} else {
+				select = 1;
+				cur = current_item(menu);
+				set_item_value(cur, true);
+				select_pos = item_index(cur);
+			}
+			break;
 		case KEY_UP:
 		case 'k':
+			if (select) {
+				cur = current_item(menu);
+				int cur_pos = item_index(cur);
+				if (cur_pos > select_pos) {
+					set_item_value(cur, false);
+				}
+				if (cur_pos < select_pos) {
+					set_item_value(cur, true);
+				}
+			}
 			menu_driver(menu, REQ_PREV_ITEM);
+			cur = current_item(menu);
+			int cur_pos = item_index(cur);
+			if (select) {
+				cur = current_item(menu);
+				if (cur_pos > select_pos) {
+					set_item_value(cur, true);
+				}
+				if (select_pos != cur_pos) {
+					set_item_value(cur, false);
+				}
+			}
 			break;
 		case KEY_DOWN:
 		case 'j':
+			if (select) {
+				cur = current_item(menu);
+				int cur_pos = item_index(cur);
+				if (cur_pos > select_pos) {
+					set_item_value(cur, true);
+				}
+				if (cur_pos < select_pos) {
+					set_item_value(cur, false);
+				}
+			}
 			menu_driver(menu, REQ_NEXT_ITEM);
+			if (select) {
+				cur = current_item(menu);
+				set_item_value(cur, true);
+			}
 			break;
 		case KEY_HOME:
 		case 'g':
 			menu_driver(menu, REQ_FIRST_ITEM);
+			if (select) {
+				for (int i = 0; i < item_count(menu); ++i) {
+					if (i > select_pos) {
+						set_item_value(items[i], false);
+					}
+					if (i < select_pos) {
+						set_item_value(items[i], true);
+					}
+				}
+			}
 			break;
 		case KEY_END:
 		case 'G':
 			menu_driver(menu, REQ_LAST_ITEM);
+			if (select) {
+				for (int i = 0; i < item_count(menu); ++i) {
+					if (i > select_pos) {
+						set_item_value(items[i], true);
+					}
+					if (i < select_pos) {
+						set_item_value(items[i], false);
+					}
+				}
+			}
 			break;
 		case KEY_PPAGE:
 		case CTRL('b'):
+			if (select) {
+				cur = current_item(menu);
+				init_pos = item_index(cur);
+			}
 			menu_driver(menu, REQ_SCR_UPAGE);
+			if (select) {
+				cur = current_item(menu);
+				end_pos = item_index(cur);
+				for (int i = end_pos; i <= init_pos; ++i) {
+					if (i > select_pos) {
+						set_item_value(items[i], false);
+					}
+					if (i < select_pos) {
+						set_item_value(items[i], true);
+					}
+				}
+			}
 			break;
 		case KEY_NPAGE:
 		case CTRL('f'):
+			if (select) {
+				cur = current_item(menu);
+				init_pos = item_index(cur);
+			}
 			menu_driver(menu, REQ_SCR_DPAGE);
+			if (select) {
+				cur = current_item(menu);
+				end_pos = item_index(cur);
+				for (int i = init_pos; i <= end_pos; ++i) {
+					if (i > select_pos) {
+						set_item_value(items[i], true);
+					}
+					if (i < select_pos) {
+						set_item_value(items[i], false);
+					}
+				}
+			}
 			break;
 		case 10:
 			ctx = mpv_generate();
-			if (n_sel) {
-				for (int i = 0; i < item_count(menu); ++i) {
-					if (item_value(items[i])) {
-						name = item_name(items[i]);
-						mpv_queue(ctx, name);
-					}
+			int n = 0;
+			for (int i = 0; i < item_count(menu); ++i) {
+				if (item_value(items[i])) {
+					name = item_name(items[i]);
+					mpv_queue(ctx, name);
+					++n;
 				}
-				mpv_wait(ctx, n_sel);
+			}
+			if (n) {
+				mpv_wait(ctx, n);
 			} else {
 				cur = current_item(menu);
 				name = item_name(cur);
