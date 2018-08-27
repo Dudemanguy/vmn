@@ -25,13 +25,13 @@ library = "path/to/music/directory"
 
 Then, simply run the `vmn` executable. Current keybindings are the following.
 
-* scroll up: `Up Arrow` or `k`
-* scroll down: `Down Arrow` or `j`
-* scroll page up: `Page Up` or `CTRL+b`
-* scroll page down: `Page Down` or `CTRL+f`
-* jump to beginning: `Home Key` or `g`
-* jump to end: `End Key` or `G`
-* queue track: `i`
+* scroll up: `k` or `Up Arrow`
+* scroll down: `j` or `Down Arrow`
+* scroll page up: `CTRL+b` or `Page Up`
+* scroll page down: `CTRL+f` or `Page Down`
+* jump to beginning: `g` or `Home Key`
+* jump to end: `G` or `End Key`
+* queue track: `i` or `space`
 * queue all tracks: `y`
 * clear queue: `u`
 * toggle visual selection mode: `v`

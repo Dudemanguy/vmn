@@ -184,8 +184,8 @@ void key_event(MENU *menu, ITEM **items) {
 
 	while ((c = getch()) != 'q') {
 		switch(c) {
-		case ' ':
 		case 'i':
+		case ' ':
 			cur = current_item(menu);
 			menu_driver(menu, REQ_TOGGLE_ITEM);
 			break;
@@ -216,8 +216,8 @@ void key_event(MENU *menu, ITEM **items) {
 				select_pos = item_index(cur);
 			}
 			break;
-		case KEY_UP:
 		case 'k':
+		case KEY_UP:
 			if (select) {
 				cur = current_item(menu);
 				int cur_pos = item_index(cur);
@@ -241,8 +241,8 @@ void key_event(MENU *menu, ITEM **items) {
 				}
 			}
 			break;
-		case KEY_DOWN:
 		case 'j':
+		case KEY_DOWN:
 			if (select) {
 				cur = current_item(menu);
 				int cur_pos = item_index(cur);
@@ -259,8 +259,8 @@ void key_event(MENU *menu, ITEM **items) {
 				set_item_value(cur, true);
 			}
 			break;
-		case KEY_HOME:
 		case 'g':
+		case KEY_HOME:
 			menu_driver(menu, REQ_FIRST_ITEM);
 			if (select) {
 				for (int i = 0; i < item_count(menu); ++i) {
@@ -273,8 +273,8 @@ void key_event(MENU *menu, ITEM **items) {
 				}
 			}
 			break;
-		case KEY_END:
 		case 'G':
+		case KEY_END:
 			menu_driver(menu, REQ_LAST_ITEM);
 			if (select) {
 				for (int i = 0; i < item_count(menu); ++i) {
@@ -287,8 +287,8 @@ void key_event(MENU *menu, ITEM **items) {
 				}
 			}
 			break;
-		case KEY_PPAGE:
 		case CTRL('b'):
+		case KEY_PPAGE:
 			if (select) {
 				cur = current_item(menu);
 				init_pos = item_index(cur);
@@ -307,8 +307,8 @@ void key_event(MENU *menu, ITEM **items) {
 				}
 			}
 			break;
-		case KEY_NPAGE:
 		case CTRL('f'):
+		case KEY_NPAGE:
 			if (select) {
 				cur = current_item(menu);
 				init_pos = item_index(cur);
