@@ -21,11 +21,12 @@ int ext_valid(char *ext);
 char *get_file_ext(const char *file);
 void get_music_files(const char *base);
 ITEM **get_lib_items();
+void key_event(MENU *menu, ITEM **items);
 mpv_handle *mpv_generate();
 void mpv_queue(mpv_handle *ctx, const char *audio);
 void mpv_wait(mpv_handle *ctx, int len);
 int qstrcmp(const void *a, const void *b);
-void show_library();
+MENU *set_library(ITEM **items);
 
 int main() {
 	setlocale(LC_CTYPE, "");
@@ -36,7 +37,19 @@ int main() {
 	const char *library = read_cfg(cfg_file, "library");
 	remove(lib);
 	get_music_files(library);
-	show_library();
+	ITEM **items = get_lib_items();
+	MENU *menu = set_library(items);
+	post_menu(menu);
+	refresh();
+	key_event(menu, items);
+	unpost_menu(menu);
+	free_menu(menu);
+	int i = 0;
+	while (items[i]) {
+		free_item(items[i]);
+		++i;
+	}
+	endwin();
 	return 0;
 }
 
@@ -159,32 +172,13 @@ ITEM **get_lib_items() {
 	return items;
 }
 
-int qstrcmp(const void *a, const void *b) {
-	const char *aa = *(const char**)a;
-	const char *bb = *(const char**)b;
-	return strcmp(aa, bb);
-}
-
-void show_library() {
-	MENU *menu;
+void key_event(MENU *menu, ITEM **items) {
 	int c;
 	int init_pos;
 	int end_pos;
 	int select = 0;
 	int select_pos;
-	ITEM **items = get_lib_items();
 	ITEM *cur;
-	
-	initscr();
-	cbreak();
-	noecho();
-	keypad(stdscr, TRUE);
-
-	menu = new_menu((ITEM **)items);
-	set_menu_format(menu, LINES, 0);
-	menu_opts_off(menu, O_ONEVALUE);
-	post_menu(menu);
-	refresh();
 	const char *name;
 	mpv_handle *ctx;
 
@@ -354,13 +348,24 @@ void show_library() {
 			break;
 		}
 	}
+}
 
-	unpost_menu(menu);
-	free_menu(menu);
-	int i = 0;
-	while (items[i]) {
-		free_item(items[i]);
-		++i;
-	}
-	endwin();
+int qstrcmp(const void *a, const void *b) {
+	const char *aa = *(const char**)a;
+	const char *bb = *(const char**)b;
+	return strcmp(aa, bb);
+}
+
+MENU *set_library(ITEM **items) {
+	MENU *menu;
+	
+	initscr();
+	cbreak();
+	noecho();
+	keypad(stdscr, TRUE);
+
+	menu = new_menu((ITEM **)items);
+	set_menu_format(menu, LINES, 0);
+	menu_opts_off(menu, O_ONEVALUE);
+	return menu;
 }
