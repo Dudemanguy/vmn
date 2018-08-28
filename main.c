@@ -21,10 +21,10 @@ int ext_valid(char *ext);
 char *get_file_ext(const char *file);
 void get_music_files(const char *base);
 ITEM **get_lib_items();
-void key_event(MENU *menu, ITEM **items);
+void key_event(int c, MENU *menu, ITEM **items);
 mpv_handle *mpv_generate();
 void mpv_queue(mpv_handle *ctx, const char *audio);
-void mpv_wait(mpv_handle *ctx, int len);
+void mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items);
 int qstrcmp(const void *a, const void *b);
 MENU *set_library(ITEM **items);
 
@@ -41,7 +41,10 @@ int main() {
 	MENU *menu = set_library(items);
 	post_menu(menu);
 	refresh();
-	key_event(menu, items);
+	int c;
+	while ((c = getch()) != 'q') {
+		key_event(c, menu, items);
+	}
 	unpost_menu(menu);
 	free_menu(menu);
 	int i = 0;
@@ -62,38 +65,6 @@ int ext_valid(char *ext) {
 		}
 	}
 	return 0;
-}
-
-mpv_handle *mpv_generate() {
-	mpv_handle *ctx = mpv_create();
-	mpv_set_option_string(ctx, "input-default-bindings", "yes");
-	mpv_set_option_string(ctx, "input-vo-keyboard", "yes");
-	int val = 1;
-	mpv_set_option(ctx, "osc", MPV_FORMAT_FLAG, &val);
-	mpv_initialize(ctx);
-	return ctx;
-}
-
-void mpv_queue(mpv_handle *ctx, const char *audio) {
-	const char *cmd[] = {"loadfile", audio, "append-play", NULL};
-	mpv_command(ctx, cmd);
-}
-
-void mpv_wait(mpv_handle *ctx, int len) {
-	int n = 0;
-	while (1) {
-		mpv_event *event = mpv_wait_event(ctx, 0);
-		if (event->event_id == MPV_EVENT_SHUTDOWN) {
-			break;
-		}
-		if (event->event_id == MPV_EVENT_END_FILE) {
-			++n;
-			if (n == len) {
-				break;
-			}
-		}
-	}
-	mpv_terminate_destroy(ctx);
 }
 
 char *get_file_ext(const char *file) {
@@ -172,8 +143,7 @@ ITEM **get_lib_items() {
 	return items;
 }
 
-void key_event(MENU *menu, ITEM **items) {
-	int c;
+void key_event(int c, MENU *menu, ITEM **items) {
 	int init_pos;
 	int end_pos;
 	int select = 0;
@@ -182,174 +152,207 @@ void key_event(MENU *menu, ITEM **items) {
 	const char *name;
 	mpv_handle *ctx;
 
-	while ((c = getch()) != 'q') {
-		switch(c) {
-		case 'i':
-		case ' ':
+	switch(c) {
+	case 'i':
+	case ' ':
+		cur = current_item(menu);
+		menu_driver(menu, REQ_TOGGLE_ITEM);
+		break;
+	case 'u':
+		for (int i = 0; i < item_count(menu); ++i) {
+			if (item_value(items[i])) {
+				set_item_value(items[i], false);
+			}
+		}
+		select = 0;
+		break;
+	case 'y':
+		for (int i = 0; i < item_count(menu); ++i) {
+			if (!item_value(items[i])) {
+				set_item_value(items[i], true);
+			}
+		}
+		break;
+	case 'v':
+		if (select) {
+			select = 0;
+			select_pos = 0;
+			set_item_value(items[select_pos], false);
+		} else {
+			select = 1;
 			cur = current_item(menu);
-			menu_driver(menu, REQ_TOGGLE_ITEM);
-			break;
-		case 'u':
+			set_item_value(cur, true);
+			select_pos = item_index(cur);
+		}
+		break;
+	case 'k':
+	case KEY_UP:
+		if (select) {
+			cur = current_item(menu);
+			int cur_pos = item_index(cur);
+			if (cur_pos > select_pos) {
+				set_item_value(cur, false);
+			}
+			if (cur_pos < select_pos) {
+				set_item_value(cur, true);
+			}
+		}
+		menu_driver(menu, REQ_PREV_ITEM);
+		cur = current_item(menu);
+		int cur_pos = item_index(cur);
+		if (select) {
+			cur = current_item(menu);
+			if (cur_pos > select_pos) {
+				set_item_value(cur, true);
+			}
+			if (select_pos != cur_pos) {
+				set_item_value(cur, false);
+			}
+		}
+		break;
+	case 'j':
+	case KEY_DOWN:
+		if (select) {
+			cur = current_item(menu);
+			int cur_pos = item_index(cur);
+			if (cur_pos > select_pos) {
+				set_item_value(cur, true);
+			}
+			if (cur_pos < select_pos) {
+				set_item_value(cur, false);
+			}
+		}
+		menu_driver(menu, REQ_NEXT_ITEM);
+		if (select) {
+			cur = current_item(menu);
+			set_item_value(cur, true);
+		}
+		break;
+	case 'g':
+	case KEY_HOME:
+		menu_driver(menu, REQ_FIRST_ITEM);
+		if (select) {
 			for (int i = 0; i < item_count(menu); ++i) {
-				if (item_value(items[i])) {
+				if (i > select_pos) {
 					set_item_value(items[i], false);
 				}
-			}
-			select = 0;
-			break;
-		case 'y':
-			for (int i = 0; i < item_count(menu); ++i) {
-				if (!item_value(items[i])) {
+				if (i < select_pos) {
 					set_item_value(items[i], true);
 				}
 			}
-			break;
-		case 'v':
-			if (select) {
-				select = 0;
-				select_pos = 0;
-				set_item_value(items[select_pos], false);
-			} else {
-				select = 1;
-				cur = current_item(menu);
-				set_item_value(cur, true);
-				select_pos = item_index(cur);
-			}
-			break;
-		case 'k':
-		case KEY_UP:
-			if (select) {
-				cur = current_item(menu);
-				int cur_pos = item_index(cur);
-				if (cur_pos > select_pos) {
-					set_item_value(cur, false);
-				}
-				if (cur_pos < select_pos) {
-					set_item_value(cur, true);
-				}
-			}
-			menu_driver(menu, REQ_PREV_ITEM);
-			cur = current_item(menu);
-			int cur_pos = item_index(cur);
-			if (select) {
-				cur = current_item(menu);
-				if (cur_pos > select_pos) {
-					set_item_value(cur, true);
-				}
-				if (select_pos != cur_pos) {
-					set_item_value(cur, false);
-				}
-			}
-			break;
-		case 'j':
-		case KEY_DOWN:
-			if (select) {
-				cur = current_item(menu);
-				int cur_pos = item_index(cur);
-				if (cur_pos > select_pos) {
-					set_item_value(cur, true);
-				}
-				if (cur_pos < select_pos) {
-					set_item_value(cur, false);
-				}
-			}
-			menu_driver(menu, REQ_NEXT_ITEM);
-			if (select) {
-				cur = current_item(menu);
-				set_item_value(cur, true);
-			}
-			break;
-		case 'g':
-		case KEY_HOME:
-			menu_driver(menu, REQ_FIRST_ITEM);
-			if (select) {
-				for (int i = 0; i < item_count(menu); ++i) {
-					if (i > select_pos) {
-						set_item_value(items[i], false);
-					}
-					if (i < select_pos) {
-						set_item_value(items[i], true);
-					}
-				}
-			}
-			break;
-		case 'G':
-		case KEY_END:
-			menu_driver(menu, REQ_LAST_ITEM);
-			if (select) {
-				for (int i = 0; i < item_count(menu); ++i) {
-					if (i > select_pos) {
-						set_item_value(items[i], true);
-					}
-					if (i < select_pos) {
-						set_item_value(items[i], false);
-					}
-				}
-			}
-			break;
-		case CTRL('b'):
-		case KEY_PPAGE:
-			if (select) {
-				cur = current_item(menu);
-				init_pos = item_index(cur);
-			}
-			menu_driver(menu, REQ_SCR_UPAGE);
-			if (select) {
-				cur = current_item(menu);
-				end_pos = item_index(cur);
-				for (int i = end_pos; i <= init_pos; ++i) {
-					if (i > select_pos) {
-						set_item_value(items[i], false);
-					}
-					if (i < select_pos) {
-						set_item_value(items[i], true);
-					}
-				}
-			}
-			break;
-		case CTRL('f'):
-		case KEY_NPAGE:
-			if (select) {
-				cur = current_item(menu);
-				init_pos = item_index(cur);
-			}
-			menu_driver(menu, REQ_SCR_DPAGE);
-			if (select) {
-				cur = current_item(menu);
-				end_pos = item_index(cur);
-				for (int i = init_pos; i <= end_pos; ++i) {
-					if (i > select_pos) {
-						set_item_value(items[i], true);
-					}
-					if (i < select_pos) {
-						set_item_value(items[i], false);
-					}
-				}
-			}
-			break;
-		case 10:
-			ctx = mpv_generate();
-			int n = 0;
-			for (int i = 0; i < item_count(menu); ++i) {
-				if (item_value(items[i])) {
-					name = item_name(items[i]);
-					mpv_queue(ctx, name);
-					++n;
-				}
-			}
-			if (n) {
-				mpv_wait(ctx, n);
-			} else {
-				cur = current_item(menu);
-				name = item_name(cur);
-				mpv_queue(ctx, name);
-				mpv_wait(ctx, 1);
-			}
-			break;
 		}
+		break;
+	case 'G':
+	case KEY_END:
+		menu_driver(menu, REQ_LAST_ITEM);
+		if (select) {
+			for (int i = 0; i < item_count(menu); ++i) {
+				if (i > select_pos) {
+					set_item_value(items[i], true);
+				}
+				if (i < select_pos) {
+					set_item_value(items[i], false);
+				}
+			}
+		}
+		break;
+	case CTRL('b'):
+	case KEY_PPAGE:
+		if (select) {
+			cur = current_item(menu);
+			init_pos = item_index(cur);
+		}
+		menu_driver(menu, REQ_SCR_UPAGE);
+		if (select) {
+			cur = current_item(menu);
+			end_pos = item_index(cur);
+			for (int i = end_pos; i <= init_pos; ++i) {
+				if (i > select_pos) {
+					set_item_value(items[i], false);
+				}
+				if (i < select_pos) {
+					set_item_value(items[i], true);
+				}
+			}
+		}
+		break;
+	case CTRL('f'):
+	case KEY_NPAGE:
+		if (select) {
+			cur = current_item(menu);
+			init_pos = item_index(cur);
+		}
+		menu_driver(menu, REQ_SCR_DPAGE);
+		if (select) {
+			cur = current_item(menu);
+			end_pos = item_index(cur);
+			for (int i = init_pos; i <= end_pos; ++i) {
+				if (i > select_pos) {
+					set_item_value(items[i], true);
+				}
+				if (i < select_pos) {
+					set_item_value(items[i], false);
+				}
+			}
+		}
+		break;
+	case 10:
+		ctx = mpv_generate();
+		int n = 0;
+		for (int i = 0; i < item_count(menu); ++i) {
+			if (item_value(items[i])) {
+				name = item_name(items[i]);
+				mpv_queue(ctx, name);
+				++n;
+			}
+		}
+		if (n) {
+			mpv_wait(ctx, n, menu, items);
+		} else {
+			cur = current_item(menu);
+			name = item_name(cur);
+			mpv_queue(ctx, name);
+			mpv_wait(ctx, 1, menu, items);
+		}
+		break;
 	}
 }
 
+mpv_handle *mpv_generate() {
+	mpv_handle *ctx = mpv_create();
+	mpv_set_option_string(ctx, "input-default-bindings", "yes");
+	mpv_set_option_string(ctx, "input-vo-keyboard", "yes");
+	int val = 1;
+	mpv_set_option(ctx, "osc", MPV_FORMAT_FLAG, &val);
+	mpv_initialize(ctx);
+	return ctx;
+}
+
+void mpv_queue(mpv_handle *ctx, const char *audio) {
+	const char *cmd[] = {"loadfile", audio, "append-play", NULL};
+	mpv_command(ctx, cmd);
+}
+
+void mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items) {
+	int n = 0;
+	int c;
+	while (1) {
+		mpv_event *event = mpv_wait_event(ctx, 0);
+		if (event->event_id == MPV_EVENT_SHUTDOWN) {
+			break;
+		}
+		if (event->event_id == MPV_EVENT_END_FILE) {
+			++n;
+			if (n == len) {
+				break;
+			}
+		}
+		if ((c = getch()) != 'q') {
+			key_event(c, menu, items);
+		}
+	}
+	mpv_terminate_destroy(ctx);
+}
 int qstrcmp(const void *a, const void *b) {
 	const char *aa = *(const char**)a;
 	const char *bb = *(const char**)b;
