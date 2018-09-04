@@ -41,7 +41,7 @@ int main() {
 	} else {
 		cfg.mpv_config = 1;
 	}
-	const char *library = read_cfg_string(cfg_file, "library");
+	const char *library = read_cfg_string(&cfg, cfg_file, "library");
 	remove(lib);
 	get_music_files(library);
 	ITEM **items = get_lib_items();
