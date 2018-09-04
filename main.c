@@ -376,7 +376,7 @@ int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_conf
 				break;
 			}
 		}
-		if (exit) {
+		if (exit == 1) {
 			return 1;
 		}
 	}
