@@ -21,10 +21,10 @@ int ext_valid(char *ext);
 char *get_file_ext(const char *file);
 void get_music_files(const char *base);
 ITEM **get_lib_items();
-void key_event(int c, MENU *menu, ITEM **items);
+void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg);
 mpv_handle *mpv_generate();
 void mpv_queue(mpv_handle *ctx, const char *audio);
-void mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items);
+void mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg);
 int qstrcmp(const void *a, const void *b);
 MENU *set_library(ITEM **items);
 
@@ -42,8 +42,9 @@ int main() {
 	post_menu(menu);
 	refresh();
 	int c;
+	struct vmn_config cfg = cfg_init();
 	while ((c = getch()) != 'q') {
-		key_event(c, menu, items);
+		key_event(c, menu, items, &cfg);
 	}
 	unpost_menu(menu);
 	free_menu(menu);
@@ -143,11 +144,9 @@ ITEM **get_lib_items() {
 	return items;
 }
 
-void key_event(int c, MENU *menu, ITEM **items) {
+void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 	int init_pos;
 	int end_pos;
-	int select = 0;
-	int select_pos;
 	ITEM *cur;
 	const char *name;
 	mpv_handle *ctx;
@@ -164,7 +163,7 @@ void key_event(int c, MENU *menu, ITEM **items) {
 				set_item_value(items[i], false);
 			}
 		}
-		select = 0;
+		cfg->select = 0;
 		break;
 	case 'y':
 		for (int i = 0; i < item_count(menu); ++i) {
@@ -174,56 +173,56 @@ void key_event(int c, MENU *menu, ITEM **items) {
 		}
 		break;
 	case 'v':
-		if (select) {
-			select = 0;
-			select_pos = 0;
-			set_item_value(items[select_pos], false);
+		if (cfg->select) {
+			cfg->select = 0;
+			cfg->select_pos = 0;
+			set_item_value(items[cfg->select_pos], false);
 		} else {
-			select = 1;
+			cfg->select = 1;
 			cur = current_item(menu);
 			set_item_value(cur, true);
-			select_pos = item_index(cur);
+			cfg->select_pos = item_index(cur);
 		}
 		break;
 	case 'k':
 	case KEY_UP:
-		if (select) {
+		if (cfg->select) {
 			cur = current_item(menu);
 			int cur_pos = item_index(cur);
-			if (cur_pos > select_pos) {
+			if (cur_pos > cfg->select_pos) {
 				set_item_value(cur, false);
 			}
-			if (cur_pos < select_pos) {
+			if (cur_pos < cfg->select_pos) {
 				set_item_value(cur, true);
 			}
 		}
 		menu_driver(menu, REQ_PREV_ITEM);
 		cur = current_item(menu);
 		int cur_pos = item_index(cur);
-		if (select) {
+		if (cfg->select) {
 			cur = current_item(menu);
-			if (cur_pos > select_pos) {
+			if (cur_pos > cfg->select_pos) {
 				set_item_value(cur, true);
 			}
-			if (select_pos != cur_pos) {
+			if (cfg->select_pos != cur_pos) {
 				set_item_value(cur, false);
 			}
 		}
 		break;
 	case 'j':
 	case KEY_DOWN:
-		if (select) {
+		if (cfg->select) {
 			cur = current_item(menu);
 			int cur_pos = item_index(cur);
-			if (cur_pos > select_pos) {
+			if (cur_pos > cfg->select_pos) {
 				set_item_value(cur, true);
 			}
-			if (cur_pos < select_pos) {
+			if (cur_pos < cfg->select_pos) {
 				set_item_value(cur, false);
 			}
 		}
 		menu_driver(menu, REQ_NEXT_ITEM);
-		if (select) {
+		if (cfg->select) {
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
@@ -231,12 +230,12 @@ void key_event(int c, MENU *menu, ITEM **items) {
 	case 'g':
 	case KEY_HOME:
 		menu_driver(menu, REQ_FIRST_ITEM);
-		if (select) {
+		if (cfg->select) {
 			for (int i = 0; i < item_count(menu); ++i) {
-				if (i > select_pos) {
+				if (i > cfg->select_pos) {
 					set_item_value(items[i], false);
 				}
-				if (i < select_pos) {
+				if (i < cfg->select_pos) {
 					set_item_value(items[i], true);
 				}
 			}
@@ -245,12 +244,12 @@ void key_event(int c, MENU *menu, ITEM **items) {
 	case 'G':
 	case KEY_END:
 		menu_driver(menu, REQ_LAST_ITEM);
-		if (select) {
+		if (cfg->select) {
 			for (int i = 0; i < item_count(menu); ++i) {
-				if (i > select_pos) {
+				if (i > cfg->select_pos) {
 					set_item_value(items[i], true);
 				}
-				if (i < select_pos) {
+				if (i < cfg->select_pos) {
 					set_item_value(items[i], false);
 				}
 			}
@@ -258,19 +257,19 @@ void key_event(int c, MENU *menu, ITEM **items) {
 		break;
 	case CTRL('b'):
 	case KEY_PPAGE:
-		if (select) {
+		if (cfg->select) {
 			cur = current_item(menu);
 			init_pos = item_index(cur);
 		}
 		menu_driver(menu, REQ_SCR_UPAGE);
-		if (select) {
+		if (cfg->select) {
 			cur = current_item(menu);
 			end_pos = item_index(cur);
 			for (int i = end_pos; i <= init_pos; ++i) {
-				if (i > select_pos) {
+				if (i > cfg->select_pos) {
 					set_item_value(items[i], false);
 				}
-				if (i < select_pos) {
+				if (i < cfg->select_pos) {
 					set_item_value(items[i], true);
 				}
 			}
@@ -278,19 +277,19 @@ void key_event(int c, MENU *menu, ITEM **items) {
 		break;
 	case CTRL('f'):
 	case KEY_NPAGE:
-		if (select) {
+		if (cfg->select) {
 			cur = current_item(menu);
 			init_pos = item_index(cur);
 		}
 		menu_driver(menu, REQ_SCR_DPAGE);
-		if (select) {
+		if (cfg->select) {
 			cur = current_item(menu);
 			end_pos = item_index(cur);
 			for (int i = init_pos; i <= end_pos; ++i) {
-				if (i > select_pos) {
+				if (i > cfg->select_pos) {
 					set_item_value(items[i], true);
 				}
-				if (i < select_pos) {
+				if (i < cfg->select_pos) {
 					set_item_value(items[i], false);
 				}
 			}
@@ -307,12 +306,12 @@ void key_event(int c, MENU *menu, ITEM **items) {
 			}
 		}
 		if (n) {
-			mpv_wait(ctx, n, menu, items);
+			mpv_wait(ctx, n, menu, items, cfg);
 		} else {
 			cur = current_item(menu);
 			name = item_name(cur);
 			mpv_queue(ctx, name);
-			mpv_wait(ctx, 1, menu, items);
+			mpv_wait(ctx, 1, menu, items, cfg);
 		}
 		break;
 	}
@@ -333,7 +332,7 @@ void mpv_queue(mpv_handle *ctx, const char *audio) {
 	mpv_command(ctx, cmd);
 }
 
-void mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items) {
+void mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 	int n = 0;
 	int c;
 	while (1) {
@@ -348,7 +347,7 @@ void mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items) {
 			}
 		}
 		if ((c = getch()) != 'q') {
-			key_event(c, menu, items);
+			key_event(c, menu, items, cfg);
 		}
 	}
 	mpv_terminate_destroy(ctx);

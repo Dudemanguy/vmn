@@ -28,6 +28,11 @@ void check_dir() {
 	}
 }
 
+struct vmn_config cfg_init() {
+	struct vmn_config cfg = {0, 0};
+	return cfg;
+}
+
 char *get_cfg() {
 	char *home = getenv("HOME"); 
 	const char *cfg = "/.config/vmn/config";
