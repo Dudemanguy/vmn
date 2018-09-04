@@ -21,10 +21,10 @@ int ext_valid(char *ext);
 char *get_file_ext(const char *file);
 void get_music_files(const char *base);
 ITEM **get_lib_items();
-void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg);
+int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg);
 mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
-void mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg);
+int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg);
 int qstrcmp(const void *a, const void *b);
 MENU *set_library(ITEM **items);
 
@@ -49,8 +49,10 @@ int main() {
 	post_menu(menu);
 	refresh();
 	int c;
-	while ((c = getch()) != 'q') {
-		key_event(c, menu, items, &cfg);
+	int exit = 0;
+	while (!exit) {
+		c = getch();
+		exit = key_event(c, menu, items, &cfg);
 	}
 	unpost_menu(menu);
 	free_menu(menu);
@@ -150,9 +152,10 @@ ITEM **get_lib_items() {
 	return items;
 }
 
-void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
+int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 	int init_pos;
 	int end_pos;
+	int exit;
 	ITEM *cur;
 	const char *name;
 	mpv_handle *ctx;
@@ -162,6 +165,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 	case ' ':
 		cur = current_item(menu);
 		menu_driver(menu, REQ_TOGGLE_ITEM);
+		exit = 0;
 		break;
 	case 'u':
 		for (int i = 0; i < item_count(menu); ++i) {
@@ -170,6 +174,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 			}
 		}
 		cfg->select = 0;
+		exit = 0;
 		break;
 	case 'y':
 		for (int i = 0; i < item_count(menu); ++i) {
@@ -177,6 +182,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 				set_item_value(items[i], true);
 			}
 		}
+		exit = 0;
 		break;
 	case 'v':
 		if (cfg->select) {
@@ -189,6 +195,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 			set_item_value(cur, true);
 			cfg->select_pos = item_index(cur);
 		}
+		exit = 0;
 		break;
 	case 'k':
 	case KEY_UP:
@@ -214,6 +221,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 				set_item_value(cur, false);
 			}
 		}
+		exit = 0;
 		break;
 	case 'j':
 	case KEY_DOWN:
@@ -232,6 +240,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
+		exit = 0;
 		break;
 	case 'g':
 	case KEY_HOME:
@@ -246,6 +255,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 				}
 			}
 		}
+		exit = 0;
 		break;
 	case 'G':
 	case KEY_END:
@@ -260,6 +270,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 				}
 			}
 		}
+		exit = 0;
 		break;
 	case CTRL('b'):
 	case KEY_PPAGE:
@@ -280,6 +291,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 				}
 			}
 		}
+		exit = 0;
 		break;
 	case CTRL('f'):
 	case KEY_NPAGE:
@@ -300,6 +312,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 				}
 			}
 		}
+		exit = 0;
 		break;
 	case 10:
 		ctx = mpv_generate(cfg);
@@ -312,15 +325,20 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 			}
 		}
 		if (n) {
-			mpv_wait(ctx, n, menu, items, cfg);
+			exit = mpv_wait(ctx, n, menu, items, cfg);
 		} else {
 			cur = current_item(menu);
 			name = item_name(cur);
 			mpv_queue(ctx, name);
-			mpv_wait(ctx, 1, menu, items, cfg);
+			exit = mpv_wait(ctx, 1, menu, items, cfg);
 		}
 		break;
+	case 'q':
+		mpv_terminate_destroy(ctx);
+		exit = 1;
+		break;
 	}
+	return exit;
 }
 
 mpv_handle *mpv_generate(struct vmn_config *cfg) {
@@ -341,10 +359,13 @@ void mpv_queue(mpv_handle *ctx, const char *audio) {
 	mpv_command(ctx, cmd);
 }
 
-void mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg) {
+int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 	int n = 0;
 	int c;
+	int exit;
 	while (1) {
+		c = getch();
+		exit = key_event(c, menu, items, cfg);
 		mpv_event *event = mpv_wait_event(ctx, 0);
 		if (event->event_id == MPV_EVENT_SHUTDOWN) {
 			break;
@@ -355,12 +376,14 @@ void mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_con
 				break;
 			}
 		}
-		if ((c = getch()) != 'q') {
-			key_event(c, menu, items, cfg);
+		if (exit) {
+			return 1;
 		}
 	}
 	mpv_terminate_destroy(ctx);
+	return 0;
 }
+
 int qstrcmp(const void *a, const void *b) {
 	const char *aa = *(const char**)a;
 	const char *bb = *(const char**)b;
