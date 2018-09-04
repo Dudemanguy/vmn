@@ -29,7 +29,7 @@ void check_dir() {
 }
 
 struct vmn_config cfg_init() {
-	struct vmn_config cfg = {0, 0};
+	struct vmn_config cfg = {0, 0, 0};
 	return cfg;
 }
 
@@ -72,7 +72,16 @@ const char *cfg_defaults(const char *opt) {
 	return path;
 }
 
-const char *read_cfg(char *file, const char *opt) {
+int read_cfg_int(char *file, const char *opt) {
+	config_t cfg;
+	config_init(&cfg);
+	config_read_file(&cfg, file);
+	int output;
+	config_lookup_int(&cfg, opt, &output);
+	return output;
+}
+
+const char *read_cfg_string(char *file, const char *opt) {
 	config_t cfg;
 	config_init(&cfg);
 	config_read_file(&cfg, file);

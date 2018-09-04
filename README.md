@@ -40,5 +40,11 @@ Then, simply run the `vmn` executable. Current keybindings are the following.
 
 All tracks that are queued will be played by mpv upon hitting enter. If no tracks are selected, then the currently highlighted track will be played upon hitting enter.
 
+vmn currently reads your mpv configuration file by default and will obey the set parameters if possible (e.g. the default volume can be set this way). To disable reading mpv's config file, set following in vmn's config.
+```
+mpv_config = 0
+```
+`1`, of course, explicitly enables reading mpv's config.
+
 ## License
 GPLv2 or later.

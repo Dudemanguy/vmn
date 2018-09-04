@@ -22,7 +22,7 @@ char *get_file_ext(const char *file);
 void get_music_files(const char *base);
 ITEM **get_lib_items();
 void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg);
-mpv_handle *mpv_generate();
+mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
 void mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg);
 int qstrcmp(const void *a, const void *b);
@@ -30,11 +30,18 @@ MENU *set_library(ITEM **items);
 
 int main() {
 	setlocale(LC_CTYPE, "");
+	struct vmn_config cfg = cfg_init();
 	char *lib = get_cfg_lib();
 	char *cfg_file = get_cfg();
 	check_dir();
 	check_cfg(cfg_file);
-	const char *library = read_cfg(cfg_file, "library");
+	int mpv_config = read_cfg_int(cfg_file, "mpv_config");
+	if ((mpv_config == 0) || (mpv_config == 1)) {
+		cfg.mpv_config = mpv_config;
+	} else {
+		cfg.mpv_config = 1;
+	}
+	const char *library = read_cfg_string(cfg_file, "library");
 	remove(lib);
 	get_music_files(library);
 	ITEM **items = get_lib_items();
@@ -42,7 +49,6 @@ int main() {
 	post_menu(menu);
 	refresh();
 	int c;
-	struct vmn_config cfg = cfg_init();
 	while ((c = getch()) != 'q') {
 		key_event(c, menu, items, &cfg);
 	}
@@ -296,7 +302,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 		}
 		break;
 	case 10:
-		ctx = mpv_generate();
+		ctx = mpv_generate(cfg);
 		int n = 0;
 		for (int i = 0; i < item_count(menu); ++i) {
 			if (item_value(items[i])) {
@@ -317,10 +323,13 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 	}
 }
 
-mpv_handle *mpv_generate() {
+mpv_handle *mpv_generate(struct vmn_config *cfg) {
 	mpv_handle *ctx = mpv_create();
 	mpv_set_option_string(ctx, "input-default-bindings", "yes");
 	mpv_set_option_string(ctx, "input-vo-keyboard", "yes");
+	if (cfg->mpv_config) {
+		mpv_set_option_string(ctx, "config", "yes");
+	}
 	int val = 1;
 	mpv_set_option(ctx, "osc", MPV_FORMAT_FLAG, &val);
 	mpv_initialize(ctx);
