@@ -337,6 +337,9 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 		mpv_terminate_destroy(ctx);
 		exit = 1;
 		break;
+	default:
+		exit = 0;
+		break;
 	}
 	return exit;
 }
