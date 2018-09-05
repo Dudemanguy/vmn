@@ -1,15 +1,8 @@
 # vmn
-**Note**: This is very much a work in progress.
-
 **v**im **m**usic **n**avigator is a simple, barebones commandline music player. vmn aims to provide a highly customizable, configurable interface to handle massive music libraries with ease. One feature of vmn is that it makes use of mpv's client API for playback which gives you all of the power of mpv's options integrated into a nice interface for browsing and listening to your music.
 
 ## Installation
-vmn only depends on ncurses, the ncurses menu library (likely already included with your distro's ncurses package), libconfig, mpv, and meson for building. First, checkout the source.
-```
-git clone https://github.com/Dudemanguy911/vmn.git
-```
-
-Then navigate to that directory.
+vmn only depends on ncurses (with the menu library), libconfig, mpv, and meson for building. After checking out the source the source, navigate to the directory. Then simply run.
 ```
 mkdir build
 meson build
@@ -17,13 +10,15 @@ ninja -C build
 sudo ninja -C build install
 ```
 
-## Usage
-vmn reads its configuration in the standard `$USER/.confg/vmn/config` directory. By default, vmn will search XDG_MUSIC_DIR, `$USER/Music`, if no library directory is specified. If a different library directory needs to be read then specify it in the config file like so.
+## Configuration
+By default, vmn will search XDG_MUSIC_DIR, `$USER/Music`, for audio files. It's very likely that you would prefer a different directory. To do so, specify the library directory in `$USER/.config/vmn/config` like so.
 ```
 library = "path/to/music/directory"
 ```
+vmn accepts two different kinds of configurations: one for the vmn program itself and another for the mpv client. All configuration values are specified in the same `$USER/.config/vmn/config` file. The syntax is the same however options for vmn are enclosed in quotes while the options for the mpv client follow standard [mpv.conf syntax](https://github.com/mpv-player/mpv/blob/master/etc/mpv.conf). Most mpv options should work without a problem.
 
-Then, simply run the `vmn` executable. Current keybindings are the following.
+## Usage
+Current keybindings are the following.
 
 * scroll up: `k` or `Up Arrow`
 * scroll down: `j` or `Down Arrow`
@@ -39,12 +34,6 @@ Then, simply run the `vmn` executable. Current keybindings are the following.
 * quit: `q`
 
 All tracks that are queued will be played by mpv upon hitting enter. If no tracks are selected, then the currently highlighted track will be played upon hitting enter.
-
-vmn currently reads your mpv configuration file by default and will obey the set parameters if possible (e.g. the default volume can be set this way). To disable reading mpv's config file, set following in vmn's config.
-```
-mpv_config = 0
-```
-`1`, of course, explicitly enables reading mpv's config.
 
 ## License
 GPLv2 or later.
