@@ -32,18 +32,8 @@ int main() {
 	setlocale(LC_CTYPE, "");
 	struct vmn_config cfg = cfg_init();
 	char *lib = get_cfg_lib();
-	char *cfg_file = get_cfg();
-	check_dir();
-	check_cfg(cfg_file);
-	int mpv_config = read_cfg_int(cfg_file, "mpv_config");
-	if ((mpv_config == 0) || (mpv_config == 1)) {
-		cfg.mpv_config = mpv_config;
-	} else {
-		cfg.mpv_config = 1;
-	}
-	const char *library = read_cfg_string(&cfg, cfg_file, "library");
 	remove(lib);
-	get_music_files(library);
+	get_music_files(cfg.library);
 	ITEM **items = get_lib_items();
 	MENU *menu = set_library(items);
 	post_menu(menu);
@@ -348,9 +338,8 @@ mpv_handle *mpv_generate(struct vmn_config *cfg) {
 	mpv_handle *ctx = mpv_create();
 	mpv_set_option_string(ctx, "input-default-bindings", "yes");
 	mpv_set_option_string(ctx, "input-vo-keyboard", "yes");
-	if (cfg->mpv_config) {
-		mpv_set_option_string(ctx, "config", "yes");
-	}
+	mpv_set_option_string(ctx, "config-dir", cfg->mpv_cfg_dir);
+	mpv_set_option_string(ctx, "config", cfg->mpv_cfg);
 	int val = 1;
 	mpv_set_option(ctx, "osc", MPV_FORMAT_FLAG, &val);
 	mpv_initialize(ctx);
