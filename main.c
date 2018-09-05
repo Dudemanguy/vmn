@@ -379,7 +379,7 @@ int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_conf
 int qstrcmp(const void *a, const void *b) {
 	const char *aa = *(const char**)a;
 	const char *bb = *(const char**)b;
-	return strcmp(aa, bb);
+	return strcasecmp(aa, bb);
 }
 
 MENU *set_library(ITEM **items) {
