@@ -17,10 +17,12 @@
 #define CTRL(c) ((c) & 037)
 #endif
 
+int directory_count(const char *path);
 int ext_valid(char *ext);
 char *get_file_ext(const char *file);
 void get_music_files(const char *base);
 ITEM **get_lib_items();
+char **get_lib_root(const char *library);
 int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg);
 mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
@@ -53,6 +55,16 @@ int main() {
 	}
 	endwin();
 	return 0;
+}
+
+int directory_count(const char *path) {
+	const char *where = path;
+	int i = 0;
+	while ((where = strchr(where, '/'))) {
+		++i;
+		++where;
+	};
+	return i;
 }
 
 int ext_valid(char *ext) {
@@ -110,7 +122,6 @@ ITEM **get_lib_items() {
 	int lines_allocated = 1000;
 	int max_line_len = 4096;
 	char *lib = get_cfg_lib();
-
 	char **lines = (char **)malloc(sizeof(char*)*lines_allocated);
 	FILE *fp = fopen(lib, "r");
 
@@ -140,6 +151,44 @@ ITEM **get_lib_items() {
 	}
 	items[i] = (ITEM *)NULL;
 	return items;
+}
+
+char **get_lib_root(const char *library) {
+	struct dirent *dp;
+	DIR *dir = opendir(library);
+	int max_line_len = 1024;
+	int lines_allocated = 1000;
+
+	if (!dir) {
+		return 0;
+	}
+
+	char **root = (char **)malloc(sizeof(char*)*lines_allocated);
+
+	int i = 0;
+	while ((dp = readdir(dir)) != NULL) {
+		if (i >= lines_allocated) {
+			int new_size;
+			new_size = lines_allocated*2;
+			root = (char **)realloc(root,sizeof(char*)*new_size);
+			lines_allocated = new_size;
+		}
+		root[i] = malloc(max_line_len);
+		char path[1024];
+		strcpy(path, library);
+		strcat(path, "/");
+		strcat(path, dp->d_name);
+		if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
+			if (dp->d_type == DT_DIR) {
+				strcpy(root[i], path);
+				++i;
+			}
+		}
+	}
+	
+	closedir(dir);
+	qsort(root, i, sizeof(char *), qstrcmp);
+	return root;
 }
 
 int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
