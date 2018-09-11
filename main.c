@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "config.h"
+#include "library.h"
 
 #ifndef CTRL
 #define CTRL(c) ((c) & 037)
@@ -20,8 +21,8 @@
 int directory_count(const char *path);
 int ext_valid(char *ext);
 char *get_file_ext(const char *file);
-void get_music_files(const char *base);
-ITEM **get_lib_items();
+void get_music_files(const char *library, struct vmn_library *lib);
+ITEM **get_lib_items(struct vmn_library *lib);
 char **get_lib_root(const char *library);
 int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg);
 mpv_handle *mpv_generate(struct vmn_config *cfg);
@@ -33,10 +34,9 @@ MENU *set_library(ITEM **items);
 int main() {
 	setlocale(LC_CTYPE, "");
 	struct vmn_config cfg = cfg_init();
-	char *lib = get_cfg_lib();
-	remove(lib);
-	get_music_files(cfg.library);
-	ITEM **items = get_lib_items();
+	struct vmn_library lib = lib_init();
+	get_music_files(cfg.library, &lib);
+	ITEM **items = get_lib_items(&lib);
 	MENU *menu = set_library(items);
 	post_menu(menu);
 	refresh();
@@ -86,11 +86,9 @@ char *get_file_ext(const char *file) {
 	return dot + 1;
 }
 
-void get_music_files(const char *library) {
+void get_music_files(const char *library, struct vmn_library *lib) {
 	struct dirent *dp;
 	DIR *dir = opendir(library);
-	char *lib = get_cfg_lib();
-	FILE *fp = fopen(lib, "a+");
 
 	if (!dir) {
 		return;
@@ -103,53 +101,26 @@ void get_music_files(const char *library) {
 		strcat(path, dp->d_name);
 		if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
 			if (dp->d_type == DT_DIR) {
-				get_music_files(path);
+				get_music_files(path, lib);
 			} else {
 				char *ext = get_file_ext(dp->d_name);
 				if (ext_valid(ext)) {
-					fputs(path, fp);
-					fputs("\n", fp);
+					vmn_library_add(lib, path);
 				}
 			}
 		}
 	}
-	fclose(fp);
 	closedir(dir);
 }
 
-ITEM **get_lib_items() {
+ITEM **get_lib_items(struct vmn_library *lib) {
 	ITEM **items;
-	int lines_allocated = 1000;
-	int max_line_len = 4096;
-	char *lib = get_cfg_lib();
-	char **lines = (char **)malloc(sizeof(char*)*lines_allocated);
-	FILE *fp = fopen(lib, "r");
-
-	int i;
-	for (i = 0; 1; ++i) {
-		int j;
-
-		if (i >= lines_allocated) {
-			int new_size;
-			new_size = lines_allocated*2;
-			lines = (char **)realloc(lines,sizeof(char*)*new_size);
-			lines_allocated = new_size;
-		}
-		lines[i] = malloc(max_line_len);
-		if (fgets(lines[i], max_line_len-1, fp)==NULL)
-			break;
-		for (j=strlen(lines[i])-1; j>=0 && (lines[i][j]=='\n' || lines[i][j]=='\r'); j--) {
-			;
-		}
-		lines[i][j+1]='\0';
+	qsort(lib->files, lib->length, sizeof(char *), qstrcmp);
+	items = (ITEM **)calloc(lib->length + 1, sizeof(ITEM *));
+	for (int i = 0; i < lib->length; ++i) {
+		items[i] = new_item(lib->files[i], NULL);
 	}
-    fclose(fp);
-	qsort(lines, i, sizeof(char *), qstrcmp);
-	items = (ITEM **)calloc(i + 1, sizeof(ITEM *));
-	for (int k = 0; k < i; ++k) {
-		items[k] = new_item(lines[k], NULL);
-	}
-	items[i] = (ITEM *)NULL;
+	items[lib->length] = (ITEM *)NULL;
 	return items;
 }
 
