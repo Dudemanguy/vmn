@@ -21,9 +21,9 @@
 int directory_count(const char *path);
 int ext_valid(char *ext);
 char *get_file_ext(const char *file);
-void get_music_files(const char *library, struct vmn_library *lib);
 ITEM **get_lib_items(struct vmn_library *lib);
 char **get_lib_root(const char *library);
+void get_music_files(const char *library, struct vmn_library *lib);
 int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg);
 mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
@@ -86,33 +86,6 @@ char *get_file_ext(const char *file) {
 	return dot + 1;
 }
 
-void get_music_files(const char *library, struct vmn_library *lib) {
-	struct dirent *dp;
-	DIR *dir = opendir(library);
-
-	if (!dir) {
-		return;
-	}
-
-	while ((dp = readdir(dir)) != NULL) {
-		char path[1024];
-		strcpy(path, library);
-		strcat(path, "/");
-		strcat(path, dp->d_name);
-		if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
-			if (dp->d_type == DT_DIR) {
-				get_music_files(path, lib);
-			} else {
-				char *ext = get_file_ext(dp->d_name);
-				if (ext_valid(ext)) {
-					vmn_library_add(lib, path);
-				}
-			}
-		}
-	}
-	closedir(dir);
-}
-
 ITEM **get_lib_items(struct vmn_library *lib) {
 	ITEM **items;
 	qsort(lib->files, lib->length, sizeof(char *), qstrcmp);
@@ -160,6 +133,33 @@ char **get_lib_root(const char *library) {
 	closedir(dir);
 	qsort(root, i, sizeof(char *), qstrcmp);
 	return root;
+}
+
+void get_music_files(const char *library, struct vmn_library *lib) {
+	struct dirent *dp;
+	DIR *dir = opendir(library);
+
+	if (!dir) {
+		return;
+	}
+
+	while ((dp = readdir(dir)) != NULL) {
+		char path[1024];
+		strcpy(path, library);
+		strcat(path, "/");
+		strcat(path, dp->d_name);
+		if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
+			if (dp->d_type == DT_DIR) {
+				get_music_files(path, lib);
+			} else {
+				char *ext = get_file_ext(dp->d_name);
+				if (ext_valid(ext)) {
+					vmn_library_add(lib, path);
+				}
+			}
+		}
+	}
+	closedir(dir);
 }
 
 int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
