@@ -6,11 +6,12 @@ char *get_cfg_dir();
 char *get_cfg_lib();
 int read_cfg_int(struct vmn_config *cfg, char *file, const char *opt);
 const char *read_cfg_str(struct vmn_config *cfg, char *file, const char *opt);
+void vmn_config_destroy(struct vmn_config *cfg);
 
 struct vmn_config {
 	int select;
 	int select_pos;
-	const char *lib_dir;
-	const char *mpv_cfg_dir;
-	const char *mpv_cfg;
+	char *lib_dir;
+	char *mpv_cfg_dir;
+	char *mpv_cfg;
 };

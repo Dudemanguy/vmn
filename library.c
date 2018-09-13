@@ -28,5 +28,8 @@ void vmn_library_add(struct vmn_library *lib, char *entry) {
 
 
 void vmn_library_destroy(struct vmn_library *lib) {
+	for (int i = 0; i < lib->length; ++i) {
+		free(lib->files[i]);
+	}
 	free(lib->files);
 }

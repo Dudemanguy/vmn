@@ -50,11 +50,10 @@ int main() {
 	}
 	unpost_menu(menu);
 	free_menu(menu);
-	int i = 0;
-	while (items[i]) {
+	for (int i = 0; i < lib.length; ++i) {
 		free_item(items[i]);
-		++i;
 	}
+	vmn_config_destroy(&cfg);
 	vmn_library_destroy(&lib);
 	endwin();
 	return 0;
