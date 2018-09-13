@@ -35,7 +35,7 @@ int main() {
 	setlocale(LC_CTYPE, "");
 	struct vmn_config cfg = cfg_init();
 	struct vmn_library lib = lib_init();
-	get_music_files(cfg.library, &lib);
+	get_music_files(cfg.lib_dir, &lib);
 	ITEM **items = get_lib_items(&lib);
 	MENU *menu = set_library(items);
 	post_menu(menu);
@@ -53,6 +53,7 @@ int main() {
 		free_item(items[i]);
 		++i;
 	}
+	vmn_library_destroy(&lib);
 	endwin();
 	return 0;
 }
@@ -168,7 +169,8 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 	int exit;
 	ITEM *cur;
 	const char *name;
-	mpv_handle *ctx;
+	mpv_handle *ctx = mpv_generate(cfg);
+	int mpv_active = 1;
 
 	switch(c) {
 	case 'i':
@@ -325,7 +327,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 		exit = 0;
 		break;
 	case 10:
-		ctx = mpv_generate(cfg);
+		mpv_active = mpv_initialize(ctx);
 		int n = 0;
 		for (int i = 0; i < item_count(menu); ++i) {
 			if (item_value(items[i])) {
@@ -344,7 +346,9 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 		}
 		break;
 	case 'q':
-		mpv_terminate_destroy(ctx);
+		if (mpv_active == 0) {
+			mpv_terminate_destroy(ctx);
+		}
 		exit = 1;
 		break;
 	default:
@@ -362,7 +366,6 @@ mpv_handle *mpv_generate(struct vmn_config *cfg) {
 	mpv_set_option_string(ctx, "config", cfg->mpv_cfg);
 	int val = 1;
 	mpv_set_option(ctx, "osc", MPV_FORMAT_FLAG, &val);
-	mpv_initialize(ctx);
 	return ctx;
 }
 

@@ -101,43 +101,45 @@ char *get_default_str(struct vmn_config *cfg, const char *opt) {
 	return output;
 }
 
-int read_cfg_int(struct vmn_config *vmn, char *file, const char *opt) {
-	config_t cfg;
-	config_init(&cfg);
-	config_read_file(&cfg, file);
+int read_cfg_int(struct vmn_config *cfg, char *file, const char *opt) {
+	config_t libcfg;
+	config_init(&libcfg);
+	config_read_file(&libcfg, file);
 	int output;
-	config_lookup_int(&cfg, opt, &output);
+	config_lookup_int(&libcfg, opt, &output);
 	if (!output) {
-		output = get_default_int(vmn, opt);
+		output = get_default_int(cfg, opt);
 	}
 	return output;
 }
 
-const char *read_cfg_str(struct vmn_config *vmn, char *file, const char *opt) {
-	config_t cfg;
-	config_init(&cfg);
-	config_read_file(&cfg, file);
+const char *read_cfg_str(struct vmn_config *cfg, char *file, const char *opt) {
+	config_t libcfg;
+	config_init(&libcfg);
+	config_read_file(&libcfg, file);
 	const char *output;
-	config_lookup_string(&cfg, opt, &output);
+	config_lookup_string(&libcfg, opt, &output);
 	return output;
 }
 
 struct vmn_config cfg_init() {
-	struct vmn_config vmn;
-	config_t cfg;
-	config_init(&cfg);
+	struct vmn_config cfg;
+	config_t libcfg;
+	config_init(&libcfg);
 	char *cfg_file = get_cfg();
-	config_read_file(&cfg, cfg_file);
+	config_read_file(&libcfg, cfg_file);
 
 	const char *library;
-	config_lookup_string(&cfg, "library", &library);
+	config_lookup_string(&libcfg, "library", &library);
 	if (!library) {
 		library = get_default_lib();
 	}
-	vmn.select = 0;
-	vmn.select_pos = 0;
-	vmn.library = library;
-	vmn.mpv_cfg_dir = get_cfg_dir();
-	vmn.mpv_cfg = "yes";
-	return vmn;
+	cfg.select = 0;
+	cfg.select_pos = 0;
+	cfg.lib_dir = library;
+	cfg.mpv_cfg_dir = get_cfg_dir();
+	cfg.mpv_cfg = "yes";
+
+	free(cfg_file);
+	return cfg;
 }
