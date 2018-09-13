@@ -224,15 +224,9 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 		}
 		menu_driver(menu, REQ_PREV_ITEM);
 		cur = current_item(menu);
-		int cur_pos = item_index(cur);
 		if (cfg->select) {
 			cur = current_item(menu);
-			if (cur_pos > cfg->select_pos) {
-				set_item_value(cur, true);
-			}
-			if (cfg->select_pos != cur_pos) {
-				set_item_value(cur, false);
-			}
+			set_item_value(cur, true);
 		}
 		exit = 0;
 		break;
