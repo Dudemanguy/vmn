@@ -4,6 +4,7 @@
 #include <menu.h>
 #include <mpv/client.h>
 #include <ncurses.h>
+#include <regex.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,12 +23,13 @@ int directory_count(const char *path);
 int ext_valid(char *ext);
 char *get_file_ext(const char *file);
 ITEM **get_lib_items(struct vmn_library *lib);
-char **get_lib_root(const char *library);
+char **get_lib_root(const char *library, struct vmn_library *lib);
 void get_music_files(const char *library, struct vmn_library *lib);
 int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg);
 mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
 int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg);
+int path_in_lib(char *path, struct vmn_library *lib);
 int qstrcmp(const void *a, const void *b);
 MENU *set_library(ITEM **items);
 
@@ -98,7 +100,7 @@ ITEM **get_lib_items(struct vmn_library *lib) {
 	return items;
 }
 
-char **get_lib_root(const char *library) {
+char **get_lib_root(const char *library, struct vmn_library *lib) {
 	struct dirent *dp;
 	DIR *dir = opendir(library);
 	int max_line_len = 1024;
@@ -124,7 +126,7 @@ char **get_lib_root(const char *library) {
 		strcat(path, "/");
 		strcat(path, dp->d_name);
 		if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
-			if (dp->d_type == DT_DIR) {
+			if (dp->d_type == DT_DIR && path_in_lib(path, lib)) {
 				strcpy(root[i], path);
 				++i;
 			}
@@ -396,6 +398,22 @@ int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_conf
 		}
 	}
 	mpv_terminate_destroy(ctx);
+	return 0;
+}
+
+int path_in_lib(char *path, struct vmn_library *lib) {
+	regex_t regex;
+	int status;
+	regcomp(&regex, path, 0);
+	for (int i = 0; i < lib->length; ++i) {
+		status = regexec(&regex, lib->files[i], 0, NULL, 0);
+		if (status == 0) {
+			regfree(&regex);
+			return 1;
+			break;
+		}
+	}
+	regfree(&regex);
 	return 0;
 }
 
