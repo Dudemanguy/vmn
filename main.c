@@ -172,7 +172,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 	ITEM *cur;
 	const char *name;
 	mpv_handle *ctx = mpv_generate(cfg);
-	int mpv_active = 1;
 
 	switch(c) {
 	case 'i':
@@ -323,7 +322,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 		exit = 0;
 		break;
 	case 10:
-		mpv_active = mpv_initialize(ctx);
+		mpv_initialize(ctx);
 		int n = 0;
 		for (int i = 0; i < item_count(menu); ++i) {
 			if (item_value(items[i])) {
@@ -342,14 +341,14 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 		}
 		break;
 	case 'q':
-		if (mpv_active == 0) {
-			mpv_terminate_destroy(ctx);
-		}
 		exit = 1;
 		break;
 	default:
 		exit = 0;
 		break;
+	}
+	if (exit) {
+		mpv_destroy(ctx);
 	}
 	return exit;
 }
@@ -391,7 +390,7 @@ int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_conf
 			return 1;
 		}
 	}
-	mpv_terminate_destroy(ctx);
+	mpv_destroy(ctx);
 	return 0;
 }
 
