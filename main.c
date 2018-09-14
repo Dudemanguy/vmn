@@ -357,6 +357,7 @@ mpv_handle *mpv_generate(struct vmn_config *cfg) {
 	mpv_handle *ctx = mpv_create();
 	mpv_set_option_string(ctx, "input-default-bindings", "yes");
 	mpv_set_option_string(ctx, "input-vo-keyboard", "yes");
+	mpv_set_option_string(ctx, "force-window", "yes");
 	mpv_set_option_string(ctx, "config-dir", cfg->mpv_cfg_dir);
 	mpv_set_option_string(ctx, "config", cfg->mpv_cfg);
 	int val = 1;
