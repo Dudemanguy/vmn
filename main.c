@@ -53,6 +53,7 @@ int main() {
 	for (int i = 0; i < lib.length; ++i) {
 		free_item(items[i]);
 	}
+	free(items);
 	vmn_config_destroy(&cfg);
 	vmn_library_destroy(&lib);
 	endwin();
