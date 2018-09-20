@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include <libconfig.h>
 #include <locale.h>
+#include <math.h>
 #include <menu.h>
 #include <mpv/client.h>
 #include <ncurses.h>
@@ -19,45 +20,87 @@
 #define CTRL(c) ((c) & 037)
 #endif
 
+ITEM **create_items(char **names, char **paths);
 int directory_count(const char *path);
 int ext_valid(char *ext);
 char *get_file_ext(const char *file);
+char **get_lib_dir_names(const char *library, struct vmn_library *lib);
+char **get_lib_dir_paths(const char *library, struct vmn_library *lib);
 ITEM **get_lib_items(struct vmn_library *lib);
-char **get_lib_root(const char *library, struct vmn_library *lib);
 void get_music_files(const char *library, struct vmn_library *lib);
-int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg);
+int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
+int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_library *lib);
+int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_library *lib);
 mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
-int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg);
+int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
 int path_in_lib(char *path, struct vmn_library *lib);
 int qstrcmp(const void *a, const void *b);
-MENU *set_library(ITEM **items);
 
 int main() {
 	setlocale(LC_CTYPE, "");
 	struct vmn_config cfg = cfg_init();
 	struct vmn_library lib = lib_init();
+	initscr();
+	cbreak();
+	noecho();
+	keypad(stdscr, TRUE);
 	get_music_files(cfg.lib_dir, &lib);
-	ITEM **items = get_lib_items(&lib);
-	MENU *menu = set_library(items);
-	post_menu(menu);
-	refresh();
+	char **root = get_lib_dir_names(cfg.lib_dir, &lib);
+	char **paths = get_lib_dir_paths(cfg.lib_dir, &lib);
+	lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
+	lib.items[0] = create_items(root, paths);
+	lib.menu = (MENU **)calloc(1, sizeof(MENU *));
+	lib.menu[0] = new_menu((ITEM **)lib.items[0]);
+	set_menu_format(lib.menu[0], LINES, 0);
+	menu_opts_off(lib.menu[0], O_ONEVALUE);
+	menu_opts_off(lib.menu[0], O_SHOWDESC);
+	WINDOW *win = newwin(0, 0, 0, 0);
+	keypad(win, TRUE);
+	set_menu_win(lib.menu[0], win);
+	set_menu_sub(lib.menu[0], win);
+	post_menu(lib.menu[0]);
+	wrefresh(win);
 	int c;
 	int exit = 0;
 	while (!exit) {
-		c = getch();
-		exit = key_event(c, menu, items, &cfg);
+		c = wgetch(win);
+		MENU *menu = lib.menu[lib.depth];
+		ITEM **items = lib.items[lib.depth];
+		exit = key_event(c, menu, items, &cfg, &lib);
 	}
-	unpost_menu(menu);
-	free_menu(menu);
-	for (int i = 0; i < lib.length; ++i) {
-		free_item(items[i]);
-	}
-	free(items);
+	//TODO: free memory properly
+	//free(lib.items);
+	//free(lib.menu);
+	/*int i = 0;
+	for (int i = 0; i < 4; ++i) {
+		int length = item_count(lib.menu[i]);
+		unpost_menu(lib.menu[i]);
+		free_menu(lib.menu[i]);
+		for (int j = 0; j < length; ++i) {
+			free_item(lib.items[i][j]);
+		}
+		free(lib.items[i]);
+	}*/
 	vmn_config_destroy(&cfg);
 	vmn_library_destroy(&lib);
 	endwin();
 	return 0;
+}
+
+ITEM **create_items(char **names, char **paths) {
+	ITEM **items;
+	int n = 0;
+	while (names[n]) {
+		++n;
+	}
+	items = (ITEM **)calloc(n, sizeof(ITEM *));
+	int i;
+	for (i = 0; i < n; ++i) {
+		items[i] = new_item(names[i], paths[i]);
+	}
+	items[i] = (ITEM *)NULL;
+	return items;
 }
 
 int directory_count(const char *path) {
@@ -100,7 +143,7 @@ ITEM **get_lib_items(struct vmn_library *lib) {
 	return items;
 }
 
-char **get_lib_root(const char *library, struct vmn_library *lib) {
+char **get_lib_dir_names(const char *library, struct vmn_library *lib) {
 	struct dirent *dp;
 	DIR *dir = opendir(library);
 	int max_line_len = 1024;
@@ -110,32 +153,82 @@ char **get_lib_root(const char *library, struct vmn_library *lib) {
 		return 0;
 	}
 
-	char **root = (char **)malloc(sizeof(char*)*lines_allocated);
+	char **names = (char **)malloc(sizeof(char*)*lines_allocated);
 
 	int i = 0;
 	while ((dp = readdir(dir)) != NULL) {
 		if (i >= lines_allocated) {
 			int new_size;
 			new_size = lines_allocated*2;
-			root = (char **)realloc(root,sizeof(char*)*new_size);
+			names = (char **)realloc(names,sizeof(char *)*new_size);
 			lines_allocated = new_size;
 		}
-		root[i] = malloc(max_line_len);
+		names[i] = malloc(max_line_len);
 		char path[1024];
 		strcpy(path, library);
 		strcat(path, "/");
 		strcat(path, dp->d_name);
 		if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
 			if (dp->d_type == DT_DIR && path_in_lib(path, lib)) {
-				strcpy(root[i], path);
+				strcpy(names[i], dp->d_name);
+				++i;
+			}
+			char *ext = get_file_ext(dp->d_name);
+			if (ext_valid(ext)) {
+				strcpy(names[i], dp->d_name);
 				++i;
 			}
 		}
 	}
 	
+	names[i] = '\0';
 	closedir(dir);
-	qsort(root, i, sizeof(char *), qstrcmp);
-	return root;
+	qsort(names, i, sizeof(char *), qstrcmp);
+	return names;
+}
+
+char **get_lib_dir_paths(const char *library, struct vmn_library *lib) {
+	struct dirent *dp;
+	DIR *dir = opendir(library);
+	int max_line_len = 1024;
+	int lines_allocated = 1000;
+
+	if (!dir) {
+		return 0;
+	}
+
+	char **paths = (char **)malloc(sizeof(char*)*lines_allocated);
+
+	int i = 0;
+	while ((dp = readdir(dir)) != NULL) {
+		if (i >= lines_allocated) {
+			int new_size;
+			new_size = lines_allocated*2;
+			paths = (char **)realloc(paths,sizeof(char *)*new_size);
+			lines_allocated = new_size;
+		}
+		paths[i] = malloc(max_line_len);
+		char path[1024];
+		strcpy(path, library);
+		strcat(path, "/");
+		strcat(path, dp->d_name);
+		if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
+			if (dp->d_type == DT_DIR && path_in_lib(path, lib)) {
+				strcpy(paths[i], path);
+				++i;
+			}
+			char *ext = get_file_ext(dp->d_name);
+			if (ext_valid(ext)) {
+				strcpy(paths[i], path);
+				++i;
+			}
+		}
+	}
+	
+	paths[i] = '\0';
+	closedir(dir);
+	qsort(paths, i, sizeof(char *), qstrcmp);
+	return paths;
 }
 
 void get_music_files(const char *library, struct vmn_library *lib) {
@@ -165,12 +258,12 @@ void get_music_files(const char *library, struct vmn_library *lib) {
 	closedir(dir);
 }
 
-int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
+int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib) {
 	int init_pos;
 	int end_pos;
 	int exit;
 	ITEM *cur;
-	const char *name;
+	const char *path;
 	mpv_handle *ctx = mpv_generate(cfg);
 
 	switch(c) {
@@ -247,6 +340,20 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
+		exit = 0;
+		break;
+	case 'l':
+	case KEY_RIGHT:
+		cur = current_item(menu);
+		path = item_description(cur);
+		move_menu_forward(path, cfg, lib);
+		exit = 0;
+		break;
+	case 'h':
+	case KEY_LEFT:
+		cur = current_item(menu);
+		path = item_description(cur);
+		move_menu_backward(path, cfg, lib);
 		exit = 0;
 		break;
 	case 'g':
@@ -326,19 +433,21 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 		int n = 0;
 		for (int i = 0; i < item_count(menu); ++i) {
 			if (item_value(items[i])) {
-				name = item_name(items[i]);
-				mpv_queue(ctx, name);
+				path = item_description(items[i]);
+				mpv_queue(ctx, path);
 				++n;
 			}
 		}
 		if (n) {
-			exit = mpv_wait(ctx, n, menu, items, cfg);
+			//exit = mpv_wait(ctx, n, menu, items, cfg, lib);
 		} else {
 			cur = current_item(menu);
-			name = item_name(cur);
-			mpv_queue(ctx, name);
-			exit = mpv_wait(ctx, 1, menu, items, cfg);
+			path = item_description(cur);
+			mpv_queue(ctx, path);
+			//exit = mpv_wait(ctx, 1, menu, items, cfg, lib);
 		}
+		//TODO: fix mpv's event loop detection
+		exit = 0;
 		break;
 	case 'q':
 		exit = 1;
@@ -347,10 +456,52 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg) {
 		exit = 0;
 		break;
 	}
+	wrefresh(menu_win(menu));
 	if (exit) {
 		mpv_destroy(ctx);
 	}
 	return exit;
+}
+
+int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_library *lib) {
+	if (lib->depth == 0) {
+		return 0;
+	}
+	--lib->depth;
+	WINDOW *win = menu_win(lib->menu[lib->depth]);
+	wmove(win, 0, 0);
+	wrefresh(win);
+	return 0;
+}
+
+int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_library *lib) {
+	char **dir = get_lib_dir_names(path, lib);
+	if (!dir) {
+		return 0;
+	}
+	char **dir_paths = get_lib_dir_paths(path, lib);
+	++lib->depth;
+	double startx = getmaxx(stdscr);
+	//TODO: resize previous menus
+	/*for (int i = 0; i < lib->depth; ++i) {
+		wresize(menu_win(lib->menu[i]), 0, (startx*i+1)/(lib->depth+1));
+		wrefresh(menu_win(lib->menu[i]));
+	}*/
+	//make new menu
+	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*lib->depth+1);
+	lib->items[lib->depth] = create_items(dir, dir_paths);
+	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*lib->depth+1);
+	lib->menu[lib->depth] = new_menu((ITEM **)lib->items[lib->depth]);
+	set_menu_format(lib->menu[lib->depth], LINES, 0);
+	menu_opts_off(lib->menu[lib->depth], O_ONEVALUE);
+	menu_opts_off(lib->menu[lib->depth], O_SHOWDESC);
+	WINDOW *win = newwin(0, 0, 0, (startx*lib->depth)/(lib->depth+1));
+	set_menu_win(lib->menu[lib->depth], win);
+	set_menu_sub(lib->menu[lib->depth], win);
+	post_menu(lib->menu[lib->depth]);
+	wmove(win, 0, 0);
+	wrefresh(win);
+	return 0;
 }
 
 mpv_handle *mpv_generate(struct vmn_config *cfg) {
@@ -370,13 +521,13 @@ void mpv_queue(mpv_handle *ctx, const char *audio) {
 	mpv_command(ctx, cmd);
 }
 
-int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg) {
+int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib) {
 	int n = 0;
 	int c;
 	int exit;
 	while (1) {
 		c = getch();
-		exit = key_event(c, menu, items, cfg);
+		exit = key_event(c, menu, items, cfg, lib);
 		mpv_event *event = mpv_wait_event(ctx, 0);
 		if (event->event_id == MPV_EVENT_SHUTDOWN) {
 			break;
@@ -415,18 +566,4 @@ int qstrcmp(const void *a, const void *b) {
 	const char *aa = *(const char**)a;
 	const char *bb = *(const char**)b;
 	return strcasecmp(aa, bb);
-}
-
-MENU *set_library(ITEM **items) {
-	MENU *menu;
-	
-	initscr();
-	cbreak();
-	noecho();
-	keypad(stdscr, TRUE);
-
-	menu = new_menu((ITEM **)items);
-	set_menu_format(menu, LINES, 0);
-	menu_opts_off(menu, O_ONEVALUE);
-	return menu;
 }

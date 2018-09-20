@@ -1,4 +1,5 @@
 #include <dirent.h>
+#include <menu.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +11,7 @@ struct vmn_library lib_init() {
 	lib.files = (char **)malloc(sizeof(char*)*entries_allocated);
 	lib.mem_size = 1000;
 	lib.length = 0;
+	lib.depth = 0;
 	return lib;
 }
 

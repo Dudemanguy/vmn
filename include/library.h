@@ -3,7 +3,10 @@ void vmn_library_add(struct vmn_library *lib, char *entry);
 void vmn_library_destroy(struct vmn_library *lib);
 
 struct vmn_library {
+	int depth;
 	char **files;
-	int mem_size;
+	ITEM ***items;
 	int length;
+	int mem_size;
+	MENU **menu;
 };
