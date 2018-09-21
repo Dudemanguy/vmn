@@ -20,12 +20,11 @@
 #define CTRL(c) ((c) & 037)
 #endif
 
-ITEM **create_items(char **names, char **paths);
+ITEM **create_items(char ***files);
 int directory_count(const char *path);
 int ext_valid(char *ext);
 char *get_file_ext(const char *file);
-char **get_lib_dir_names(const char *library, struct vmn_library *lib);
-char **get_lib_dir_paths(const char *library, struct vmn_library *lib);
+char ***get_lib_dir(const char *library, struct vmn_library *lib);
 ITEM **get_lib_items(struct vmn_library *lib);
 void get_music_files(const char *library, struct vmn_library *lib);
 int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
@@ -46,10 +45,9 @@ int main() {
 	noecho();
 	keypad(stdscr, TRUE);
 	get_music_files(cfg.lib_dir, &lib);
-	char **root = get_lib_dir_names(cfg.lib_dir, &lib);
-	char **paths = get_lib_dir_paths(cfg.lib_dir, &lib);
+	char ***root = get_lib_dir(cfg.lib_dir, &lib);
 	lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
-	lib.items[0] = create_items(root, paths);
+	lib.items[0] = create_items(root);
 	lib.menu = (MENU **)calloc(1, sizeof(MENU *));
 	lib.menu[0] = new_menu((ITEM **)lib.items[0]);
 	set_menu_format(lib.menu[0], LINES, 0);
@@ -88,16 +86,16 @@ int main() {
 	return 0;
 }
 
-ITEM **create_items(char **names, char **paths) {
+ITEM **create_items(char ***files) {
 	ITEM **items;
 	int n = 0;
-	while (names[n]) {
+	while (files[0][n]) {
 		++n;
 	}
 	items = (ITEM **)calloc(n, sizeof(ITEM *));
 	int i;
 	for (i = 0; i < n; ++i) {
-		items[i] = new_item(names[i], paths[i]);
+		items[i] = new_item(files[0][i], files[1][i]);
 	}
 	items[i] = (ITEM *)NULL;
 	return items;
@@ -143,7 +141,7 @@ ITEM **get_lib_items(struct vmn_library *lib) {
 	return items;
 }
 
-char **get_lib_dir_names(const char *library, struct vmn_library *lib) {
+char ***get_lib_dir(const char *library, struct vmn_library *lib) {
 	struct dirent *dp;
 	DIR *dir = opendir(library);
 	int max_line_len = 1024;
@@ -153,82 +151,48 @@ char **get_lib_dir_names(const char *library, struct vmn_library *lib) {
 		return 0;
 	}
 
-	char **names = (char **)malloc(sizeof(char*)*lines_allocated);
+	char ***dir_info = (char ***)malloc(sizeof(char **)*2);
+	dir_info[0] = (char **)malloc(sizeof(char *)*lines_allocated);
+	dir_info[1] = (char **)malloc(sizeof(char *)*lines_allocated);
 
 	int i = 0;
 	while ((dp = readdir(dir)) != NULL) {
 		if (i >= lines_allocated) {
 			int new_size;
 			new_size = lines_allocated*2;
-			names = (char **)realloc(names,sizeof(char *)*new_size);
+			dir_info[0] = (char **)realloc(dir_info[0],sizeof(char *)*new_size);
+			dir_info[1] = (char **)realloc(dir_info[1],sizeof(char *)*new_size);
 			lines_allocated = new_size;
 		}
-		names[i] = malloc(max_line_len);
+		dir_info[0][i] = malloc(max_line_len);
+		dir_info[1][i] = malloc(max_line_len);
 		char path[1024];
 		strcpy(path, library);
 		strcat(path, "/");
 		strcat(path, dp->d_name);
 		if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
 			if (dp->d_type == DT_DIR && path_in_lib(path, lib)) {
-				strcpy(names[i], dp->d_name);
+				strcpy(dir_info[0][i], dp->d_name);
+				strcpy(dir_info[1][i], path);
 				++i;
 			}
-			char *ext = get_file_ext(dp->d_name);
-			if (ext_valid(ext)) {
-				strcpy(names[i], dp->d_name);
-				++i;
-			}
-		}
-	}
-	
-	names[i] = '\0';
-	closedir(dir);
-	qsort(names, i, sizeof(char *), qstrcmp);
-	return names;
-}
-
-char **get_lib_dir_paths(const char *library, struct vmn_library *lib) {
-	struct dirent *dp;
-	DIR *dir = opendir(library);
-	int max_line_len = 1024;
-	int lines_allocated = 1000;
-
-	if (!dir) {
-		return 0;
-	}
-
-	char **paths = (char **)malloc(sizeof(char*)*lines_allocated);
-
-	int i = 0;
-	while ((dp = readdir(dir)) != NULL) {
-		if (i >= lines_allocated) {
-			int new_size;
-			new_size = lines_allocated*2;
-			paths = (char **)realloc(paths,sizeof(char *)*new_size);
-			lines_allocated = new_size;
-		}
-		paths[i] = malloc(max_line_len);
-		char path[1024];
-		strcpy(path, library);
-		strcat(path, "/");
-		strcat(path, dp->d_name);
-		if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
-			if (dp->d_type == DT_DIR && path_in_lib(path, lib)) {
-				strcpy(paths[i], path);
-				++i;
-			}
-			char *ext = get_file_ext(dp->d_name);
-			if (ext_valid(ext)) {
-				strcpy(paths[i], path);
-				++i;
+			if (dp->d_type == DT_REG) {
+				char *ext = get_file_ext(dp->d_name);
+				if (ext_valid(ext)) {
+					strcpy(dir_info[0][i], dp->d_name);
+					strcpy(dir_info[1][i], path);
+					++i;
+				}
 			}
 		}
 	}
 	
-	paths[i] = '\0';
+	dir_info[0][i] = '\0';
+	dir_info[1][i] = '\0';
 	closedir(dir);
-	qsort(paths, i, sizeof(char *), qstrcmp);
-	return paths;
+	qsort(dir_info[0], i, sizeof(char *), qstrcmp);
+	qsort(dir_info[1], i, sizeof(char *), qstrcmp);
+	return dir_info;
 }
 
 void get_music_files(const char *library, struct vmn_library *lib) {
@@ -475,11 +439,10 @@ int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_libr
 }
 
 int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_library *lib) {
-	char **dir = get_lib_dir_names(path, lib);
+	char ***dir = get_lib_dir(path, lib);
 	if (!dir) {
 		return 0;
 	}
-	char **dir_paths = get_lib_dir_paths(path, lib);
 	++lib->depth;
 	double startx = getmaxx(stdscr);
 	//TODO: resize previous menus
@@ -489,7 +452,7 @@ int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_libra
 	}*/
 	//make new menu
 	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*lib->depth+1);
-	lib->items[lib->depth] = create_items(dir, dir_paths);
+	lib->items[lib->depth] = create_items(dir);
 	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*lib->depth+1);
 	lib->menu[lib->depth] = new_menu((ITEM **)lib->items[lib->depth]);
 	set_menu_format(lib->menu[lib->depth], LINES, 0);
