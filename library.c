@@ -12,6 +12,7 @@ struct vmn_library lib_init() {
 	lib.mem_size = 1000;
 	lib.length = 0;
 	lib.depth = 0;
+	lib.mpv_active = 0;
 	return lib;
 }
 

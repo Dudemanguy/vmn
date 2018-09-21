@@ -32,7 +32,6 @@ int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_libr
 int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_library *lib);
 mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
-int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
 int path_in_lib(char *path, struct vmn_library *lib);
 int qstrcmp(const void *a, const void *b);
 
@@ -61,11 +60,47 @@ int main() {
 	wrefresh(win);
 	int c;
 	int exit = 0;
-	while (!exit) {
-		c = wgetch(win);
+	mpv_handle *ctx;
+	const char *path;
+	ctx = mpv_generate(&cfg);
+	while (1) {
+		mpv_event *event = mpv_wait_event(ctx, 0);
+		if (event->event_id == MPV_EVENT_SHUTDOWN) {
+			mpv_destroy(ctx);
+			ctx = mpv_generate(&cfg);
+		}
+		if (event->event_id == MPV_EVENT_END_FILE) {
+			char *idle = mpv_get_property_string(ctx, "idle-active");
+			if (strcmp(idle, "yes") == 0) {
+				mpv_destroy(ctx);
+				ctx = mpv_generate(&cfg);
+			}
+		}
+		
 		MENU *menu = lib.menu[lib.depth];
 		ITEM **items = lib.items[lib.depth];
+		c = wgetch(win);
 		exit = key_event(c, menu, items, &cfg, &lib);
+		int n = 0;
+		if (lib.mpv_active) {
+			mpv_initialize(ctx);
+			for (int i = 0; i < item_count(menu); ++i) {
+				if (item_value(items[i])) {
+					path = item_description(items[i]);
+					mpv_queue(ctx, path);
+					++n;
+				}
+			}
+			if (!n) {
+				ITEM *cur = current_item(menu);
+				path = item_description(cur);
+				mpv_queue(ctx, path);
+			}
+			lib.mpv_active = 0;
+		}
+		if (exit) {
+			break;
+		}
 	}
 	//TODO: free memory properly
 	//free(lib.items);
@@ -80,6 +115,7 @@ int main() {
 		}
 		free(lib.items[i]);
 	}*/
+	mpv_destroy(ctx);
 	vmn_config_destroy(&cfg);
 	vmn_library_destroy(&lib);
 	endwin();
@@ -228,7 +264,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 	int exit;
 	ITEM *cur;
 	const char *path;
-	mpv_handle *ctx = mpv_generate(cfg);
 
 	switch(c) {
 	case 'i':
@@ -393,24 +428,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 		exit = 0;
 		break;
 	case 10:
-		mpv_initialize(ctx);
-		int n = 0;
-		for (int i = 0; i < item_count(menu); ++i) {
-			if (item_value(items[i])) {
-				path = item_description(items[i]);
-				mpv_queue(ctx, path);
-				++n;
-			}
-		}
-		if (n) {
-			//exit = mpv_wait(ctx, n, menu, items, cfg, lib);
-		} else {
-			cur = current_item(menu);
-			path = item_description(cur);
-			mpv_queue(ctx, path);
-			//exit = mpv_wait(ctx, 1, menu, items, cfg, lib);
-		}
-		//TODO: fix mpv's event loop detection
+		++lib->mpv_active;
 		exit = 0;
 		break;
 	case 'q':
@@ -421,9 +439,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 		break;
 	}
 	wrefresh(menu_win(menu));
-	if (exit) {
-		mpv_destroy(ctx);
-	}
 	return exit;
 }
 
@@ -450,10 +465,11 @@ int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_libra
 		wresize(menu_win(lib->menu[i]), 0, (startx*i+1)/(lib->depth+1));
 		wrefresh(menu_win(lib->menu[i]));
 	}*/
+	//TODO: figure out why some menu items crash but not others
 	//make new menu
-	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*lib->depth+1);
+	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*lib->depth);
 	lib->items[lib->depth] = create_items(dir);
-	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*lib->depth+1);
+	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*lib->depth);
 	lib->menu[lib->depth] = new_menu((ITEM **)lib->items[lib->depth]);
 	set_menu_format(lib->menu[lib->depth], LINES, 0);
 	menu_opts_off(lib->menu[lib->depth], O_ONEVALUE);
@@ -482,31 +498,6 @@ mpv_handle *mpv_generate(struct vmn_config *cfg) {
 void mpv_queue(mpv_handle *ctx, const char *audio) {
 	const char *cmd[] = {"loadfile", audio, "append-play", NULL};
 	mpv_command(ctx, cmd);
-}
-
-int mpv_wait(mpv_handle *ctx, int len, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib) {
-	int n = 0;
-	int c;
-	int exit;
-	while (1) {
-		c = getch();
-		exit = key_event(c, menu, items, cfg, lib);
-		mpv_event *event = mpv_wait_event(ctx, 0);
-		if (event->event_id == MPV_EVENT_SHUTDOWN) {
-			break;
-		}
-		if (event->event_id == MPV_EVENT_END_FILE) {
-			++n;
-			if (n == len) {
-				break;
-			}
-		}
-		if (exit == 1) {
-			return 1;
-		}
-	}
-	mpv_destroy(ctx);
-	return 0;
 }
 
 int path_in_lib(char *path, struct vmn_library *lib) {

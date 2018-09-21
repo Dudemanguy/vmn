@@ -9,4 +9,5 @@ struct vmn_library {
 	int length;
 	int mem_size;
 	MENU **menu;
+	int mpv_active;
 };
