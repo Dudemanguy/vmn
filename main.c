@@ -102,19 +102,29 @@ int main() {
 			break;
 		}
 	}
-	//TODO: free memory properly
-	//free(lib.items);
-	//free(lib.menu);
-	/*int i = 0;
-	for (int i = 0; i < 4; ++i) {
-		int length = item_count(lib.menu[i]);
+	int i = 0;
+	while (root[0][i]) {
+		free(root[0][i]);
+		free(root[1][i]);
+		++i;
+	}
+	free(root[0]);
+	free(root[1]);
+	free(root);
+	for (int i = 0; i < lib.depth + 1; ++i) {
 		unpost_menu(lib.menu[i]);
 		free_menu(lib.menu[i]);
-		for (int j = 0; j < length; ++i) {
+	}
+	free(lib.menu);
+	for (int i = 0; i < lib.depth + 1; ++i) {
+		int j = 0;
+		while(lib.items[i][j]) {
 			free_item(lib.items[i][j]);
+			++j;
 		}
 		free(lib.items[i]);
-	}*/
+	}
+	free(lib.items);
 	mpv_destroy(ctx);
 	vmn_config_destroy(&cfg);
 	vmn_library_destroy(&lib);
@@ -180,7 +190,6 @@ ITEM **get_lib_items(struct vmn_library *lib) {
 char ***get_lib_dir(const char *library, struct vmn_library *lib) {
 	struct dirent *dp;
 	DIR *dir = opendir(library);
-	int max_line_len = 1024;
 	int lines_allocated = 1000;
 
 	if (!dir) {
@@ -200,14 +209,14 @@ char ***get_lib_dir(const char *library, struct vmn_library *lib) {
 			dir_info[1] = (char **)realloc(dir_info[1],sizeof(char *)*new_size);
 			lines_allocated = new_size;
 		}
-		dir_info[0][i] = malloc(max_line_len);
-		dir_info[1][i] = malloc(max_line_len);
 		char path[1024];
 		strcpy(path, library);
 		strcat(path, "/");
 		strcat(path, dp->d_name);
 		if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
 			if (dp->d_type == DT_DIR && path_in_lib(path, lib)) {
+				dir_info[0][i] = malloc(sizeof(char *)*(strlen(dp->d_name) + 1));
+				dir_info[1][i] = malloc(sizeof(char *)*(strlen(path) + 1));
 				strcpy(dir_info[0][i], dp->d_name);
 				strcpy(dir_info[1][i], path);
 				++i;
@@ -215,6 +224,8 @@ char ***get_lib_dir(const char *library, struct vmn_library *lib) {
 			if (dp->d_type == DT_REG) {
 				char *ext = get_file_ext(dp->d_name);
 				if (ext_valid(ext)) {
+					dir_info[0][i] = malloc(sizeof(char *)*(strlen(dp->d_name) + 1));
+					dir_info[1][i] = malloc(sizeof(char *)*(strlen(path) + 1));
 					strcpy(dir_info[0][i], dp->d_name);
 					strcpy(dir_info[1][i], path);
 					++i;
@@ -465,7 +476,6 @@ int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_libra
 		wresize(menu_win(lib->menu[i]), 0, (startx*i+1)/(lib->depth+1));
 		wrefresh(menu_win(lib->menu[i]));
 	}*/
-	//TODO: figure out why some menu items crash but not others
 	//make new menu
 	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*lib->depth);
 	lib->items[lib->depth] = create_items(dir);
