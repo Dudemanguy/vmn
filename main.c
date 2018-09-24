@@ -128,7 +128,7 @@ ITEM **create_items(char ***files) {
 	while (files[0][n]) {
 		++n;
 	}
-	items = (ITEM **)calloc(n, sizeof(ITEM *));
+	items = (ITEM **)calloc(n+1, sizeof(ITEM *));
 	int i;
 	for (i = 0; i < n; ++i) {
 		items[i] = new_item(files[0][i], files[1][i]);
