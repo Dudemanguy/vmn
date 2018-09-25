@@ -190,31 +190,25 @@ ITEM **get_lib_items(struct vmn_library *lib) {
 char ***get_lib_dir(const char *library, struct vmn_library *lib) {
 	struct dirent *dp;
 	DIR *dir = opendir(library);
-	int lines_allocated = 1000;
 
 	if (!dir) {
 		return 0;
 	}
 
 	char ***dir_info = (char ***)malloc(sizeof(char **)*2);
-	dir_info[0] = (char **)malloc(sizeof(char *)*lines_allocated);
-	dir_info[1] = (char **)malloc(sizeof(char *)*lines_allocated);
+	dir_info[0] = (char **)malloc(sizeof(char *)*1);
+	dir_info[1] = (char **)malloc(sizeof(char *)*1);
 
 	int i = 0;
 	while ((dp = readdir(dir)) != NULL) {
-		if (i >= lines_allocated) {
-			int new_size;
-			new_size = lines_allocated*2;
-			dir_info[0] = (char **)realloc(dir_info[0],sizeof(char *)*new_size);
-			dir_info[1] = (char **)realloc(dir_info[1],sizeof(char *)*new_size);
-			lines_allocated = new_size;
-		}
 		char path[1024];
 		strcpy(path, library);
 		strcat(path, "/");
 		strcat(path, dp->d_name);
 		if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
 			if (dp->d_type == DT_DIR && path_in_lib(path, lib)) {
+				dir_info[0] = (char **)realloc(dir_info[0],sizeof(char *)*(i+1));
+				dir_info[1] = (char **)realloc(dir_info[1],sizeof(char *)*(i+1));
 				dir_info[0][i] = malloc(sizeof(char *)*(strlen(dp->d_name) + 1));
 				dir_info[1][i] = malloc(sizeof(char *)*(strlen(path) + 1));
 				strcpy(dir_info[0][i], dp->d_name);
@@ -224,6 +218,8 @@ char ***get_lib_dir(const char *library, struct vmn_library *lib) {
 			if (dp->d_type == DT_REG) {
 				char *ext = get_file_ext(dp->d_name);
 				if (ext_valid(ext)) {
+					dir_info[0] = (char **)realloc(dir_info[0],sizeof(char *)*(i+1));
+					dir_info[1] = (char **)realloc(dir_info[1],sizeof(char *)*(i+1));
 					dir_info[0][i] = malloc(sizeof(char *)*(strlen(dp->d_name) + 1));
 					dir_info[1][i] = malloc(sizeof(char *)*(strlen(path) + 1));
 					strcpy(dir_info[0][i], dp->d_name);
@@ -234,11 +230,13 @@ char ***get_lib_dir(const char *library, struct vmn_library *lib) {
 		}
 	}
 	
-	dir_info[0][i] = '\0';
-	dir_info[1][i] = '\0';
 	closedir(dir);
 	qsort(dir_info[0], i, sizeof(char *), qstrcmp);
 	qsort(dir_info[1], i, sizeof(char *), qstrcmp);
+	dir_info[0] = (char **)realloc(dir_info[0],sizeof(char *)*(i+1));
+	dir_info[1] = (char **)realloc(dir_info[1],sizeof(char *)*(i+1));
+	dir_info[0][i] = '\0';
+	dir_info[1][i] = '\0';
 	return dir_info;
 }
 
