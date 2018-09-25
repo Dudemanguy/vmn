@@ -475,7 +475,9 @@ int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_libr
 	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
 	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
 	WINDOW *win = menu_win(lib->menu[lib->depth]);
-	wmove(win, 0, 0);
+	ITEM *cur = current_item(lib->menu[lib->depth]);
+	int index = item_index(cur);
+	wmove(win, index, 0);
 	wrefresh(win);
 	return 0;
 }
