@@ -27,7 +27,7 @@ int ext_valid(char *ext);
 char *get_file_ext(const char *file);
 char ***get_lib_dir(const char *library, struct vmn_library *lib);
 ITEM **get_lib_items(struct vmn_library *lib);
-void get_music_files(const char *library, struct vmn_library *lib);
+int get_music_files(const char *library, struct vmn_library *lib);
 int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
 int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_library *lib);
 int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_library *lib);
@@ -40,11 +40,17 @@ int main() {
 	setlocale(LC_CTYPE, "");
 	struct vmn_config cfg = cfg_init();
 	struct vmn_library lib = lib_init();
+	int invalid = get_music_files(cfg.lib_dir, &lib);
+	if (invalid) {
+		vmn_config_destroy(&cfg);
+		vmn_library_destroy(&lib);
+		printf("Either the directory does not exist or no audio files were found.\n");
+		return 0;
+	}
 	initscr();
 	cbreak();
 	noecho();
 	keypad(stdscr, TRUE);
-	get_music_files(cfg.lib_dir, &lib);
 	lib.entries = (char ****)calloc(1, sizeof(char ***));
 	lib.entries[0] = get_lib_dir(cfg.lib_dir, &lib);
 	lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
@@ -236,12 +242,12 @@ char ***get_lib_dir(const char *library, struct vmn_library *lib) {
 	return dir_info;
 }
 
-void get_music_files(const char *library, struct vmn_library *lib) {
+int get_music_files(const char *library, struct vmn_library *lib) {
 	struct dirent *dp;
 	DIR *dir = opendir(library);
 
 	if (!dir) {
-		return;
+		return 1;
 	}
 
 	while ((dp = readdir(dir)) != NULL) {
@@ -261,6 +267,12 @@ void get_music_files(const char *library, struct vmn_library *lib) {
 		}
 	}
 	closedir(dir);
+
+	if (lib->length == 0) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib) {
