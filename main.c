@@ -74,13 +74,13 @@ int main() {
 	while (1) {
 		mpv_event *event = mpv_wait_event(ctx, 0);
 		if (event->event_id == MPV_EVENT_SHUTDOWN) {
-			mpv_destroy(ctx);
+			mpv_terminate_destroy(ctx);
 			ctx = mpv_generate(&cfg);
 		}
 		if (event->event_id == MPV_EVENT_END_FILE) {
 			char *idle = mpv_get_property_string(ctx, "idle-active");
 			if (strcmp(idle, "yes") == 0) {
-				mpv_destroy(ctx);
+				mpv_terminate_destroy(ctx);
 				ctx = mpv_generate(&cfg);
 			}
 		}
