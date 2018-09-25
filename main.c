@@ -145,6 +145,7 @@ int directory_count(const char *path) {
 void destroy_menu(struct vmn_library *lib) {
 	int n = item_count(lib->menu[lib->depth]);
 	unpost_menu(lib->menu[lib->depth]);
+	wrefresh(menu_win(lib->menu[lib->depth]));
 	free_menu(lib->menu[lib->depth]);
 	for (int i = 0; i < n; ++i) {
 		free_item(lib->items[lib->depth][i]);
@@ -285,7 +286,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 	case ' ':
 		cur = current_item(menu);
 		menu_driver(menu, REQ_TOGGLE_ITEM);
-		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'u':
@@ -295,7 +295,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 			}
 		}
 		cfg->select = 0;
-		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'y':
@@ -304,7 +303,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				set_item_value(items[i], true);
 			}
 		}
-		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'v':
@@ -318,7 +316,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 			set_item_value(cur, true);
 			cfg->select_pos = item_index(cur);
 		}
-		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'k':
@@ -339,7 +336,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
-		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'j':
@@ -359,7 +355,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
-		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'l':
@@ -389,7 +384,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				}
 			}
 		}
-		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'G':
@@ -405,7 +399,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				}
 			}
 		}
-		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case CTRL('b'):
@@ -427,7 +420,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				}
 			}
 		}
-		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case CTRL('f'):
@@ -449,7 +441,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				}
 			}
 		}
-		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 10:
@@ -463,6 +454,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 		exit = 0;
 		break;
 	}
+	wrefresh(menu_win(lib->menu[lib->depth]));
 	return exit;
 }
 
