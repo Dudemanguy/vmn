@@ -22,6 +22,7 @@
 
 ITEM **create_items(char ***files);
 int directory_count(const char *path);
+void destroy_menu(struct vmn_library *lib);
 int ext_valid(char *ext);
 char *get_file_ext(const char *file);
 char ***get_lib_dir(const char *library, struct vmn_library *lib);
@@ -44,9 +45,10 @@ int main() {
 	noecho();
 	keypad(stdscr, TRUE);
 	get_music_files(cfg.lib_dir, &lib);
-	char ***root = get_lib_dir(cfg.lib_dir, &lib);
+	lib.entries = (char ****)calloc(1, sizeof(char ***));
+	lib.entries[0] = get_lib_dir(cfg.lib_dir, &lib);
 	lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
-	lib.items[0] = create_items(root);
+	lib.items[0] = create_items(lib.entries[0]);
 	lib.menu = (MENU **)calloc(1, sizeof(MENU *));
 	lib.menu[0] = new_menu((ITEM **)lib.items[0]);
 	set_menu_format(lib.menu[0], LINES, 0);
@@ -102,29 +104,6 @@ int main() {
 			break;
 		}
 	}
-	int i = 0;
-	while (root[0][i]) {
-		free(root[0][i]);
-		free(root[1][i]);
-		++i;
-	}
-	free(root[0]);
-	free(root[1]);
-	free(root);
-	for (int i = 0; i < lib.depth + 1; ++i) {
-		unpost_menu(lib.menu[i]);
-		free_menu(lib.menu[i]);
-	}
-	free(lib.menu);
-	for (int i = 0; i < lib.depth + 1; ++i) {
-		int j = 0;
-		while(lib.items[i][j]) {
-			free_item(lib.items[i][j]);
-			++j;
-		}
-		free(lib.items[i]);
-	}
-	free(lib.items);
 	mpv_destroy(ctx);
 	vmn_config_destroy(&cfg);
 	vmn_library_destroy(&lib);
@@ -132,16 +111,16 @@ int main() {
 	return 0;
 }
 
-ITEM **create_items(char ***files) {
+ITEM **create_items(char ***entries) {
 	ITEM **items;
 	int n = 0;
-	while (files[0][n]) {
+	while (entries[0][n]) {
 		++n;
 	}
 	items = (ITEM **)calloc(n+1, sizeof(ITEM *));
 	int i;
 	for (i = 0; i < n; ++i) {
-		items[i] = new_item(files[0][i], files[1][i]);
+		items[i] = new_item(entries[0][i], entries[1][i]);
 	}
 	items[i] = (ITEM *)NULL;
 	return items;
@@ -155,6 +134,21 @@ int directory_count(const char *path) {
 		++where;
 	};
 	return i;
+}
+
+void destroy_menu(struct vmn_library *lib) {
+	int n = item_count(lib->menu[lib->depth]);
+	unpost_menu(lib->menu[lib->depth]);
+	free_menu(lib->menu[lib->depth]);
+	for (int i = 0; i < n; ++i) {
+		free_item(lib->items[lib->depth][i]);
+		free(lib->entries[lib->depth][0][i]);
+		free(lib->entries[lib->depth][1][i]);
+	}
+	free(lib->entries[lib->depth][0]);
+	free(lib->entries[lib->depth][1]);
+	free(lib->entries[lib->depth]);
+	free(lib->items[lib->depth]);
 }
 
 int ext_valid(char *ext) {
@@ -281,6 +275,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 	case ' ':
 		cur = current_item(menu);
 		menu_driver(menu, REQ_TOGGLE_ITEM);
+		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'u':
@@ -290,6 +285,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 			}
 		}
 		cfg->select = 0;
+		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'y':
@@ -298,6 +294,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				set_item_value(items[i], true);
 			}
 		}
+		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'v':
@@ -311,6 +308,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 			set_item_value(cur, true);
 			cfg->select_pos = item_index(cur);
 		}
+		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'k':
@@ -331,6 +329,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
+		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'j':
@@ -350,6 +349,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
+		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'l':
@@ -379,6 +379,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				}
 			}
 		}
+		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 'G':
@@ -394,6 +395,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				}
 			}
 		}
+		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case CTRL('b'):
@@ -415,6 +417,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				}
 			}
 		}
+		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case CTRL('f'):
@@ -436,6 +439,7 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				}
 			}
 		}
+		wrefresh(menu_win(menu));
 		exit = 0;
 		break;
 	case 10:
@@ -449,7 +453,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 		exit = 0;
 		break;
 	}
-	wrefresh(menu_win(menu));
 	return exit;
 }
 
@@ -457,7 +460,10 @@ int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_libr
 	if (lib->depth == 0) {
 		return 0;
 	}
+	destroy_menu(lib);
 	--lib->depth;
+	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
+	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
 	WINDOW *win = menu_win(lib->menu[lib->depth]);
 	wmove(win, 0, 0);
 	wrefresh(win);
@@ -465,11 +471,13 @@ int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_libr
 }
 
 int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_library *lib) {
-	char ***dir = get_lib_dir(path, lib);
-	if (!dir) {
+	++lib->depth;
+	lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth+1));
+	lib->entries[lib->depth] = get_lib_dir(path, lib);
+	if (!lib->entries[lib->depth]) {
+		--lib->depth;
 		return 0;
 	}
-	++lib->depth;
 	double startx = getmaxx(stdscr);
 	//TODO: resize previous menus
 	/*for (int i = 0; i < lib->depth; ++i) {
@@ -477,9 +485,9 @@ int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_libra
 		wrefresh(menu_win(lib->menu[i]));
 	}*/
 	//make new menu
-	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*lib->depth);
-	lib->items[lib->depth] = create_items(dir);
-	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*lib->depth);
+	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
+	lib->items[lib->depth] = create_items(lib->entries[lib->depth]);
+	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
 	lib->menu[lib->depth] = new_menu((ITEM **)lib->items[lib->depth]);
 	set_menu_format(lib->menu[lib->depth], LINES, 0);
 	menu_opts_off(lib->menu[lib->depth], O_ONEVALUE);

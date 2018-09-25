@@ -5,6 +5,7 @@ void vmn_library_destroy(struct vmn_library *lib);
 struct vmn_library {
 	int depth;
 	char **files;
+	char ****entries;
 	ITEM ***items;
 	int length;
 	int mem_size;
