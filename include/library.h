@@ -8,7 +8,6 @@ struct vmn_library {
 	char ****entries;
 	ITEM ***items;
 	int length;
-	int mem_size;
 	MENU **menu;
 	int mpv_active;
 };

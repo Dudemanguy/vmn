@@ -7,26 +7,18 @@
 
 struct vmn_library lib_init() {
 	struct vmn_library lib;
-	int entries_allocated = 1000;
-	lib.files = (char **)malloc(sizeof(char*)*entries_allocated);
-	lib.mem_size = 1000;
-	lib.length = 0;
 	lib.depth = 0;
+	lib.files = (char **)malloc(sizeof(char *)*(1));
+	lib.length = 0;
 	lib.mpv_active = 0;
 	return lib;
 }
 
 void vmn_library_add(struct vmn_library *lib, char *entry) {
-	int max_line_len = 4096;
-	int length = lib->length;
-	if (lib->length >= lib->mem_size) {
-		int new_size = lib->mem_size*2;
-		lib->files = (char **)realloc(lib->files,sizeof(char*)*new_size);
-		lib->mem_size = new_size;
-	}
-	lib->files[length] = malloc(max_line_len);
-	strcpy(lib->files[length], entry);
-	lib->length = length + 1;
+	lib->files = (char **)realloc(lib->files,sizeof(char*)*(lib->length + 1));
+	lib->files[lib->length] = malloc(strlen(entry) + 1);
+	strcpy(lib->files[lib->length], entry);
+	++lib->length;
 }
 
 
