@@ -472,6 +472,7 @@ int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_libr
 		wresize(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
 		mvwin(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
 		post_menu(lib->menu[i]);
+		wrefresh(menu_win(lib->menu[i]));
 	}
 	wrefresh(menu_win(lib->menu[lib->depth]));
 	return 0;
