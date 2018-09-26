@@ -22,7 +22,7 @@
 
 ITEM **create_items(char ***files);
 int directory_count(const char *path);
-void destroy_menu(struct vmn_library *lib);
+void destroy_last_menu(struct vmn_library *lib);
 int ext_valid(char *ext);
 char *get_file_ext(const char *file);
 char ***get_lib_dir(const char *library, struct vmn_library *lib);
@@ -50,7 +50,6 @@ int main() {
 	initscr();
 	cbreak();
 	noecho();
-	keypad(stdscr, TRUE);
 	lib.entries = (char ****)calloc(1, sizeof(char ***));
 	lib.entries[0] = get_lib_dir(cfg.lib_dir, &lib);
 	lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
@@ -65,7 +64,6 @@ int main() {
 	set_menu_win(lib.menu[0], win);
 	set_menu_sub(lib.menu[0], win);
 	post_menu(lib.menu[0]);
-	wrefresh(win);
 	int c;
 	int exit = 0;
 	mpv_handle *ctx;
@@ -142,10 +140,11 @@ int directory_count(const char *path) {
 	return i;
 }
 
-void destroy_menu(struct vmn_library *lib) {
+void destroy_last_menu(struct vmn_library *lib) {
 	int n = item_count(lib->menu[lib->depth]);
 	unpost_menu(lib->menu[lib->depth]);
 	wrefresh(menu_win(lib->menu[lib->depth]));
+	delwin(menu_win(lib->menu[lib->depth]));
 	free_menu(lib->menu[lib->depth]);
 	for (int i = 0; i < n; ++i) {
 		free_item(lib->items[lib->depth][i]);
@@ -462,15 +461,19 @@ int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_libr
 	if (lib->depth == 0) {
 		return 0;
 	}
-	destroy_menu(lib);
+	destroy_last_menu(lib);
 	--lib->depth;
 	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
 	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
-	WINDOW *win = menu_win(lib->menu[lib->depth]);
-	ITEM *cur = current_item(lib->menu[lib->depth]);
-	int index = item_index(cur);
-	wmove(win, index, 0);
-	wrefresh(win);
+	double startx = getmaxx(stdscr);
+	for (int i = 1; i <= lib->depth; ++i) {
+		unpost_menu(lib->menu[i]);
+		wrefresh(menu_win(lib->menu[i]));
+		wresize(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
+		mvwin(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
+		post_menu(lib->menu[i]);
+	}
+	wrefresh(menu_win(lib->menu[lib->depth]));
 	return 0;
 }
 
@@ -480,15 +483,15 @@ int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_libra
 	lib->entries[lib->depth] = get_lib_dir(path, lib);
 	if (!lib->entries[lib->depth]) {
 		--lib->depth;
+		lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth+1));
 		return 0;
 	}
 	double startx = getmaxx(stdscr);
-	//TODO: resize previous menus
-	/*for (int i = 0; i < lib->depth; ++i) {
-		wresize(menu_win(lib->menu[i]), 0, (startx*i+1)/(lib->depth+1));
+	for (int i = 1; i < lib->depth; ++i) {
+		wresize(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
+		mvwin(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
 		wrefresh(menu_win(lib->menu[i]));
-	}*/
-	//make new menu
+	}
 	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
 	lib->items[lib->depth] = create_items(lib->entries[lib->depth]);
 	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
