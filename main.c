@@ -41,6 +41,7 @@ int main() {
 	struct vmn_config cfg = cfg_init();
 	struct vmn_library lib = lib_init();
 	int invalid = get_music_files(cfg.lib_dir, &lib);
+	qsort(lib.files, lib.length, sizeof(char *), qstrcmp);
 	if (invalid) {
 		vmn_config_destroy(&cfg);
 		vmn_library_destroy(&lib);
@@ -51,9 +52,22 @@ int main() {
 	cbreak();
 	noecho();
 	lib.entries = (char ****)calloc(1, sizeof(char ***));
-	lib.entries[0] = get_lib_dir(cfg.lib_dir, &lib);
-	lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
-	lib.items[0] = create_items(lib.entries[0]);
+	if (cfg.view == F_PATH) {
+		lib.entries[0] = get_lib_dir(cfg.lib_dir, &lib);
+		lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
+		lib.items[0] = create_items(lib.entries[0]);
+	}
+	if (cfg.view == S_ONLY) {
+		lib.entries[0] = (char ***)calloc(2, sizeof(char **));
+		lib.entries[0][0] = lib.files;
+		lib.entries[0][1] = lib.files;
+		lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
+		lib.items[0] = (ITEM **)calloc(lib.length+1, sizeof(ITEM *));
+		for (int i = 0; i < lib.length; ++i) {
+			lib.items[0][i] = new_item(lib.entries[0][0][i], lib.entries[0][1][i]);
+		}
+		lib.items[0][lib.length] = (ITEM *)NULL;
+	}
 	lib.menu = (MENU **)calloc(1, sizeof(MENU *));
 	lib.menu[0] = new_menu((ITEM **)lib.items[0]);
 	set_menu_format(lib.menu[0], LINES, 0);
@@ -110,7 +124,25 @@ int main() {
 	}
 	mpv_destroy(ctx);
 	vmn_config_destroy(&cfg);
-	vmn_library_destroy(&lib);
+	if (cfg.view == F_PATH) {
+		vmn_library_destroy(&lib);
+	}
+	if (cfg.view == S_ONLY) {
+		for (int i = 0; i < lib.length; ++i) {
+			free(lib.files[i]);
+		}
+		free(lib.files);
+		free(lib.entries[0]);
+		free(lib.entries);
+		unpost_menu(lib.menu[0]);
+		free_menu(lib.menu[0]);
+		free(lib.menu);
+		for (int i = 0; i < lib.length; ++i) {
+			free_item(lib.items[0][i]);
+		}
+		free(lib.items[0]);
+		free(lib.items);
+	}
 	endwin();
 	return 0;
 }
@@ -479,6 +511,10 @@ int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_libr
 }
 
 int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_library *lib) {
+	char *ext = get_file_ext(path);
+	if (ext_valid(ext)) {
+		return 0;
+	}
 	++lib->depth;
 	lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth+1));
 	lib->entries[lib->depth] = get_lib_dir(path, lib);

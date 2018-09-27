@@ -42,14 +42,14 @@ void vmn_library_destroy(struct vmn_library *lib) {
 		free(lib->entries);
 	}
 	if (lib->length) {
-		for (int i = 0; i < lib->depth + 1; ++i) {
+		for (int i = 0; i < (lib->depth + 1); ++i) {
 			unpost_menu(lib->menu[i]);
 			free_menu(lib->menu[i]);
 		}
 		free(lib->menu);
 	}
 	if (lib->length) {
-		for (int i = 0; i < lib->depth + 1; ++i) {
+		for (int i = 0; i < (lib->depth + 1); ++i) {
 			int j = 0;
 			while(lib->items[i][j]) {
 				free_item(lib->items[i][j]);

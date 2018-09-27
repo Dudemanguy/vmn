@@ -123,26 +123,35 @@ const char *read_cfg_str(struct vmn_config *cfg, char *file, const char *opt) {
 }
 
 struct vmn_config cfg_init() {
-	//TODO: make view mode configurable
 	config_t libcfg;
 	config_init(&libcfg);
 	struct vmn_config cfg;
 	char *cfg_file = get_cfg();
 	config_read_file(&libcfg, cfg_file);
 	const char *library;
-	int view;
+	const char *viewcfg;
+	enum vmn_config_view view;
 
-	config_lookup_string(&libcfg, "library", &library);
-	if (!library) {
-		library = get_default_lib();
+	if (!config_lookup_string(&libcfg, "library", &library)) {
+		cfg.lib_dir = get_default_lib();
+	} else {
+		cfg.lib_dir = strdup(library);
 	}
-	if (!config_lookup_int(&libcfg, "view", &view)) {
-		view = 0;
+
+	if (!config_lookup_string(&libcfg, "view", &viewcfg)) {
+		view = F_PATH;
+	} else {
+		if (strcmp(viewcfg, "file-path") == 0) {
+			view = F_PATH;
+		} else if (strcmp(viewcfg, "song-only") == 0) {
+			view = S_ONLY;
+		} else {
+			view = F_PATH;
+		}
 	}
 
 	cfg.select = 0;
 	cfg.select_pos = 0;
-	cfg.lib_dir = strdup(library);
 	cfg.mpv_cfg_dir = get_cfg_dir();
 	cfg.mpv_cfg = "yes";
 	cfg.view = view;

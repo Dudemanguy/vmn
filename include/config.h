@@ -9,8 +9,8 @@ const char *read_cfg_str(struct vmn_config *cfg, char *file, const char *opt);
 void vmn_config_destroy(struct vmn_config *cfg);
 
 enum vmn_config_view {
-	filepath,
-	allfiles,
+	F_PATH,
+	S_ONLY,
 };
 
 struct vmn_config {
