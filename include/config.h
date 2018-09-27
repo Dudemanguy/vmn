@@ -1,6 +1,6 @@
 int check_cfg(char *cfg_file);
 void check_dir();
-struct vmn_config cfg_init();
+struct vmn_config cfg_init(int argc, char *argv[]);
 char *get_cfg();
 char *get_cfg_dir();
 char *get_cfg_lib();
@@ -17,7 +17,13 @@ struct vmn_config {
 	int select;
 	int select_pos;
 	char *lib_dir;
-	char *mpv_cfg_dir;
 	char *mpv_cfg;
+	char *mpv_cfg_dir;
 	enum vmn_config_view view;
+
+	int lib_arg;
+	int mpv_arg;
+	int mpv_dir_arg;
+	int view_arg;
 };
+

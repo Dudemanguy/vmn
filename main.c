@@ -36,9 +36,9 @@ void mpv_queue(mpv_handle *ctx, const char *audio);
 int path_in_lib(char *path, struct vmn_library *lib);
 int qstrcmp(const void *a, const void *b);
 
-int main() {
+int main(int argc, char *argv[]) {
 	setlocale(LC_CTYPE, "");
-	struct vmn_config cfg = cfg_init();
+	struct vmn_config cfg = cfg_init(argc, argv);
 	struct vmn_library lib = lib_init();
 	int invalid = get_music_files(cfg.lib_dir, &lib);
 	qsort(lib.files, lib.length, sizeof(char *), qstrcmp);

@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <libconfig.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +8,43 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "config.h"
+
+int check_arg(struct vmn_config *cfg, char *arg) {
+	char *valid[5] = {"", "--library=", "--mpv-cfg=", "--mpv-cfg-dir=", "--view="};
+	int i = 0;
+	int status;
+	for (i = 0; i < 5; ++i) {
+		regex_t regex;
+		regcomp(&regex, valid[i], 0);
+		status = regexec(&regex, arg, 0, NULL, 0);
+		if (status == 0) {
+			if (i == 0) {
+				regfree(&regex);
+			}
+			if (i == 1) {
+				regfree(&regex);
+				return i;
+				break;
+			}
+			if (i == 2) {
+				regfree(&regex);
+				return i;
+				break;
+			}
+			if (i == 3) {
+				regfree(&regex);
+				return i;
+				break;
+			}
+			if (i == 4) {
+				regfree(&regex);
+				return i;
+				break;
+			}
+		}
+	}
+	return 0;
+}
 
 int check_cfg(char *cfg_file) {
 	config_t cfg;
@@ -102,6 +140,17 @@ char *get_default_str(struct vmn_config *cfg, const char *opt) {
 	return output;
 }
 
+char *read_arg(char *arg) {
+	char *sep = "=";
+	char *out = strtok(arg, sep);
+	out = strtok(NULL, "");
+	if (out) {
+		return out;
+	} else {
+		return "";
+	}
+}
+
 int read_cfg_int(struct vmn_config *cfg, char *file, const char *opt) {
 	config_t libcfg;
 	config_init(&libcfg);
@@ -123,7 +172,7 @@ const char *read_cfg_str(struct vmn_config *cfg, char *file, const char *opt) {
 	return output;
 }
 
-struct vmn_config cfg_init() {
+struct vmn_config cfg_init(int argc, char *argv[]) {
 	config_t libcfg;
 	config_init(&libcfg);
 	struct vmn_config cfg;
@@ -134,43 +183,107 @@ struct vmn_config cfg_init() {
 	const char *mpv_cfg_dir;
 	const char *mpv_cfg;
 	enum vmn_config_view view;
-
-	if (!config_lookup_string(&libcfg, "library", &library)) {
-		cfg.lib_dir = get_default_lib();
-	} else {
-		cfg.lib_dir = strdup(library);
-	}
-
-	if (!config_lookup_string(&libcfg, "view", &viewcfg)) {
-		view = F_PATH;
-	} else {
-		if (strcmp(viewcfg, "file-path") == 0) {
-			view = F_PATH;
-		} else if (strcmp(viewcfg, "song-only") == 0) {
-			view = S_ONLY;
-		} else {
-			view = F_PATH;
+	int pos[4];
+	
+	//check for any command line arguments
+	//these take priority over any config file options
+	if (argc > 1) {
+		for (int i = 1; i < argc; ++i) {
+			pos[i] = check_arg(&cfg, argv[i]);
+		}
+		for (int i = 0; i < argc; ++i) {
+			if (pos[i] == 1) {
+				library = read_arg(argv[i]);
+				DIR *dir = opendir(library);
+				if (dir) {
+					cfg.lib_dir = strdup(library);
+				} else {
+					cfg.lib_dir = get_default_lib();
+					printf("Library directory not found. Falling back to default.\n");
+				}
+				closedir(dir);
+			}
+			if (pos[i] == 2) {
+				mpv_cfg = read_arg(argv[i]);
+				if ((strcmp(mpv_cfg, "no") == 0) || (strcmp(mpv_cfg, "no") == 0)) {
+					cfg.mpv_cfg = strdup(mpv_cfg);
+				} else {
+					cfg.mpv_cfg = "yes";
+				}
+			}
+			if (pos[i] == 3) {
+				mpv_cfg_dir = read_arg(argv[i]);
+				DIR *dir = opendir(mpv_cfg_dir);
+				if (dir) {
+					cfg.mpv_cfg_dir = strdup(mpv_cfg_dir);
+				} else {
+					cfg.mpv_cfg_dir = get_cfg_dir();
+					printf("Mpv config directory not found. Falling back to default.\n");
+				}
+				closedir(dir);
+			}
+			if (pos[i] == 4) {
+				viewcfg = read_arg(argv[i]);
+				if (strcmp(viewcfg, "file-path") == 0) {
+					view = F_PATH;
+				} else if (strcmp(viewcfg, "song-only") == 0) {
+					view = S_ONLY;
+				} else {
+					view = F_PATH;
+					printf("Invalid view specified. Falling back to default.\n");
+				}
+			}
 		}
 	}
 
-	if (!config_lookup_string(&libcfg, "mpv-cfg-dir", &mpv_cfg_dir)) {
-		cfg.mpv_cfg_dir = get_cfg_dir();
-	} else {
-		DIR *dir = opendir(mpv_cfg_dir);
-		if (dir) {
-			cfg.mpv_cfg_dir = strdup(mpv_cfg_dir);
+	if (!library) {
+		if (!config_lookup_string(&libcfg, "library", &library)) {
+			cfg.lib_dir = get_default_lib();
+			printf("Library directory not found. Falling back to default.\n");
 		} else {
-			cfg.mpv_cfg_dir = get_cfg_dir();
+			cfg.lib_dir = strdup(library);
 		}
 	}
 
-	if (!config_lookup_string(&libcfg, "mpv-cfg", &mpv_cfg)) {
-		cfg.mpv_cfg = "yes";
-	} else {
-		if ((strcmp(mpv_cfg, "no") == 0) || (strcmp(mpv_cfg, "no") == 0)) {
-			cfg.mpv_cfg = strdup(mpv_cfg);
-		} else {
+	if (!mpv_cfg) {
+		if (!config_lookup_string(&libcfg, "mpv-cfg", &mpv_cfg)) {
 			cfg.mpv_cfg = "yes";
+		} else {
+			if ((strcmp(mpv_cfg, "no") == 0) || (strcmp(mpv_cfg, "no") == 0)) {
+				cfg.mpv_cfg = strdup(mpv_cfg);
+			} else {
+				cfg.mpv_cfg = "yes";
+			}
+		}
+	}
+
+	if (!mpv_cfg_dir) {
+		if (!config_lookup_string(&libcfg, "mpv-cfg-dir", &mpv_cfg_dir)) {
+			cfg.mpv_cfg_dir = get_cfg_dir();
+		} else {
+			DIR *dir = opendir(mpv_cfg_dir);
+			if (dir) {
+				cfg.mpv_cfg_dir = strdup(mpv_cfg_dir);
+			} else {
+				cfg.mpv_cfg_dir = get_cfg_dir();
+				printf("Mpv config directory not found. Falling back to default.\n");
+			}
+			closedir(dir);
+		}
+	}
+
+	if (!view) {
+		if (!config_lookup_string(&libcfg, "view", &viewcfg)) {
+			view = F_PATH;
+		} else {
+			if (strcmp(viewcfg, "file-path") == 0) {
+				view = F_PATH;
+			} else if (strcmp(viewcfg, "song-only") == 0) {
+				view = S_ONLY;
+			} else {
+				view = F_PATH;
+				printf("Invalid view specified. Falling back to default.\n");
+			}
 		}
 	}
 
