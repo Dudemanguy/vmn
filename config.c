@@ -1,3 +1,4 @@
+#include <dirent.h>
 #include <libconfig.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -130,6 +131,8 @@ struct vmn_config cfg_init() {
 	config_read_file(&libcfg, cfg_file);
 	const char *library;
 	const char *viewcfg;
+	const char *mpv_cfg_dir;
+	const char *mpv_cfg;
 	enum vmn_config_view view;
 
 	if (!config_lookup_string(&libcfg, "library", &library)) {
@@ -150,10 +153,29 @@ struct vmn_config cfg_init() {
 		}
 	}
 
+	if (!config_lookup_string(&libcfg, "mpv-cfg-dir", &mpv_cfg_dir)) {
+		cfg.mpv_cfg_dir = get_cfg_dir();
+	} else {
+		DIR *dir = opendir(mpv_cfg_dir);
+		if (dir) {
+			cfg.mpv_cfg_dir = strdup(mpv_cfg_dir);
+		} else {
+			cfg.mpv_cfg_dir = get_cfg_dir();
+		}
+	}
+
+	if (!config_lookup_string(&libcfg, "mpv-cfg", &mpv_cfg)) {
+		cfg.mpv_cfg = "yes";
+	} else {
+		if ((strcmp(mpv_cfg, "no") == 0) || (strcmp(mpv_cfg, "no") == 0)) {
+			cfg.mpv_cfg = strdup(mpv_cfg);
+		} else {
+			cfg.mpv_cfg = "yes";
+		}
+	}
+
 	cfg.select = 0;
 	cfg.select_pos = 0;
-	cfg.mpv_cfg_dir = get_cfg_dir();
-	cfg.mpv_cfg = "yes";
 	cfg.view = view;
 
 	free(cfg_file);
