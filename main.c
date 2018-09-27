@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 	if (invalid) {
 		vmn_config_destroy(&cfg);
 		vmn_library_destroy(&lib);
-		printf("Either the directory does not exist or no audio files were found.\n");
+		printf("No audio files were found.\n");
 		return 0;
 	}
 	initscr();

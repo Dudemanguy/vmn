@@ -272,7 +272,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
-	if (!view) {
+	if (!viewcfg) {
 		if (!config_lookup_string(&libcfg, "view", &viewcfg)) {
 			view = F_PATH;
 		} else {
