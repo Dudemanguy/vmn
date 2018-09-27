@@ -20,10 +20,5 @@ struct vmn_config {
 	char *mpv_cfg;
 	char *mpv_cfg_dir;
 	enum vmn_config_view view;
-
-	int lib_arg;
-	int mpv_arg;
-	int mpv_dir_arg;
-	int view_arg;
 };
 
