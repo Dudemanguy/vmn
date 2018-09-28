@@ -29,8 +29,8 @@ Current keybindings are the following.
 * scroll page down: `CTRL+f` or `Page Down`
 * jump to beginning: `g` or `Home Key`
 * jump to end: `G` or `End Key`
-* move down a directory: 'l' or `Right Arrow`
-* move up a directory: 'h' or `Left Arrow`
+* move down a directory: `l` or `Right Arrow`
+* move up a directory: `h` or `Left Arrow`
 * queue item: `i` or `space`
 * queue all items: `y`
 * clear queue: `u`
