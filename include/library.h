@@ -10,4 +10,6 @@ struct vmn_library {
 	int length;
 	MENU **menu;
 	int mpv_active;
+	int mpv_kill;
+	int vmn_quit;
 };

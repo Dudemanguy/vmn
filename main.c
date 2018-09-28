@@ -28,7 +28,7 @@ char *get_file_ext(const char *file);
 char ***get_lib_dir(const char *library, struct vmn_library *lib);
 ITEM **get_lib_items(struct vmn_library *lib);
 int get_music_files(const char *library, struct vmn_library *lib);
-int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
+void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
 int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_library *lib);
 int move_menu_forward(const char *path, struct vmn_config *cfg, struct vmn_library *lib);
 mpv_handle *mpv_generate(struct vmn_config *cfg);
@@ -79,7 +79,6 @@ int main(int argc, char *argv[]) {
 	set_menu_sub(lib.menu[0], win);
 	post_menu(lib.menu[0]);
 	int c;
-	int exit = 0;
 	mpv_handle *ctx;
 	const char *path;
 	ctx = mpv_generate(&cfg);
@@ -96,12 +95,16 @@ int main(int argc, char *argv[]) {
 				ctx = mpv_generate(&cfg);
 			}
 		}
-		
 		MENU *menu = lib.menu[lib.depth];
 		ITEM **items = lib.items[lib.depth];
 		c = wgetch(win);
-		exit = key_event(c, menu, items, &cfg, &lib);
+		key_event(c, menu, items, &cfg, &lib);
 		int n = 0;
+		if (lib.mpv_kill) {
+			mpv_terminate_destroy(ctx);
+			ctx = mpv_generate(&cfg);
+			lib.mpv_kill = 0;
+		}
 		if (lib.mpv_active) {
 			mpv_initialize(ctx);
 			for (int i = 0; i < item_count(menu); ++i) {
@@ -118,11 +121,11 @@ int main(int argc, char *argv[]) {
 			}
 			lib.mpv_active = 0;
 		}
-		if (exit) {
+		if (lib.vmn_quit) {
 			break;
 		}
 	}
-	mpv_destroy(ctx);
+	mpv_terminate_destroy(ctx);
 	vmn_config_destroy(&cfg);
 	if (cfg.view == F_PATH) {
 		vmn_library_destroy(&lib);
@@ -305,10 +308,9 @@ int get_music_files(const char *library, struct vmn_library *lib) {
 	}
 }
 
-int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib) {
+void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib) {
 	int init_pos;
 	int end_pos;
-	int exit;
 	ITEM *cur;
 	const char *path;
 
@@ -317,7 +319,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 	case ' ':
 		cur = current_item(menu);
 		menu_driver(menu, REQ_TOGGLE_ITEM);
-		exit = 0;
 		break;
 	case 'u':
 		for (int i = 0; i < item_count(menu); ++i) {
@@ -326,7 +327,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 			}
 		}
 		cfg->select = 0;
-		exit = 0;
 		break;
 	case 'y':
 		for (int i = 0; i < item_count(menu); ++i) {
@@ -334,7 +334,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				set_item_value(items[i], true);
 			}
 		}
-		exit = 0;
 		break;
 	case 'v':
 		if (cfg->select) {
@@ -347,7 +346,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 			set_item_value(cur, true);
 			cfg->select_pos = item_index(cur);
 		}
-		exit = 0;
 		break;
 	case 'k':
 	case KEY_UP:
@@ -367,7 +365,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
-		exit = 0;
 		break;
 	case 'j':
 	case KEY_DOWN:
@@ -386,21 +383,18 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
-		exit = 0;
 		break;
 	case 'l':
 	case KEY_RIGHT:
 		cur = current_item(menu);
 		path = item_description(cur);
 		move_menu_forward(path, cfg, lib);
-		exit = 0;
 		break;
 	case 'h':
 	case KEY_LEFT:
 		cur = current_item(menu);
 		path = item_description(cur);
 		move_menu_backward(path, cfg, lib);
-		exit = 0;
 		break;
 	case 'g':
 	case KEY_HOME:
@@ -415,7 +409,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				}
 			}
 		}
-		exit = 0;
 		break;
 	case 'G':
 	case KEY_END:
@@ -430,7 +423,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				}
 			}
 		}
-		exit = 0;
 		break;
 	case CTRL('b'):
 	case KEY_PPAGE:
@@ -451,7 +443,6 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				}
 			}
 		}
-		exit = 0;
 		break;
 	case CTRL('f'):
 	case KEY_NPAGE:
@@ -472,21 +463,19 @@ int key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vm
 				}
 			}
 		}
-		exit = 0;
 		break;
 	case 10:
 		++lib->mpv_active;
-		exit = 0;
 		break;
+	case 'Q':
+		++lib->mpv_kill;
 	case 'q':
-		exit = 1;
+		++lib->vmn_quit;
 		break;
 	default:
-		exit = 0;
 		break;
 	}
 	wrefresh(menu_win(lib->menu[lib->depth]));
-	return exit;
 }
 
 int move_menu_backward(const char *path, struct vmn_config *cfg, struct vmn_library *lib) {

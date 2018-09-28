@@ -11,6 +11,8 @@ struct vmn_library lib_init() {
 	lib.files = (char **)malloc(sizeof(char *)*(1));
 	lib.length = 0;
 	lib.mpv_active = 0;
+	lib.mpv_kill = 0;
+	lib.vmn_quit = 0;
 	return lib;
 }
 
