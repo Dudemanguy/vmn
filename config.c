@@ -182,7 +182,6 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	const char *viewcfg;
 	const char *mpv_cfg_dir;
 	const char *mpv_cfg;
-	enum vmn_config_view view;
 	int pos[4];
 	
 	//check for any command line arguments
@@ -225,11 +224,11 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 			if (pos[i] == 4) {
 				viewcfg = read_arg(argv[i]);
 				if (strcmp(viewcfg, "file-path") == 0) {
-					view = F_PATH;
+					cfg.view = F_PATH;
 				} else if (strcmp(viewcfg, "song-only") == 0) {
-					view = S_ONLY;
+					cfg.view = S_ONLY;
 				} else {
-					view = F_PATH;
+					cfg.view = F_PATH;
 					printf("Invalid view specified. Falling back to default.\n");
 				}
 			}
@@ -274,14 +273,14 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 
 	if (!viewcfg) {
 		if (!config_lookup_string(&libcfg, "view", &viewcfg)) {
-			view = F_PATH;
+			cfg.view = F_PATH;
 		} else {
 			if (strcmp(viewcfg, "file-path") == 0) {
-				view = F_PATH;
+				cfg.view = F_PATH;
 			} else if (strcmp(viewcfg, "song-only") == 0) {
-				view = S_ONLY;
+				cfg.view = S_ONLY;
 			} else {
-				view = F_PATH;
+				cfg.view = F_PATH;
 				printf("Invalid view specified. Falling back to default.\n");
 			}
 		}
@@ -289,7 +288,6 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 
 	cfg.select = 0;
 	cfg.select_pos = 0;
-	cfg.view = view;
 
 	free(cfg_file);
 	config_destroy(&libcfg);
