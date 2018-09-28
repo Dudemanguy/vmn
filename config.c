@@ -179,10 +179,14 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	char *cfg_file = get_cfg();
 	config_read_file(&libcfg, cfg_file);
 	const char *library;
-	const char *viewcfg;
-	const char *mpv_cfg_dir;
 	const char *mpv_cfg;
-	int pos[4];
+	const char *mpv_cfg_dir;
+	const char *viewcfg;
+	int pos[4] = {0, 0, 0, 0};
+	int lib_arg = 0;
+	int mpv_arg = 0;
+	int mpv_dir_arg = 0;
+	int view_arg = 0;
 	
 	//check for any command line arguments
 	//these take priority over any config file options
@@ -192,6 +196,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 		for (int i = 0; i < argc; ++i) {
 			if (pos[i] == 1) {
+				lib_arg = 1;
 				library = read_arg(argv[i]);
 				DIR *dir = opendir(library);
 				if (dir) {
@@ -203,6 +208,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 				closedir(dir);
 			}
 			if (pos[i] == 2) {
+				mpv_arg = 1;
 				mpv_cfg = read_arg(argv[i]);
 				if ((strcmp(mpv_cfg, "no") == 0) || (strcmp(mpv_cfg, "no") == 0)) {
 					cfg.mpv_cfg = strdup(mpv_cfg);
@@ -211,6 +217,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 				}
 			}
 			if (pos[i] == 3) {
+				mpv_dir_arg = 1;
 				mpv_cfg_dir = read_arg(argv[i]);
 				DIR *dir = opendir(mpv_cfg_dir);
 				if (dir) {
@@ -222,6 +229,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 				closedir(dir);
 			}
 			if (pos[i] == 4) {
+				view_arg = 1;
 				viewcfg = read_arg(argv[i]);
 				if (strcmp(viewcfg, "file-path") == 0) {
 					cfg.view = F_PATH;
@@ -235,7 +243,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
-	if (!library) {
+	if (!lib_arg) {
 		if (!config_lookup_string(&libcfg, "library", &library)) {
 			cfg.lib_dir = get_default_lib();
 			printf("Library directory not found. Falling back to default.\n");
@@ -244,7 +252,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
-	if (!mpv_cfg) {
+	if (!mpv_arg) {
 		if (!config_lookup_string(&libcfg, "mpv-cfg", &mpv_cfg)) {
 			cfg.mpv_cfg = "yes";
 		} else {
@@ -256,7 +264,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
-	if (!mpv_cfg_dir) {
+	if (!mpv_dir_arg) {
 		if (!config_lookup_string(&libcfg, "mpv-cfg-dir", &mpv_cfg_dir)) {
 			cfg.mpv_cfg_dir = get_cfg_dir();
 		} else {
@@ -271,7 +279,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
-	if (!viewcfg) {
+	if (!view_arg) {
 		if (!config_lookup_string(&libcfg, "view", &viewcfg)) {
 			cfg.view = F_PATH;
 		} else {
