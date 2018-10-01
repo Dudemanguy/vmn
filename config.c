@@ -9,6 +9,11 @@
 #include <unistd.h>
 #include "config.h"
 
+#ifndef CTRL
+#define CTRL(c) ((c) & 037)
+#endif
+
+
 int check_arg(struct vmn_config *cfg, char *arg) {
 	char *valid[5] = {"", "--library=", "--mpv-cfg=", "--mpv-cfg-dir=", "--view="};
 	int i = 0;
@@ -114,13 +119,34 @@ char *read_cfg_str(config_t *libcfg, const char *opt) {
 	return out;
 }
 
+struct vmn_key key_init(config_t *libcfg) {
+	struct vmn_key key;
+	key.move_up = 'k';
+	key.move_down = 'j';
+	key.move_forward = 'l';
+	key.move_backward = 'h';
+	key.page_up = CTRL('b');
+	key.page_down = CTRL('f');
+	key.beginning = 'g';
+	key.end = 'G';
+	key.queue = 'i';
+	key.queue_all = 'y';
+	key.queue_clear = 'u';
+	key.visual = 'v';
+	key.playback = 10;
+	key.mpv_kill = 'Q';
+	key.vmn_quit = 'q';
+	return key;
+//	}
+}
+
 struct vmn_config cfg_init(int argc, char *argv[]) {
 	config_t libcfg;
 	config_init(&libcfg);
 	struct vmn_config cfg;
 	char *cfg_file = get_cfg();
 	config_read_file(&libcfg, cfg_file);
-	key_init(&cfg, &libcfg);
+	cfg.key = key_init(&libcfg);
 	const char *library;
 	const char *mpv_cfg;
 	const char *mpv_cfg_dir;
