@@ -85,26 +85,6 @@ char *get_cfg_dir() {
 	return path;
 }
 
-char *get_cfg_lib() {
-	char *home = getenv("HOME"); 
-	const char *lib = "/.config/vmn/lib";
-	char *path = malloc(strlen(home) + strlen(lib) + 1);
-	strcpy(path, home);
-	strcat(path, lib);
-	return path;
-}
-
-int get_default_int(struct vmn_config *cfg, const char *opt) {
-	int output;
-	if (strcmp(opt, "select") == 0) {
-		output = cfg->select;
-	}
-	if (strcmp(opt, "select_pos") == 0) {
-		output = cfg->select_pos;
-	}
-	return output;
-}
-
 char *get_default_lib() {
 	char *home = getenv("HOME"); 
 	const char *library = "/Music";
@@ -112,32 +92,6 @@ char *get_default_lib() {
 	strcpy(path, home);
 	strcat(path, library);
 	return path;
-}
-
-char *get_default_str(struct vmn_config *cfg, const char *opt) {
-	char *output;
-	if (strcmp(opt, "library") == 0) {
-		char *home = getenv("HOME");
-		const char *library = "/Music";
-		output = malloc(strlen(home) + strlen(library) + 1);
-		strcpy(output, home);
-		strcat(output, library);
-	}
-	if (strcmp(opt, "mpv_cfg_dir") == 0) {
-		char *output;
-		char *home = getenv("HOME");
-		const char *cfgdir = "/.config/vmn";
-		output = malloc(strlen(home) + strlen(cfgdir) + 1);
-		strcpy(output, home);
-		strcat(output, cfgdir);
-	}
-	if (strcmp(opt, "mpv_cfg") == 0) {
-		char *output;
-		const char *load_config = "yes";
-		output = malloc(strlen(load_config) + 1);
-		strcpy(output, load_config);
-	}
-	return output;
 }
 
 char *read_arg(char *arg) {
@@ -151,25 +105,13 @@ char *read_arg(char *arg) {
 	}
 }
 
-int read_cfg_int(struct vmn_config *cfg, char *file, const char *opt) {
-	config_t libcfg;
-	config_init(&libcfg);
-	config_read_file(&libcfg, file);
-	int output;
-	config_lookup_int(&libcfg, opt, &output);
-	if (!output) {
-		output = get_default_int(cfg, opt);
-	}
-	return output;
-}
-
-const char *read_cfg_str(struct vmn_config *cfg, char *file, const char *opt) {
-	config_t libcfg;
-	config_init(&libcfg);
-	config_read_file(&libcfg, file);
+char *read_cfg_str(config_t *libcfg, const char *opt) {
 	const char *output;
-	config_lookup_string(&libcfg, opt, &output);
-	return output;
+	if (!config_lookup_string(libcfg, opt, &output)) {
+		return "";
+	}
+	char *out = strdup(output);
+	return out;
 }
 
 struct vmn_config cfg_init(int argc, char *argv[]) {
@@ -178,6 +120,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	struct vmn_config cfg;
 	char *cfg_file = get_cfg();
 	config_read_file(&libcfg, cfg_file);
+	key_init(&cfg, &libcfg);
 	const char *library;
 	const char *mpv_cfg;
 	const char *mpv_cfg_dir;
@@ -244,36 +187,37 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	}
 
 	if (!lib_arg) {
-		if (!config_lookup_string(&libcfg, "library", &library)) {
+		cfg.lib_dir = read_cfg_str(&libcfg, "library");
+		if (strcmp(cfg.lib_dir, "") == 0) {
 			cfg.lib_dir = get_default_lib();
-			printf("Library directory not found. Falling back to default.\n");
 		} else {
-			cfg.lib_dir = strdup(library);
+			DIR *dir = opendir(cfg.lib_dir);
+			if (!dir) {
+				cfg.lib_dir = get_default_lib();
+				printf("Library directory not found. Falling back to default.\n");
+			}
+			closedir(dir);
 		}
 	}
 
 	if (!mpv_arg) {
-		if (!config_lookup_string(&libcfg, "mpv-cfg", &mpv_cfg)) {
+		cfg.mpv_cfg = read_cfg_str(&libcfg, "mpv-cfg");
+		if ((!strcmp(cfg.mpv_cfg, "yes") == 0) && (!strcmp(cfg.mpv_cfg, "no") == 0) &&
+				(!strcmp(cfg.mpv_cfg, "") == 0)) {
+			printf("mpv-cfg can only be set to 'yes' or 'no'\n");
 			cfg.mpv_cfg = "yes";
-		} else {
-			if ((strcmp(mpv_cfg, "no") == 0) || (strcmp(mpv_cfg, "no") == 0)) {
-				cfg.mpv_cfg = strdup(mpv_cfg);
-			} else {
-				cfg.mpv_cfg = "yes";
-			}
 		}
 	}
 
 	if (!mpv_dir_arg) {
-		if (!config_lookup_string(&libcfg, "mpv-cfg-dir", &mpv_cfg_dir)) {
+		cfg.mpv_cfg_dir = read_cfg_str(&libcfg, "mpv-cfg-dir");
+		if (strcmp(cfg.mpv_cfg_dir, "") == 0) {
 			cfg.mpv_cfg_dir = get_cfg_dir();
 		} else {
-			DIR *dir = opendir(mpv_cfg_dir);
-			if (dir) {
-				cfg.mpv_cfg_dir = strdup(mpv_cfg_dir);
-			} else {
+			DIR *dir = opendir(cfg.mpv_cfg_dir);
+			if (!dir) {
 				cfg.mpv_cfg_dir = get_cfg_dir();
-				printf("Mpv config directory not found. Falling back to default.\n");
+				printf("mpv config directory not found. Falling back to default.\n");
 			}
 			closedir(dir);
 		}
