@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <libconfig.h>
+#include <ncurses.h>
 #include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -110,6 +111,113 @@ char *read_arg(char *arg) {
 	}
 }
 
+int check_macro(const char *macro) {
+	if (strcmp(macro, "KEY_DOWN") == 0) {
+		return KEY_DOWN;
+	} else if (strcmp(macro, "KEY_UP") == 0) {
+		return KEY_UP;
+	} else if (strcmp(macro, "KEY_LEFT") == 0) {
+		return KEY_LEFT;
+	} else if (strcmp(macro, "KEY_RIGHT") == 0) {
+		return KEY_RIGHT;
+	} else if (strcmp(macro, "KEY_HOME") == 0) {
+		return KEY_HOME;
+	} else if (strcmp(macro, "KEY_BACKSPACE") == 0) {
+		return KEY_BACKSPACE;
+	} else if (strcmp(macro, "KEY_F0") == 0) {
+		return KEY_F0;
+	} else if (strcmp(macro, "KEY_NPAGE") == 0) {
+		return KEY_NPAGE;
+	} else if (strcmp(macro, "KEY_PPAGE") == 0) {
+		return KEY_PPAGE;
+	} else if (strcmp(macro, "KEY_ENTER") == 0) {
+		return KEY_ENTER;
+	} else if (strcmp(macro, "KEY_PRINT") == 0) {
+		return KEY_PRINT;
+	} else if (strcmp(macro, "KEY_END") == 0) {
+		return KEY_END;
+	} else {
+		return 0;
+	}
+}
+
+int check_func(const char *func) {
+	if (strcmp(func, "f1") == 0) {
+		return KEY_F(1);
+	} else if (strcmp(func, "f2") == 0) {
+		return KEY_F(2);
+	} else if (strcmp(func, "f3") == 0) {
+		return KEY_F(3);
+	} else if (strcmp(func, "f4") == 0) {
+		return KEY_F(4);
+	} else if (strcmp(func, "f5") == 0) {
+		return KEY_F(5);
+	} else if (strcmp(func, "f6") == 0) {
+		return KEY_F(6);
+	} else if (strcmp(func, "f7") == 0) {
+		return KEY_F(7);
+	} else if (strcmp(func, "f8") == 0) {
+		return KEY_F(8);
+	} else if (strcmp(func, "f9") == 0) {
+		return KEY_F(9);
+	} else if (strcmp(func, "f10") == 0) {
+		return KEY_F(10);
+	} else if (strcmp(func, "f11") == 0) {
+		return KEY_F(11);
+	} else if (strcmp(func, "f12") == 0) {
+		return KEY_F(12);
+	} else {
+		return 0;
+	}
+}
+
+int parse_modifier(const char *key) {
+	char *str = strdup(key);
+	char *token = strtok(str, "+");
+	while (token != NULL) {
+		if (!strcmp(token, "Ctrl") == 0) {
+			int macro = check_macro(token);
+			int func = check_func(token);
+			if (macro || func) {
+				printf("Ctrl modifier does not work with ncurses macros. Resetting keybind to default.\n");
+				return 0;
+			} else {
+				return token[0];
+			}
+		}
+		token = strtok(NULL, "+");
+	}
+	return 0;
+}
+
+int read_cfg_key(config_t *libcfg, const char *opt) {
+	const char *key;
+	if (!config_lookup_string(libcfg, opt, &key)) {
+		return 0;
+	} else {
+		int macro = check_macro(key);
+		if (macro) {
+			return macro;
+		}
+		int func = check_func(key);
+		if (func) {
+			return func;
+		}
+		regex_t regex;
+		regcomp(&regex, "Ctrl", 0);
+		int ctrl = regexec(&regex, key, 0, NULL, 0);
+		if (ctrl == 0) {
+			return CTRL(parse_modifier(key));
+		}
+		regfree(&regex);
+		if (atoi(key)) {
+			return atoi(key);
+		} else {
+			return key[0];
+		}
+	}
+}
+
 char *read_cfg_str(config_t *libcfg, const char *opt) {
 	const char *output;
 	if (!config_lookup_string(libcfg, opt, &output)) {
@@ -121,23 +229,67 @@ char *read_cfg_str(config_t *libcfg, const char *opt) {
 
 struct vmn_key key_init(config_t *libcfg) {
 	struct vmn_key key;
-	key.move_up = 'k';
-	key.move_down = 'j';
-	key.move_forward = 'l';
-	key.move_backward = 'h';
-	key.page_up = CTRL('b');
-	key.page_down = CTRL('f');
-	key.beginning = 'g';
-	key.end = 'G';
-	key.queue = 'i';
-	key.queue_all = 'y';
-	key.queue_clear = 'u';
-	key.visual = 'v';
-	key.playback = 10;
-	key.mpv_kill = 'Q';
-	key.vmn_quit = 'q';
+	key.move_up = read_cfg_key(libcfg, "move-up");
+	if (!key.move_up) {
+		key.move_up = 'k';
+	}
+	key.move_down = read_cfg_key(libcfg, "move-down");
+	if (!key.move_down) {
+		key.move_down = 'j';
+	}
+	key.move_forward = read_cfg_key(libcfg, "move-forward");
+	if (!key.move_forward) {
+		key.move_forward = 'l';
+	}
+	key.move_backward = read_cfg_key(libcfg, "move-backward");
+	if (!key.move_backward) {
+		key.move_backward = 'h';
+	}
+	key.page_up =read_cfg_key(libcfg, "page-up");
+	if (!key.page_up) {
+		key.page_up = CTRL('b');
+	}
+	key.page_down = read_cfg_key(libcfg, "page-down");
+	if (!key.page_down) {
+		key.page_down = CTRL('f');
+	}
+	key.beginning = read_cfg_key(libcfg, "beginning");
+	if (!key.beginning) {
+		key.beginning = 'g';
+	}
+	key.end = read_cfg_key(libcfg, "end");
+	if (!key.end) {
+		key.end = 'G';
+	}
+	key.queue = read_cfg_key(libcfg, "queue");
+	if (!key.queue) {
+		key.queue = 'i';
+	}
+	key.queue_all = read_cfg_key(libcfg, "queue-all");
+	if (!key.queue_all) {
+		key.queue_all = 'y';
+	}
+	key.queue_clear = read_cfg_key(libcfg, "queue-clear");
+	if (!key.queue_clear) {
+		key.queue_clear = 'u';
+	}
+	key.visual = read_cfg_key(libcfg, "visual");
+	if (!key.visual) {
+		key.visual = 'v';
+	}
+	key.playback = read_cfg_key(libcfg, "playback");
+	if (!key.playback) {
+		key.playback = 10;
+	}
+	key.mpv_kill = read_cfg_key(libcfg, "mpv-kill");
+	if (!key.mpv_kill) {
+		key.mpv_kill = 'Q';
+	}
+	key.vmn_quit = read_cfg_key(libcfg, "vmn-quit");
+	if (!key.vmn_quit) {
+		key.vmn_quit = 'q';
+	}
 	return key;
-//	}
 }
 
 struct vmn_config cfg_init(int argc, char *argv[]) {

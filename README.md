@@ -21,23 +21,25 @@ sudo ninja -C build install
 See the [options](https://github.com/Dudemanguy911/vmn/blob/master/options.md) page for details.
 
 ## Usage
-Current keybindings are the following.
+The default keybindings are the following.
 
-* scroll up: `k` or `Up Arrow`
-* scroll down: `j` or `Down Arrow`
-* scroll page up: `CTRL+b` or `Page Up`
-* scroll page down: `CTRL+f` or `Page Down`
-* jump to beginning: `g` or `Home Key`
-* jump to end: `G` or `End Key`
-* move down a directory: `l` or `Right Arrow`
-* move up a directory: `h` or `Left Arrow`
-* queue item: `i` or `space`
-* queue all items: `y`
-* clear queue: `u`
-* toggle visual selection mode: `v`
-* playback with mpv: `Enter`
-* kill the mpv client: `Q`
-* quit vmn: `q`
+* move up: `k`
+* move down: `j`
+* move forward: `l`
+* move backward: `h`
+* page up: `Ctrl+b`
+* page down: `Ctrl+f`
+* beginning: `g`
+* end: `G`
+* queue: `i`
+* queue all: `y`
+* queue clear: `u`
+* visual mode: `v`
+* playback: `Enter`
+* mpv kill: `Q`
+* vmn quit: `q`
+
+To change keybindings, see the [options](https://github.com/Dudemanguy911/vmn/blob/master/options.md).
 
 All items that are queued will be played by mpv upon hitting enter. If no items are selected, then the currently highlighted items will be played upon hitting enter. Items can be either directories or individual audio files. Playing back a directory will add all valid audio files to mpv for playback.
 
