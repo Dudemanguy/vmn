@@ -73,6 +73,66 @@ void check_dir() {
 	}
 }
 
+int check_func(const char *func) {
+	if (strcmp(func, "f1") == 0) {
+		return KEY_F(1);
+	} else if (strcmp(func, "f2") == 0) {
+		return KEY_F(2);
+	} else if (strcmp(func, "f3") == 0) {
+		return KEY_F(3);
+	} else if (strcmp(func, "f4") == 0) {
+		return KEY_F(4);
+	} else if (strcmp(func, "f5") == 0) {
+		return KEY_F(5);
+	} else if (strcmp(func, "f6") == 0) {
+		return KEY_F(6);
+	} else if (strcmp(func, "f7") == 0) {
+		return KEY_F(7);
+	} else if (strcmp(func, "f8") == 0) {
+		return KEY_F(8);
+	} else if (strcmp(func, "f9") == 0) {
+		return KEY_F(9);
+	} else if (strcmp(func, "f10") == 0) {
+		return KEY_F(10);
+	} else if (strcmp(func, "f11") == 0) {
+		return KEY_F(11);
+	} else if (strcmp(func, "f12") == 0) {
+		return KEY_F(12);
+	} else {
+		return 0;
+	}
+}
+
+int check_macro(const char *macro) {
+	if (strcmp(macro, "KEY_DOWN") == 0) {
+		return KEY_DOWN;
+	} else if (strcmp(macro, "KEY_UP") == 0) {
+		return KEY_UP;
+	} else if (strcmp(macro, "KEY_LEFT") == 0) {
+		return KEY_LEFT;
+	} else if (strcmp(macro, "KEY_RIGHT") == 0) {
+		return KEY_RIGHT;
+	} else if (strcmp(macro, "KEY_HOME") == 0) {
+		return KEY_HOME;
+	} else if (strcmp(macro, "KEY_BACKSPACE") == 0) {
+		return KEY_BACKSPACE;
+	} else if (strcmp(macro, "KEY_F0") == 0) {
+		return KEY_F0;
+	} else if (strcmp(macro, "KEY_NPAGE") == 0) {
+		return KEY_NPAGE;
+	} else if (strcmp(macro, "KEY_PPAGE") == 0) {
+		return KEY_PPAGE;
+	} else if (strcmp(macro, "KEY_ENTER") == 0) {
+		return KEY_ENTER;
+	} else if (strcmp(macro, "KEY_PRINT") == 0) {
+		return KEY_PRINT;
+	} else if (strcmp(macro, "KEY_END") == 0) {
+		return KEY_END;
+	} else {
+		return 0;
+	}
+}
+
 char *get_cfg() {
 	char *home = getenv("HOME"); 
 	const char *cfg = "/.config/vmn/config";
@@ -111,66 +171,6 @@ char *read_arg(char *arg) {
 	}
 }
 
-int check_macro(const char *macro) {
-	if (strcmp(macro, "KEY_DOWN") == 0) {
-		return KEY_DOWN;
-	} else if (strcmp(macro, "KEY_UP") == 0) {
-		return KEY_UP;
-	} else if (strcmp(macro, "KEY_LEFT") == 0) {
-		return KEY_LEFT;
-	} else if (strcmp(macro, "KEY_RIGHT") == 0) {
-		return KEY_RIGHT;
-	} else if (strcmp(macro, "KEY_HOME") == 0) {
-		return KEY_HOME;
-	} else if (strcmp(macro, "KEY_BACKSPACE") == 0) {
-		return KEY_BACKSPACE;
-	} else if (strcmp(macro, "KEY_F0") == 0) {
-		return KEY_F0;
-	} else if (strcmp(macro, "KEY_NPAGE") == 0) {
-		return KEY_NPAGE;
-	} else if (strcmp(macro, "KEY_PPAGE") == 0) {
-		return KEY_PPAGE;
-	} else if (strcmp(macro, "KEY_ENTER") == 0) {
-		return KEY_ENTER;
-	} else if (strcmp(macro, "KEY_PRINT") == 0) {
-		return KEY_PRINT;
-	} else if (strcmp(macro, "KEY_END") == 0) {
-		return KEY_END;
-	} else {
-		return 0;
-	}
-}
-
-int check_func(const char *func) {
-	if (strcmp(func, "f1") == 0) {
-		return KEY_F(1);
-	} else if (strcmp(func, "f2") == 0) {
-		return KEY_F(2);
-	} else if (strcmp(func, "f3") == 0) {
-		return KEY_F(3);
-	} else if (strcmp(func, "f4") == 0) {
-		return KEY_F(4);
-	} else if (strcmp(func, "f5") == 0) {
-		return KEY_F(5);
-	} else if (strcmp(func, "f6") == 0) {
-		return KEY_F(6);
-	} else if (strcmp(func, "f7") == 0) {
-		return KEY_F(7);
-	} else if (strcmp(func, "f8") == 0) {
-		return KEY_F(8);
-	} else if (strcmp(func, "f9") == 0) {
-		return KEY_F(9);
-	} else if (strcmp(func, "f10") == 0) {
-		return KEY_F(10);
-	} else if (strcmp(func, "f11") == 0) {
-		return KEY_F(11);
-	} else if (strcmp(func, "f12") == 0) {
-		return KEY_F(12);
-	} else {
-		return 0;
-	}
-}
-
 int parse_modifier(const char *key) {
 	char *str = strdup(key);
 	char *token = strtok(str, "+");
@@ -182,7 +182,11 @@ int parse_modifier(const char *key) {
 				printf("Ctrl modifier does not work with ncurses macros. Resetting keybind to default.\n");
 				return 0;
 			} else {
-				return token[0];
+				if (atoi(token)) {
+					return atoi(token);
+				} else {
+					return token[0];
+				}
 			}
 		}
 		token = strtok(NULL, "+");
