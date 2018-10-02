@@ -16,33 +16,15 @@
 
 
 int check_arg(struct vmn_config *cfg, char *arg) {
-	char *valid[5] = {"", "--library=", "--mpv-cfg=", "--mpv-cfg-dir=", "--view="};
+	char *valid[6] = {"", "--input-mode=", "--library=", "--mpv-cfg=", "--mpv-cfg-dir=", "--view="};
 	int i = 0;
 	int status;
-	for (i = 0; i < 5; ++i) {
+	for (i = 0; i < 6; ++i) {
 		regex_t regex;
 		regcomp(&regex, valid[i], 0);
 		status = regexec(&regex, arg, 0, NULL, 0);
 		if (status == 0) {
-			if (i == 0) {
-				regfree(&regex);
-			}
-			if (i == 1) {
-				regfree(&regex);
-				return i;
-				break;
-			}
-			if (i == 2) {
-				regfree(&regex);
-				return i;
-				break;
-			}
-			if (i == 3) {
-				regfree(&regex);
-				return i;
-				break;
-			}
-			if (i == 4) {
+			if (i > 0) {
 				regfree(&regex);
 				return i;
 				break;
@@ -303,11 +285,13 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	char *cfg_file = get_cfg();
 	config_read_file(&libcfg, cfg_file);
 	cfg.key = key_init(&libcfg);
+	const char *input;
 	const char *library;
 	const char *mpv_cfg;
 	const char *mpv_cfg_dir;
 	const char *viewcfg;
-	int pos[4] = {0, 0, 0, 0};
+	int pos[5] = {0, 0, 0, 0, 0};
+	int input_arg = 0;
 	int lib_arg = 0;
 	int mpv_arg = 0;
 	int mpv_dir_arg = 0;
@@ -321,6 +305,15 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 		for (int i = 0; i < argc; ++i) {
 			if (pos[i] == 1) {
+				input_arg = 1;
+				input = read_arg(argv[i]);
+				if ((strcmp(input, "yes") == 0) || (strcmp(input, "no") == 0)) {
+					cfg.input_mode = strdup(input);
+				} else {
+					cfg.input_mode = "yes";
+				}
+			}
+			if (pos[i] == 2) {
 				lib_arg = 1;
 				library = read_arg(argv[i]);
 				DIR *dir = opendir(library);
@@ -332,16 +325,16 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 				}
 				closedir(dir);
 			}
-			if (pos[i] == 2) {
+			if (pos[i] == 3) {
 				mpv_arg = 1;
 				mpv_cfg = read_arg(argv[i]);
-				if ((strcmp(mpv_cfg, "no") == 0) || (strcmp(mpv_cfg, "no") == 0)) {
+				if ((strcmp(mpv_cfg, "yes") == 0) || (strcmp(mpv_cfg, "no") == 0)) {
 					cfg.mpv_cfg = strdup(mpv_cfg);
 				} else {
 					cfg.mpv_cfg = "yes";
 				}
 			}
-			if (pos[i] == 3) {
+			if (pos[i] == 4) {
 				mpv_dir_arg = 1;
 				mpv_cfg_dir = read_arg(argv[i]);
 				DIR *dir = opendir(mpv_cfg_dir);
@@ -353,7 +346,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 				}
 				closedir(dir);
 			}
-			if (pos[i] == 4) {
+			if (pos[i] == 5) {
 				view_arg = 1;
 				viewcfg = read_arg(argv[i]);
 				if (strcmp(viewcfg, "file-path") == 0) {
@@ -365,6 +358,15 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 					printf("Invalid view specified. Falling back to default.\n");
 				}
 			}
+		}
+	}
+
+	if (!input_arg) {
+		cfg.input_mode = read_cfg_str(&libcfg, "input-mode");
+		if ((!strcmp(cfg.input_mode, "yes") == 0) && (!strcmp(cfg.input_mode, "no") == 0) &&
+				(!strcmp(cfg.input_mode, "") == 0)) {
+			printf("input-mode can only be set to 'yes' or 'no'\n");
+			cfg.input_mode = "no";
 		}
 	}
 

@@ -36,6 +36,30 @@ int main(int argc, char *argv[]) {
 	setlocale(LC_CTYPE, "");
 	struct vmn_config cfg = cfg_init(argc, argv);
 	struct vmn_library lib = lib_init();
+	if (strcmp(cfg.input_mode, "yes") == 0) {
+		int key;
+		initscr();
+		noecho();
+		keypad(stdscr, TRUE);
+		while (1) {
+			mvprintw(0, 0, "Input mode is enabled. Keycodes will be returned on the screen. Use vmn_quit to exit.\n");
+			key = getch();
+			mvprintw(1, 0, "Key = %d\n", key);
+			if (key == cfg.key.vmn_quit) {
+				mvprintw(0, 0, "Are you sure you want to quit input mode? Hit 'y' to confirm.\n");
+				int quit = getch();
+				if (quit == 'y') {
+					break;
+				} else {
+					clear();
+				}
+			}
+			refresh();
+		}
+		clear();
+		refresh();
+		endwin();
+	}
 	int invalid = get_music_files(cfg.lib_dir, &lib);
 	qsort(lib.files, lib.length, sizeof(char *), qstrcmp);
 	if (invalid) {

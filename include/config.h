@@ -32,6 +32,7 @@ enum vmn_config_view {
 struct vmn_config {
 	int select;
 	int select_pos;
+	char *input_mode;
 	char *lib_dir;
 	char *mpv_cfg;
 	char *mpv_cfg_dir;
