@@ -30,6 +30,7 @@ int check_arg(struct vmn_config *cfg, char *arg) {
 				break;
 			}
 		}
+		regfree(&regex);
 	}
 	return 0;
 }
