@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <menu.h>
+#include <mpv/client.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

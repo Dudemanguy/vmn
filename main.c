@@ -99,20 +99,19 @@ int main(int argc, char *argv[]) {
 	set_menu_sub(lib.menu[0], win);
 	post_menu(lib.menu[0]);
 	int c;
-	mpv_handle *ctx;
 	const char *path;
-	ctx = mpv_generate(&cfg);
+	lib.ctx = mpv_generate(&cfg);
 	while (1) {
-		mpv_event *event = mpv_wait_event(ctx, 0);
+		mpv_event *event = mpv_wait_event(lib.ctx, 0);
 		if (event->event_id == MPV_EVENT_SHUTDOWN) {
-			mpv_terminate_destroy(ctx);
-			ctx = mpv_generate(&cfg);
+			mpv_terminate_destroy(lib.ctx);
+			lib.ctx = mpv_generate(&cfg);
 		}
 		if (event->event_id == MPV_EVENT_END_FILE) {
-			char *idle = mpv_get_property_string(ctx, "idle-active");
+			char *idle = mpv_get_property_string(lib.ctx, "idle-active");
 			if (strcmp(idle, "yes") == 0) {
-				mpv_terminate_destroy(ctx);
-				ctx = mpv_generate(&cfg);
+				mpv_terminate_destroy(lib.ctx);
+				lib.ctx = mpv_generate(&cfg);
 			}
 		}
 		MENU *menu = lib.menu[lib.depth];
@@ -121,23 +120,23 @@ int main(int argc, char *argv[]) {
 		key_event(c, menu, items, &cfg, &lib);
 		int n = 0;
 		if (lib.mpv_kill) {
-			mpv_terminate_destroy(ctx);
-			ctx = mpv_generate(&cfg);
+			mpv_terminate_destroy(lib.ctx);
+			lib.ctx = mpv_generate(&cfg);
 			lib.mpv_kill = 0;
 		}
 		if (lib.mpv_active) {
-			mpv_initialize(ctx);
+			mpv_initialize(lib.ctx);
 			for (int i = 0; i < item_count(menu); ++i) {
 				if (item_value(items[i])) {
 					path = item_description(items[i]);
-					mpv_queue(ctx, path);
+					mpv_queue(lib.ctx, path);
 					++n;
 				}
 			}
 			if (!n) {
 				ITEM *cur = current_item(menu);
 				path = item_description(cur);
-				mpv_queue(ctx, path);
+				mpv_queue(lib.ctx, path);
 			}
 			lib.mpv_active = 0;
 		}
@@ -145,7 +144,7 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 	}
-	mpv_destroy(ctx);
+	mpv_destroy(lib.ctx);
 	vmn_config_destroy(&cfg);
 	if (cfg.view == F_PATH) {
 		vmn_library_destroy(&lib);
