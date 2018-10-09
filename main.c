@@ -20,6 +20,7 @@ ITEM **create_items(char ***files);
 int directory_count(const char *path);
 void destroy_last_menu(struct vmn_library *lib);
 int ext_valid(char *ext);
+void input_mode(struct vmn_config *cfg);
 char *get_file_ext(const char *file);
 char ***get_lib_dir(const char *library, struct vmn_library *lib);
 ITEM **get_lib_items(struct vmn_library *lib);
@@ -37,28 +38,7 @@ int main(int argc, char *argv[]) {
 	struct vmn_config cfg = cfg_init(argc, argv);
 	struct vmn_library lib = lib_init();
 	if (strcmp(cfg.input_mode, "yes") == 0) {
-		int key;
-		initscr();
-		noecho();
-		keypad(stdscr, TRUE);
-		while (1) {
-			mvprintw(0, 0, "Input mode is enabled. Keycodes will be returned on the screen. Use vmn_quit to exit.\n");
-			key = getch();
-			mvprintw(1, 0, "Key = %d\n", key);
-			if (key == cfg.key.vmn_quit) {
-				mvprintw(0, 0, "Are you sure you want to quit input mode? Hit 'y' to confirm.\n");
-				int quit = getch();
-				if (quit == 'y') {
-					break;
-				} else {
-					clear();
-				}
-			}
-			refresh();
-		}
-		clear();
-		refresh();
-		endwin();
+		input_mode(&cfg);
 	}
 	int invalid = get_music_files(cfg.lib_dir, &lib);
 	qsort(lib.files, lib.length, sizeof(char *), qstrcmp);
@@ -204,6 +184,31 @@ int ext_valid(char *ext) {
 		}
 	}
 	return 0;
+}
+
+void input_mode(struct vmn_config *cfg) {
+		int key;
+		initscr();
+		noecho();
+		keypad(stdscr, TRUE);
+		while (1) {
+			mvprintw(0, 0, "Input mode is enabled. Keycodes will be returned on the screen. Use vmn_quit to exit.\n");
+			key = getch();
+			mvprintw(1, 0, "Key = %d\n", key);
+			if (key == cfg->key.vmn_quit) {
+				mvprintw(0, 0, "Are you sure you want to quit input mode? Hit 'y' to confirm.\n");
+				int quit = getch();
+				if (quit == 'y') {
+					break;
+				} else {
+					clear();
+				}
+			}
+			refresh();
+		}
+		clear();
+		refresh();
+		endwin();
 }
 
 char *get_file_ext(const char *file) {
