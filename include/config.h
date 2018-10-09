@@ -7,20 +7,20 @@ char *get_cfg_lib();
 void vmn_config_destroy(struct vmn_config *cfg);
 
 struct vmn_key {
-	int move_up;
-	int move_down;
-	int move_forward;
-	int move_backward;
-	int page_up;
-	int page_down;
 	int beginning;
 	int end;
+	int move_backward;
+	int move_down;
+	int move_forward;
+	int move_up;
+	int mpv_kill;
+	int page_down;
+	int page_up;
+	int playback;
 	int queue;
 	int queue_all;
 	int queue_clear;
 	int visual;
-	int playback;
-	int mpv_kill;
 	int vmn_quit;
 };
 

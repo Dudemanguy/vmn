@@ -23,20 +23,20 @@ See the [options](https://github.com/Dudemanguy911/vmn/blob/master/options.md) p
 ## Usage
 The default keybindings are the following.
 
-* move up: `k`
-* move down: `j`
-* move forward: `l`
-* move backward: `h`
-* page up: `Ctrl+b`
-* page down: `Ctrl+f`
 * beginning: `g`
 * end: `G`
+* move backward: `h`
+* move down: `j`
+* move forward: `l`
+* move up: `k`
+* mpv kill: `Q`
+* page down: `Ctrl+f`
+* page up: `Ctrl+b`
+* playback: `Enter`
 * queue: `i`
 * queue all: `y`
 * queue clear: `u`
 * visual mode: `v`
-* playback: `Enter`
-* mpv kill: `Q`
 * vmn quit: `q`
 
 To change keybindings, see the [options](https://github.com/Dudemanguy911/vmn/blob/master/options.md).

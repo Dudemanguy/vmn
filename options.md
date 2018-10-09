@@ -29,8 +29,14 @@ Like the main options, keybindings in vmn are defined in the configuration file 
  Since vmn uses ncurses, the [macros](https://www.gnu.org/software/guile-ncurses/manual/html_node/Getting-characters-from-the-keyboard.html) for special keys are valid (i.e. `foo="KEY_RIGHT"` sets foo to the right arrow key). Function keys (f1, f2, f3, etc.) are also supported via `foo="f1"`. Note that the vast majority of those macros are for keys that are completely obsolete and nonexistent on current keyboards. Only the common keys are currently enabled in vmn, but support for one of the more esoteric keys can trivially be added upon request. Combining these macros with `Ctrl+` unfortunately does not work. If this is done, an error is given and vmn reverts back to the default settings. 
  ### Keybind commands
 
-``move-up=<key>``\
-  Move up one item in the menu.
+``beginning=<key>``\
+  Jump to the first item in the menu.
+
+``end=<key>``\
+  Jump to the last item in the menu.
+
+``move-backward=<key>``\
+  Move up in the directory and destroy the rightmost menu (only valid in `file-path` view).
 
 ``move-down=<key>``\
   Move down one item in the menu.
@@ -38,20 +44,20 @@ Like the main options, keybindings in vmn are defined in the configuration file 
 ``move-forward=<key>``\
   Move down in the directory and into a new menu (only valid in `file-path` view).
 
-``move-backward=<key>``\
-  Move up in the directory and destroy the rightmost menu (only valid in `file-path` view).
+``move-up=<key>``\
+  Move up one item in the menu.
 
-``page-up=<key>``\
-  Move up a full page in the menu.
+``mpv-kill=<key>``\
+  Kill current mpv client.
 
 ``page-down=<key>``\
   Move down a full page in the menu.
 
-``beginning=<key>``\
-  Jump to the first item in the menu.
+``page-up=<key>``\
+  Move up a full page in the menu.
 
-``end=<key>``\
-  Jump to the last item in the menu.
+``playback=<key>``\
+  Begin playback.
 
 ``queue=<key>``\
   Queue item for playback.
@@ -64,12 +70,6 @@ Like the main options, keybindings in vmn are defined in the configuration file 
 
 ``visual=<key>``\
   Toggle visual selection mode.
-
-``playback=<key>``\
-  Begin playback.
-
-``mpv-kill=<key>``\
-  Kill current mpv client.
 
 ``vmn-quit=<key>``\
   Exit vmn.
