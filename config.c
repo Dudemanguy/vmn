@@ -216,9 +216,17 @@ char *read_cfg_str(config_t *libcfg, const char *opt) {
 
 struct vmn_key key_init(config_t *libcfg) {
 	struct vmn_key key;
-	key.move_up = read_cfg_key(libcfg, "move-up");
-	if (!key.move_up) {
-		key.move_up = 'k';
+	key.beginning = read_cfg_key(libcfg, "beginning");
+	if (!key.beginning) {
+		key.beginning = 'g';
+	}
+	key.end = read_cfg_key(libcfg, "end");
+	if (!key.end) {
+		key.end = 'G';
+	}
+	key.move_backward = read_cfg_key(libcfg, "move-backward");
+	if (!key.move_backward) {
+		key.move_backward = 'h';
 	}
 	key.move_down = read_cfg_key(libcfg, "move-down");
 	if (!key.move_down) {
@@ -228,25 +236,25 @@ struct vmn_key key_init(config_t *libcfg) {
 	if (!key.move_forward) {
 		key.move_forward = 'l';
 	}
-	key.move_backward = read_cfg_key(libcfg, "move-backward");
-	if (!key.move_backward) {
-		key.move_backward = 'h';
+	key.move_up = read_cfg_key(libcfg, "move-up");
+	if (!key.move_up) {
+		key.move_up = 'k';
 	}
-	key.page_up =read_cfg_key(libcfg, "page-up");
-	if (!key.page_up) {
-		key.page_up = CTRL('b');
+	key.mpv_kill = read_cfg_key(libcfg, "mpv-kill");
+	if (!key.mpv_kill) {
+		key.mpv_kill = 'Q';
 	}
 	key.page_down = read_cfg_key(libcfg, "page-down");
 	if (!key.page_down) {
 		key.page_down = CTRL('f');
 	}
-	key.beginning = read_cfg_key(libcfg, "beginning");
-	if (!key.beginning) {
-		key.beginning = 'g';
+	key.page_up =read_cfg_key(libcfg, "page-up");
+	if (!key.page_up) {
+		key.page_up = CTRL('b');
 	}
-	key.end = read_cfg_key(libcfg, "end");
-	if (!key.end) {
-		key.end = 'G';
+	key.playback = read_cfg_key(libcfg, "playback");
+	if (!key.playback) {
+		key.playback = 10;
 	}
 	key.queue = read_cfg_key(libcfg, "queue");
 	if (!key.queue) {
@@ -263,14 +271,6 @@ struct vmn_key key_init(config_t *libcfg) {
 	key.visual = read_cfg_key(libcfg, "visual");
 	if (!key.visual) {
 		key.visual = 'v';
-	}
-	key.playback = read_cfg_key(libcfg, "playback");
-	if (!key.playback) {
-		key.playback = 10;
-	}
-	key.mpv_kill = read_cfg_key(libcfg, "mpv-kill");
-	if (!key.mpv_kill) {
-		key.mpv_kill = 'Q';
 	}
 	key.vmn_quit = read_cfg_key(libcfg, "vmn-quit");
 	if (!key.vmn_quit) {
