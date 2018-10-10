@@ -36,6 +36,10 @@ The default keybindings are the following.
 * queue: `i`
 * queue all: `y`
 * queue clear: `u`
+* quit: `Ctrl+[`
+* search mode: `/`
+* search next: `n`
+* search prev: `N`
 * visual mode: `v`
 * vmn quit: `q`
 

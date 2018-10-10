@@ -20,6 +20,10 @@ struct vmn_key {
 	int queue;
 	int queue_all;
 	int queue_clear;
+	int quit;
+	int search;
+	int search_next;
+	int search_prev;
 	int visual;
 	int vmn_quit;
 };

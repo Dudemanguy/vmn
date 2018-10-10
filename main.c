@@ -32,6 +32,7 @@ mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
 int path_in_lib(char *path, struct vmn_library *lib);
 int qstrcmp(const void *a, const void *b);
+char *remove_char(char *str);
 
 int main(int argc, char *argv[]) {
 	setlocale(LC_CTYPE, "");
@@ -133,6 +134,15 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
+char *append_char(char *str, char c) {
+	int len = strlen(str);
+	char *append = malloc(len + 2);
+	strcpy(append, str);
+	append[len] = c;
+	append[len + 1] = '\0';
+	return append;
+}
+
 ITEM **create_items(char ***entries) {
 	ITEM **items;
 	int n = 0;
@@ -192,10 +202,11 @@ void input_mode(struct vmn_config *cfg) {
 		noecho();
 		keypad(stdscr, TRUE);
 		while (1) {
-			mvprintw(0, 0, "Input mode is enabled. Keycodes will be returned on the screen. Use vmn_quit to exit.\n");
+			mvprintw(0, 0, "Input mode is enabled. Keycodes will be returned on the screen. Use quit to exit.\n");
 			key = getch();
 			mvprintw(1, 0, "Key = %d\n", key);
-			if (key == cfg->key.vmn_quit) {
+			if (key == cfg->key.quit) {
+				clear();
 				mvprintw(0, 0, "Are you sure you want to quit input mode? Hit 'y' to confirm.\n");
 				int quit = getch();
 				if (quit == 'y') {
@@ -452,13 +463,46 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				set_item_value(items[i], true);
 			}
 		}
-	} else if (c == cfg->key.queue_clear) {
+	} else if (c == cfg->key.queue_clear || c == cfg->key.quit) {
 		for (int i = 0; i < item_count(menu); ++i) {
 			if (item_value(items[i])) {
 				set_item_value(items[i], false);
 			}
 		}
 		cfg->select = 0;
+	} else if (c == cfg->key.search) {
+		menu_driver(menu, REQ_CLEAR_PATTERN);
+		WINDOW *wins = newwin(1, 0, LINES - 1, 0);
+		char *search = "";
+		while (1) {
+			char key = wgetch(wins);
+			if (key == 127) {
+				menu_driver(menu, REQ_BACK_PATTERN);
+				search = remove_char(search);
+				menu_driver(menu, REQ_PREV_MATCH);
+			} else {
+				menu_driver(menu, key);
+				menu_driver(menu, REQ_NEXT_MATCH);
+				search = append_char(search, key);
+			}
+			wrefresh(menu_win(lib->menu[lib->depth]));
+			if (key == cfg->key.quit || key == 10) {
+				free(search);
+				delwin(wins);
+				for (int i = 0; i <= lib->depth; ++i) {
+					unpost_menu(lib->menu[i]);
+					post_menu(lib->menu[i]);
+					wrefresh(menu_win(lib->menu[i]));
+				}
+				break;
+			}
+			mvwprintw(wins, 0, 0, "%s\n", search);
+			wrefresh(wins);
+		}
+	} else if (c == cfg->key.search_next) {
+		menu_driver(menu, REQ_NEXT_MATCH);
+	} else if (c == cfg->key.search_prev) {
+		menu_driver(menu, REQ_PREV_MATCH);
 	} else if (c == cfg->key.visual) {
 		if (cfg->select) {
 			cfg->select = 0;
@@ -571,4 +615,16 @@ int qstrcmp(const void *a, const void *b) {
 	const char *aa = *(const char**)a;
 	const char *bb = *(const char**)b;
 	return strcasecmp(aa, bb);
+}
+
+char *remove_char(char *str) {
+	int len = strlen(str);
+	if (!len) {
+		return "";
+	}
+	char *remove;
+	remove = malloc(len - 1);
+	memcpy(remove, str, sizeof(char)*(len - 1));
+	remove[len - 1] = '\0';
+	return remove;
 }

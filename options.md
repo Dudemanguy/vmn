@@ -68,6 +68,18 @@ Like the main options, keybindings in vmn are defined in the configuration file 
 ``queue-clear=<key>``\
   Empty queue and clear all items.
 
+``quit=<key>``\
+  Quit visual or search mode and return to normal mode.
+
+``search=<key>``\
+  Enter search mode.
+
+``search-next=<key>``\
+  Move to the next valid match given from search mode.
+
+``search-prev=<key>``\
+  Move to the previous valid pattern from search mode.
+
 ``visual=<key>``\
   Toggle visual selection mode.
 

@@ -268,6 +268,22 @@ struct vmn_key key_init(config_t *libcfg) {
 	if (!key.queue_clear) {
 		key.queue_clear = 'u';
 	}
+	key.quit = read_cfg_key(libcfg, "quit");
+	if (!key.quit) {
+		key.quit = CTRL('[');
+	}
+	key.search = read_cfg_key(libcfg, "search");
+	if (!key.search) {
+		key.search = '/';
+	}
+	key.search_next = read_cfg_key(libcfg, "search-next");
+	if (!key.search_next) {
+		key.search_next = 'n';
+	}
+	key.search_prev = read_cfg_key(libcfg, "search-prev");
+	if (!key.search_prev) {
+		key.search_prev = 'N';
+	}
 	key.visual = read_cfg_key(libcfg, "visual");
 	if (!key.visual) {
 		key.visual = 'v';
