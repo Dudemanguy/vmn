@@ -50,14 +50,23 @@ Like the main options, keybindings in vmn are defined in the configuration file 
 ``mpv-kill=<key>``\
   Kill current mpv client.
 
+``mute=<key>``\
+  Toggle mute for the current mpv client.
+
 ``page-down=<key>``\
   Move down a full page in the menu.
 
 ``page-up=<key>``\
   Move up a full page in the menu.
 
-``playback=<key>``\
-  Begin playback.
+``playnext=<key>``\
+  Move to the next track in mpv's playlist.
+
+``playpause=<key>``\
+  Toggle play/pause for the current mpv client.
+
+``playprev=<key>``\
+  Move to the previous track in mpv's playlist.
 
 ``queue=<key>``\
   Queue item for playback.
@@ -80,8 +89,17 @@ Like the main options, keybindings in vmn are defined in the configuration file 
 ``search-prev=<key>``\
   Move to the previous valid pattern from search mode.
 
+``start=<key>``\
+  Launch mpv client and begin playback.
+
 ``visual=<key>``\
   Toggle visual selection mode.
 
 ``vmn-quit=<key>``\
   Exit vmn.
+
+``voldown=<key>``\
+  Decrease volume.
+
+``volup=<key>``\
+  Increase volume.

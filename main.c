@@ -400,6 +400,10 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		}
 	} else if (c == cfg->key.mpv_kill) {
 		++lib->mpv_kill;
+	} else if (c == cfg->key.mute) {
+		if (lib->mpv_active) {
+			mpv_command_string(lib->ctx, "cycle mute");
+		}
 	} else if (c == cfg->key.page_down) {
 		if (cfg->select) {
 			cur = current_item(menu);
@@ -436,23 +440,17 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				}
 			}
 		}
-	} else if (c == cfg->key.playback) {
-		int n = 0;
-		if (!lib->mpv_active) {
-			++lib->mpv_active;
-			mpv_initialize(lib->ctx);
+	} else if (c == cfg->key.playnext) {
+		if (lib->mpv_active) {
+			mpv_command_string(lib->ctx, "playlist-next");
 		}
-		for (int i = 0; i < item_count(menu); ++i) {
-			if (item_value(items[i])) {
-				path = item_description(items[i]);
-				mpv_queue(lib->ctx, path);
-				++n;
-			}
+	} else if (c == cfg->key.playpause) {
+		if (lib->mpv_active) {
+			mpv_command_string(lib->ctx, "cycle pause");
 		}
-		if (!n) {
-			ITEM *cur = current_item(menu);
-			path = item_description(cur);
-			mpv_queue(lib->ctx, path);
+	} else if (c == cfg->key.playprev) {
+		if (lib->mpv_active) {
+			mpv_command_string(lib->ctx, "playlist-prev");
 		}
 	} else if (c == cfg->key.queue) {
 		cur = current_item(menu);
@@ -503,6 +501,24 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		menu_driver(menu, REQ_NEXT_MATCH);
 	} else if (c == cfg->key.search_prev) {
 		menu_driver(menu, REQ_PREV_MATCH);
+	} else if (c == cfg->key.start) {
+		int n = 0;
+		if (!lib->mpv_active) {
+			++lib->mpv_active;
+			mpv_initialize(lib->ctx);
+		}
+		for (int i = 0; i < item_count(menu); ++i) {
+			if (item_value(items[i])) {
+				path = item_description(items[i]);
+				mpv_queue(lib->ctx, path);
+				++n;
+			}
+		}
+		if (!n) {
+			ITEM *cur = current_item(menu);
+			path = item_description(cur);
+			mpv_queue(lib->ctx, path);
+		}
 	} else if (c == cfg->key.visual) {
 		if (cfg->select) {
 			cfg->select = 0;
@@ -516,6 +532,16 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		}
 	} else if (c == cfg->key.vmn_quit) {
 		++lib->vmn_quit;
+	} else if (c == cfg->key.voldown) {
+		if (lib->mpv_active) {
+			const char *cmd[] = {"add", "volume", "-2", NULL};
+			mpv_command(lib->ctx, cmd);
+		}
+	} else if (c == cfg->key.volup) {
+		if (lib->mpv_active) {
+			const char *cmd[] = {"add", "volume", "2", NULL};
+			mpv_command(lib->ctx, cmd);
+		}
 	} else {
 		;
 	}

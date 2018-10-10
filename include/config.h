@@ -14,9 +14,12 @@ struct vmn_key {
 	int move_forward;
 	int move_up;
 	int mpv_kill;
+	int mute;
 	int page_down;
 	int page_up;
-	int playback;
+	int playnext;
+	int playpause;
+	int playprev;
 	int queue;
 	int queue_all;
 	int queue_clear;
@@ -24,8 +27,11 @@ struct vmn_key {
 	int search;
 	int search_next;
 	int search_prev;
+	int start;
 	int visual;
 	int vmn_quit;
+	int voldown;
+	int volup;
 };
 
 enum vmn_config_view {

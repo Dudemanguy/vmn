@@ -240,6 +240,10 @@ struct vmn_key key_init(config_t *libcfg) {
 	if (!key.move_up) {
 		key.move_up = 'k';
 	}
+	key.mute = read_cfg_key(libcfg, "mute");
+	if (!key.mute) {
+		key.mute = 'm';
+	}
 	key.mpv_kill = read_cfg_key(libcfg, "mpv-kill");
 	if (!key.mpv_kill) {
 		key.mpv_kill = 'Q';
@@ -248,13 +252,21 @@ struct vmn_key key_init(config_t *libcfg) {
 	if (!key.page_down) {
 		key.page_down = CTRL('f');
 	}
-	key.page_up =read_cfg_key(libcfg, "page-up");
+	key.page_up = read_cfg_key(libcfg, "page-up");
 	if (!key.page_up) {
 		key.page_up = CTRL('b');
 	}
-	key.playback = read_cfg_key(libcfg, "playback");
-	if (!key.playback) {
-		key.playback = 10;
+	key.playnext = read_cfg_key(libcfg, "playnext");
+	if (!key.playnext) {
+		key.playnext = '>';
+	}
+	key.playpause = read_cfg_key(libcfg, "playpause");
+	if (!key.playpause) {
+		key.playpause = ' ';
+	}
+	key.playprev = read_cfg_key(libcfg, "playprev");
+	if (!key.playprev) {
+		key.playprev = '<';
 	}
 	key.queue = read_cfg_key(libcfg, "queue");
 	if (!key.queue) {
@@ -284,6 +296,10 @@ struct vmn_key key_init(config_t *libcfg) {
 	if (!key.search_prev) {
 		key.search_prev = 'N';
 	}
+	key.start = read_cfg_key(libcfg, "start");
+	if (!key.start) {
+		key.start = 10;
+	}
 	key.visual = read_cfg_key(libcfg, "visual");
 	if (!key.visual) {
 		key.visual = 'v';
@@ -291,6 +307,14 @@ struct vmn_key key_init(config_t *libcfg) {
 	key.vmn_quit = read_cfg_key(libcfg, "vmn-quit");
 	if (!key.vmn_quit) {
 		key.vmn_quit = 'q';
+	}
+	key.voldown = read_cfg_key(libcfg, "voldown");
+	if (!key.voldown) {
+		key.voldown = '9';
+	}
+	key.volup = read_cfg_key(libcfg, "volup");
+	if (!key.volup) {
+		key.volup = '0';
 	}
 	return key;
 }

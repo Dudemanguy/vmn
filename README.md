@@ -30,9 +30,12 @@ The default keybindings are the following.
 * move forward: `l`
 * move up: `k`
 * mpv kill: `Q`
+* mute: `m`
 * page down: `Ctrl+f`
 * page up: `Ctrl+b`
-* playback: `Enter`
+* playnext: `>`
+* playpause: ` `
+* playprev: `<`
 * queue: `i`
 * queue all: `y`
 * queue clear: `u`
@@ -40,8 +43,11 @@ The default keybindings are the following.
 * search mode: `/`
 * search next: `n`
 * search prev: `N`
+* start: `Enter`
 * visual mode: `v`
 * vmn quit: `q`
+* voldown: `9`
+* volup: `0`
 
 To change keybindings, see the [options](https://github.com/Dudemanguy911/vmn/blob/master/options.md).
 
