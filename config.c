@@ -101,6 +101,8 @@ int check_macro(const char *macro) {
 		return KEY_BACKSPACE;
 	} else if (strcmp(macro, "KEY_F0") == 0) {
 		return KEY_F0;
+	} else if (strcmp(macro, "KEY_IC") == 0) {
+		return KEY_IC;
 	} else if (strcmp(macro, "KEY_NPAGE") == 0) {
 		return KEY_NPAGE;
 	} else if (strcmp(macro, "KEY_PPAGE") == 0) {
