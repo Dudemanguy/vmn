@@ -1,4 +1,6 @@
 #include <dirent.h>
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
 #include <menu.h>
 #include <mpv/client.h>
 #include <stdio.h>
@@ -9,7 +11,6 @@
 struct vmn_library lib_init() {
 	struct vmn_library lib;
 	lib.depth = 0;
-	lib.files = (char **)malloc(sizeof(char *)*(1));
 	lib.length = 0;
 	lib.mpv_active = 0;
 	lib.mpv_kill = 0;
@@ -23,7 +24,6 @@ void vmn_library_add(struct vmn_library *lib, char *entry) {
 	strcpy(lib->files[lib->length], entry);
 	++lib->length;
 }
-
 
 void vmn_library_destroy(struct vmn_library *lib) {
 	for (int i = 0; i < lib->length; ++i) {
@@ -61,5 +61,14 @@ void vmn_library_destroy(struct vmn_library *lib) {
 			free(lib->items[i]);
 		}
 		free(lib->items);
+	}
+}
+
+void vmn_library_metadata(struct vmn_library *lib) {
+	av_log_set_level(AV_LOG_QUIET);
+	for (int i = 0; i < lib->length; ++i) {
+		AVFormatContext *fmt_ctx = NULL;
+		avformat_open_input(&fmt_ctx, lib->files[i], NULL, NULL);
+		avformat_close_input(&fmt_ctx);
 	}
 }
