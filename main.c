@@ -44,8 +44,8 @@ int main(int argc, char *argv[]) {
 	int invalid = get_music_files(cfg.lib_dir, &lib);
 	qsort(lib.files, lib.length, sizeof(char *), qstrcmp);
 	//TODO: integrate metadata
-	/*vmn_library_metadata(&lib);
-	AVDictionaryEntry *tag = NULL;
+	//vmn_library_metadata(&lib);
+	/*AVDictionaryEntry *tag = NULL;
 	tag = av_dict_get(lib.dict[0], "artist", tag, AV_DICT_IGNORE_SUFFIX);
 	printf("%s=%s\n", tag->key, tag->value);*/
 	if (invalid) {

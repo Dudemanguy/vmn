@@ -35,6 +35,9 @@ AVInputFormat *get_input_format(const char *file) {
 	if (strcmp(ext, "opus") == 0) {
 		format = av_find_input_format("ogg");
 		return format;
+	} else if (strcmp(ext, "alac") == 0 || strcmp(ext, "m4a") == 0) {
+		format = NULL;
+		return NULL;
 	} else {
 		format = av_find_input_format(ext);
 		return format;
