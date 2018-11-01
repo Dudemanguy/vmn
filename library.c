@@ -1,12 +1,33 @@
 #include <dirent.h>
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
+#include <libavutil/file.h>
 #include <menu.h>
 #include <mpv/client.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "library.h"
+
+int ext_valid(char *ext) {
+	const char *file_type[] = { "aac", "aiff", "alac", "ape", "flac", "m4a", "mp3", "ogg", "opus", "wav" };
+	int len = 10;
+	for (int i = 0; i < len; ++i) {
+		if (strcmp(file_type[i], ext) == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+char *get_file_ext(const char *file) {
+	char *dot = strrchr(file, '.');
+	if (!dot || dot == file) {
+		return "";
+	}
+	return dot + 1;
+}
 
 struct vmn_library lib_init() {
 	struct vmn_library lib;
@@ -66,9 +87,22 @@ void vmn_library_destroy(struct vmn_library *lib) {
 
 void vmn_library_metadata(struct vmn_library *lib) {
 	av_log_set_level(AV_LOG_QUIET);
+	AVFormatContext *fmt_ctx = NULL;
+	lib->dict = malloc(10*lib->length); //TODO: figure out the right way to allocate memory for this
+	uint8_t *buffer = NULL;
+	size_t buffer_size;
 	for (int i = 0; i < lib->length; ++i) {
-		AVFormatContext *fmt_ctx = NULL;
+		struct stat st;
+		stat(lib->files[i], &st);
+		buffer_size = st.st_size;
+		int ret = av_file_map(lib->files[i], &buffer, &buffer_size, 0, NULL);
+		if (ret) {
+			continue;
+		}
+		fmt_ctx = avformat_alloc_context();
 		avformat_open_input(&fmt_ctx, lib->files[i], NULL, NULL);
+		av_dict_copy(&lib->dict[i], fmt_ctx->streams[0]->metadata, 0);
 		avformat_close_input(&fmt_ctx);
+		av_file_unmap(buffer, buffer_size);
 	}
 }

@@ -1,4 +1,6 @@
 #include <dirent.h>
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
 #include <libconfig.h>
 #include <locale.h>
 #include <math.h>
@@ -19,9 +21,7 @@
 ITEM **create_items(char ***files);
 int directory_count(const char *path);
 void destroy_last_menu(struct vmn_library *lib);
-int ext_valid(char *ext);
 void input_mode(struct vmn_config *cfg);
-char *get_file_ext(const char *file);
 char ***get_lib_dir(const char *library, struct vmn_library *lib);
 ITEM **get_lib_items(struct vmn_library *lib);
 int get_music_files(const char *library, struct vmn_library *lib);
@@ -43,6 +43,11 @@ int main(int argc, char *argv[]) {
 	}
 	int invalid = get_music_files(cfg.lib_dir, &lib);
 	qsort(lib.files, lib.length, sizeof(char *), qstrcmp);
+	//TODO: integrate metadata
+	/*vmn_library_metadata(&lib);
+	AVDictionaryEntry *tag = NULL;
+	tag = av_dict_get(lib.dict[0], "artist", tag, AV_DICT_IGNORE_SUFFIX);
+	printf("%s=%s\n", tag->key, tag->value);*/
 	if (invalid) {
 		vmn_config_destroy(&cfg);
 		vmn_library_destroy(&lib);
@@ -185,51 +190,6 @@ void destroy_last_menu(struct vmn_library *lib) {
 	free(lib->items[lib->depth]);
 }
 
-int ext_valid(char *ext) {
-	const char *file_type[] = { "aac", "aiff", "alac", "ape", "flac", "m4a", "mp3", "ogg", "opus", "wav" };
-	int len = 10;
-	for (int i = 0; i < len; ++i) {
-		if (strcmp(file_type[i], ext) == 0) {
-			return 1;
-		}
-	}
-	return 0;
-}
-
-void input_mode(struct vmn_config *cfg) {
-		int key;
-		initscr();
-		noecho();
-		keypad(stdscr, TRUE);
-		while (1) {
-			mvprintw(0, 0, "Input mode is enabled. Keycodes will be returned on the screen. Use quit to exit.\n");
-			key = getch();
-			mvprintw(1, 0, "Key = %d\n", key);
-			if (key == cfg->key.quit) {
-				clear();
-				mvprintw(0, 0, "Are you sure you want to quit input mode? Hit 'y' to confirm.\n");
-				int quit = getch();
-				if (quit == 'y') {
-					break;
-				} else {
-					clear();
-				}
-			}
-			refresh();
-		}
-		clear();
-		refresh();
-		endwin();
-}
-
-char *get_file_ext(const char *file) {
-	char *dot = strrchr(file, '.');
-	if (!dot || dot == file) {
-		return "";
-	}
-	return dot + 1;
-}
-
 ITEM **get_lib_items(struct vmn_library *lib) {
 	ITEM **items;
 	qsort(lib->files, lib->length, sizeof(char *), qstrcmp);
@@ -325,6 +285,32 @@ int get_music_files(const char *library, struct vmn_library *lib) {
 	} else {
 		return 0;
 	}
+}
+
+void input_mode(struct vmn_config *cfg) {
+		int key;
+		initscr();
+		noecho();
+		keypad(stdscr, TRUE);
+		while (1) {
+			mvprintw(0, 0, "Input mode is enabled. Keycodes will be returned on the screen. Use quit to exit.\n");
+			key = getch();
+			mvprintw(1, 0, "Key = %d\n", key);
+			if (key == cfg->key.quit) {
+				clear();
+				mvprintw(0, 0, "Are you sure you want to quit input mode? Hit 'y' to confirm.\n");
+				int quit = getch();
+				if (quit == 'y') {
+					break;
+				} else {
+					clear();
+				}
+			}
+			refresh();
+		}
+		clear();
+		refresh();
+		endwin();
 }
 
 void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib) {

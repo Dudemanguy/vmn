@@ -4,6 +4,7 @@
 ## Installation
 Make sure you have the following dependencies installed.
 
+* ffmpeg
 * libconfig
 * meson
 * mpv
