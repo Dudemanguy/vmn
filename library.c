@@ -29,6 +29,18 @@ char *get_file_ext(const char *file) {
 	return dot + 1;
 }
 
+AVInputFormat *get_input_format(const char *file) {
+	char *ext = get_file_ext(file);
+	AVInputFormat *format = NULL;
+	if (strcmp(ext, "opus") == 0) {
+		format = av_find_input_format("ogg");
+		return format;
+	} else {
+		format = av_find_input_format(ext);
+		return format;
+	}
+}
+
 struct vmn_library lib_init() {
 	struct vmn_library lib;
 	lib.depth = 0;
@@ -88,6 +100,7 @@ void vmn_library_destroy(struct vmn_library *lib) {
 void vmn_library_metadata(struct vmn_library *lib) {
 	av_log_set_level(AV_LOG_QUIET);
 	AVFormatContext *fmt_ctx = NULL;
+	AVInputFormat *format = NULL;
 	lib->dict = malloc(10*lib->length); //TODO: figure out the right way to allocate memory for this
 	uint8_t *buffer = NULL;
 	size_t buffer_size;
@@ -95,12 +108,13 @@ void vmn_library_metadata(struct vmn_library *lib) {
 		struct stat st;
 		stat(lib->files[i], &st);
 		buffer_size = st.st_size;
+		format = get_input_format(lib->files[i]);
 		int ret = av_file_map(lib->files[i], &buffer, &buffer_size, 0, NULL);
 		if (ret) {
 			continue;
 		}
 		fmt_ctx = avformat_alloc_context();
-		avformat_open_input(&fmt_ctx, lib->files[i], NULL, NULL);
+		avformat_open_input(&fmt_ctx, lib->files[i], format, NULL);
 		av_dict_copy(&lib->dict[i], fmt_ctx->streams[0]->metadata, 0);
 		avformat_close_input(&fmt_ctx);
 		av_file_unmap(buffer, buffer_size);
