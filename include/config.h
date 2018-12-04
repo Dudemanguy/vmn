@@ -4,6 +4,8 @@ struct vmn_config cfg_init(int argc, char *argv[]);
 char *get_cfg();
 char *get_cfg_dir();
 char *get_cfg_lib();
+char **parse_tags(char *tags);
+char *remove_spaces(char *str);
 void vmn_config_destroy(struct vmn_config *cfg);
 
 struct vmn_key {
@@ -36,6 +38,7 @@ struct vmn_key {
 
 enum vmn_config_view {
 	F_PATH,
+	M_DATA,
 	S_ONLY,
 };
 
@@ -47,6 +50,8 @@ struct vmn_config {
 	char *mpv_cfg;
 	char *mpv_cfg_dir;
 	struct vmn_key key;
+	char *tags;
+	int tags_len;
 	enum vmn_config_view view;
 };
 

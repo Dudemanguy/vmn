@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <dirent.h>
 #include <libconfig.h>
 #include <ncurses.h>
@@ -16,10 +17,10 @@
 
 
 int check_arg(struct vmn_config *cfg, char *arg) {
-	char *valid[6] = {"", "--input-mode=", "--library=", "--mpv-cfg=", "--mpv-cfg-dir=", "--view="};
+	char *valid[7] = {"", "--input-mode=", "--library=", "--mpv-cfg=", "--mpv-cfg-dir=", "--tags=", "--view="};
 	int i = 0;
 	int status;
-	for (i = 0; i < 6; ++i) {
+	for (i = 0; i < 7; ++i) {
 		regex_t regex;
 		regcomp(&regex, valid[i], 0);
 		status = regexec(&regex, arg, 0, NULL, 0);
@@ -179,6 +180,28 @@ int parse_modifier(const char *key) {
 	return 0;
 }
 
+char **parse_tags(char *tags) {
+	char *str = remove_spaces(tags);
+	char *token = strtok(str, ",");
+	int len = 10;
+	char **arr = (char **)calloc(10, sizeof(char*));
+	int i = 0;
+	while (token != NULL) {
+		if (i == len) {
+			len = len*2;
+			arr = (char **)realloc(arr,sizeof(char*)*len);
+		}
+		arr[i] = malloc(strlen(token) + 1);
+		strcpy(arr[i], token);
+		token = strtok(NULL, ",");
+		++i;
+	}
+	arr[i] = '\0';
+	arr = (char **)realloc(arr, sizeof(char*)*(i+1));
+	free(str);
+	return arr;
+}
+
 int read_cfg_key(config_t *libcfg, const char *opt) {
 	const char *key;
 	if (!config_lookup_string(libcfg, opt, &key)) {
@@ -214,6 +237,21 @@ char *read_cfg_str(config_t *libcfg, const char *opt) {
 	}
 	char *out = strdup(output);
 	return out;
+}
+
+char *remove_spaces(char *str) {
+	char *trim = (char *)calloc(strlen(str) + 1, sizeof(char));
+	int i = 0;
+	while (*str != '\0') {
+		if (!isspace(*str)) {
+			trim[i] = *str;
+			++i;
+		}
+		++str;
+	}
+	trim[i] = '\0';
+	trim = (char *)realloc(trim, sizeof(char)*(i+1));
+	return trim;
 }
 
 struct vmn_key key_init(config_t *libcfg) {
@@ -332,12 +370,14 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	const char *library;
 	const char *mpv_cfg;
 	const char *mpv_cfg_dir;
+	const char *tags;
 	const char *viewcfg;
 	int pos[5] = {0, 0, 0, 0, 0};
 	int input_arg = 0;
 	int lib_arg = 0;
 	int mpv_arg = 0;
 	int mpv_dir_arg = 0;
+	int tags_arg = 0;
 	int view_arg = 0;
 	
 	//check for any command line arguments
@@ -390,10 +430,24 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 				closedir(dir);
 			}
 			if (pos[i] == 5) {
+				tags_arg = 1;
+				tags = read_arg(argv[i]);
+				cfg.tags = strdup(tags);
+				char *token = strtok(cfg.tags, ",");
+				int j = 0;
+				while (token != NULL) {
+					token = strtok(NULL, ",");
+					++j;
+				}
+				cfg.tags_len = j - 1;
+			}
+			if (pos[i] == 6) {
 				view_arg = 1;
 				viewcfg = read_arg(argv[i]);
 				if (strcmp(viewcfg, "file-path") == 0) {
 					cfg.view = F_PATH;
+				} else if (strcmp(viewcfg, "metadata") == 0) {
+					cfg.view = M_DATA;
 				} else if (strcmp(viewcfg, "song-only") == 0) {
 					cfg.view = S_ONLY;
 				} else {
@@ -450,12 +504,21 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
+	if (!tags_arg) {
+		cfg.tags = read_cfg_str(&libcfg, "tags");
+		if (strcmp(cfg.tags, "") == 0) {
+			cfg.tags = "artist,album,title";
+			cfg.tags_len = 2;
+		}
+	}
 	if (!view_arg) {
 		if (!config_lookup_string(&libcfg, "view", &viewcfg)) {
 			cfg.view = F_PATH;
 		} else {
 			if (strcmp(viewcfg, "file-path") == 0) {
 				cfg.view = F_PATH;
+			} else if (strcmp(viewcfg, "metadata") == 0) {
+				cfg.view = M_DATA;
 			} else if (strcmp(viewcfg, "song-only") == 0) {
 				cfg.view = S_ONLY;
 			} else {

@@ -35,7 +35,7 @@ The default keybindings are the following.
 * page down: `Ctrl+f`
 * page up: `Ctrl+b`
 * playnext: `>`
-* playpause: ` `
+* playpause: `Space`
 * playprev: `<`
 * queue: `i`
 * queue all: `y`

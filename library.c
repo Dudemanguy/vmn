@@ -35,9 +35,6 @@ AVInputFormat *get_input_format(const char *file) {
 	if (strcmp(ext, "opus") == 0) {
 		format = av_find_input_format("ogg");
 		return format;
-	} else if (strcmp(ext, "alac") == 0 || strcmp(ext, "m4a") == 0) {
-		format = NULL;
-		return NULL;
 	} else {
 		format = av_find_input_format(ext);
 		return format;
@@ -47,6 +44,7 @@ AVInputFormat *get_input_format(const char *file) {
 struct vmn_library lib_init() {
 	struct vmn_library lib;
 	lib.depth = 0;
+	lib.files = NULL;
 	lib.length = 0;
 	lib.mpv_active = 0;
 	lib.mpv_kill = 0;
@@ -61,7 +59,34 @@ void vmn_library_add(struct vmn_library *lib, char *entry) {
 	++lib->length;
 }
 
-void vmn_library_destroy(struct vmn_library *lib) {
+void vmn_library_destroy_meta(struct vmn_library *lib) {
+	for (int i = 0; i < lib->length; ++i) {
+		free(lib->files[i]);
+		av_dict_free(&lib->dict[i]);
+	}
+	free(lib->files);
+	free(lib->dict);
+	if (lib->length) {
+		for (int i = 0; i < (lib->depth + 1); ++i) {
+			unpost_menu(lib->menu[i]);
+			free_menu(lib->menu[i]);
+		}
+		free(lib->menu);
+	}
+	if (lib->length) {
+		for (int i = 0; i < (lib->depth + 1); ++i) {
+			int j = 0;
+			while(lib->items[i][j]) {
+				free_item(lib->items[i][j]);
+				++j;
+			}
+			free(lib->items[i]);
+		}
+		free(lib->items);
+	}
+}
+
+void vmn_library_destroy_path(struct vmn_library *lib) {
 	for (int i = 0; i < lib->length; ++i) {
 		free(lib->files[i]);
 	}
@@ -116,10 +141,21 @@ void vmn_library_metadata(struct vmn_library *lib) {
 		if (ret) {
 			continue;
 		}
-		fmt_ctx = avformat_alloc_context();
-		avformat_open_input(&fmt_ctx, lib->files[i], format, NULL);
-		av_dict_copy(&lib->dict[i], fmt_ctx->streams[0]->metadata, 0);
-		avformat_close_input(&fmt_ctx);
 		av_file_unmap(buffer, buffer_size);
+		avformat_open_input(&fmt_ctx, lib->files[i], format, NULL);
+		lib->dict[i] = NULL;
+		if (strcmp(format->name, "mp3") == 0) {
+			av_dict_copy(&lib->dict[i], fmt_ctx->metadata, 0);
+		} else if (strcmp(format->name, "mov,mp4,m4a,3gp,3g2,mj2") == 0) {
+			av_dict_copy(&lib->dict[i], fmt_ctx->metadata, 0);
+		} else {
+			av_dict_copy(&lib->dict[i], fmt_ctx->streams[0]->metadata, 0);
+		}
+		avformat_close_input(&fmt_ctx);
 	}
 }
+
+void vmn_library_selections_add(struct vmn_library *lib, const char *entry) {
+	lib->selections[lib->depth] = (char *)calloc(strlen(entry) + 1, sizeof(char));
+	strcpy(lib->selections[lib->depth], entry);
+}	

@@ -18,8 +18,8 @@ Options for the mpv client cannot be set as command line arguments and must be s
 ``--mpv-cfg-dir=<directory>``\
    Tells the mpv client which directory to search for a configuration file. It will look for the configuration file the same way mpv does. `config` and `mpv.conf` are both valid and the    latter takes priority over the former if both exists. By default, this directory is `$HOME/.config/vmn` which means that mpv configuration values specified in the vmn configuration      file are accepted. This option does nothing if `mpv-cfg` is set to `no`.
 
-``--view=<file-path|song-only>``\
-   Controls which view to use for vmn. This defaults to `file-path` which creates a navigable menus that go up and down directories that contain valid audio files. The `song-only` view     outputs the complete paths to all valid audio files found in alphabetical order.
+``--view=<file-path|metadata|song-only>``\
+   Controls which view to use for vmn. This defaults to `file-path` which creates a navigable menus that go up and down directories that contain valid audio files. The `metadata` view      uses ffmpeg to read metadata off of every file and organize the menu based on it. The `song-only` view outputs the complete paths to all valid audio files found in alphabetical order.
 
 ## Keybindings
 
