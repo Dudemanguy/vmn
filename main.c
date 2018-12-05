@@ -255,7 +255,7 @@ char **get_base_metadata(struct vmn_config *cfg, struct vmn_library *lib, char *
 	char **metadata = (char **)calloc(lib->length + 1, sizeof(char *));
 	for (int i = 0; i < lib->length; ++i) {
 		AVDictionaryEntry *tag = NULL;
-		tag = av_dict_get(lib->dict[i], tags, tag, AV_DICT_IGNORE_SUFFIX);
+		tag = av_dict_get(lib->dict[i], tags, tag, 0);
 		for (int j = 0; j < len; ++j) {
 			if (strcmp(tag->value, metadata[j]) == 0) {
 				match = 1;
@@ -282,7 +282,7 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	for (int i = 0; i < lib->length; ++i) {
 		for (int j = 0; j < lib->depth; ++j) {
 			AVDictionaryEntry *tag = NULL;
-			tag = av_dict_get(lib->dict[i], tags[j], tag, AV_DICT_IGNORE_SUFFIX);
+			tag = av_dict_get(lib->dict[i], tags[j], tag, 0);
 			if ((strcasecmp(tag->key, tags[j]) == 0) && (strcmp(tag->value, lib->selections[j]) == 0)) {
 				index[i] = 1;
 			} else {
@@ -296,9 +296,9 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	for (int i = 0; i < lib->length; ++i ) {
 		AVDictionaryEntry *tag = NULL;
 		if (index[i]) {
-			tag = av_dict_get(lib->dict[i], tags[lib->depth], tag, AV_DICT_IGNORE_SUFFIX);
+			tag = av_dict_get(lib->dict[i], tags[lib->depth], tag, 0);
 			for (int j = 0; j < len; ++j) {
-				if (strcmp(tag->value, metadata[j]) == 0) {
+				if (strcasecmp(tag->value, metadata[j]) == 0) {
 					match = 1;
 					break;
 				}
@@ -321,6 +321,7 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	}
 	free(tags);
 	return metadata;
+	return 0;
 }
 
 ITEM **get_lib_items(struct vmn_library *lib) {
@@ -703,7 +704,7 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 	for (int i = 0; i < lib->length; ++i) {
 		for (int j = 0; j < lib->depth; ++j) {
 			AVDictionaryEntry *tag = NULL;
-			tag = av_dict_get(lib->dict[i], tags[j], tag, AV_DICT_IGNORE_SUFFIX);
+			tag = av_dict_get(lib->dict[i], tags[j], tag, 0);
 			if ((strcasecmp(tag->key, tags[j]) == 0) && (strcmp(tag->value, lib->selections[j]) == 0)) {
 				index[i] = 1;
 			} else {
@@ -714,7 +715,7 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 	for (int i = 0; i < lib->length; ++i ) {
 		AVDictionaryEntry *tag = NULL;
 		if (index[i]) {
-			tag = av_dict_get(lib->dict[i], tags[lib->depth], tag, AV_DICT_IGNORE_SUFFIX);
+			tag = av_dict_get(lib->dict[i], tags[lib->depth], tag, 0);
 			if (strcmp(tag->value, name) == 0) {
 				mpv_queue(lib->ctx, lib->files[i]);
 			}

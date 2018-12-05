@@ -144,12 +144,10 @@ void vmn_library_metadata(struct vmn_library *lib) {
 		av_file_unmap(buffer, buffer_size);
 		avformat_open_input(&fmt_ctx, lib->files[i], format, NULL);
 		lib->dict[i] = NULL;
-		if (strcmp(format->name, "mp3") == 0) {
-			av_dict_copy(&lib->dict[i], fmt_ctx->metadata, 0);
-		} else if (strcmp(format->name, "mov,mp4,m4a,3gp,3g2,mj2") == 0) {
-			av_dict_copy(&lib->dict[i], fmt_ctx->metadata, 0);
-		} else {
+		if (strcmp(format->name, "ogg") == 0) {
 			av_dict_copy(&lib->dict[i], fmt_ctx->streams[0]->metadata, 0);
+		} else {
+			av_dict_copy(&lib->dict[i], fmt_ctx->metadata, 0);
 		}
 		avformat_close_input(&fmt_ctx);
 	}
