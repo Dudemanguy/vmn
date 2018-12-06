@@ -50,7 +50,6 @@ int main(int argc, char *argv[]) {
 	}
 	int invalid = get_music_files(cfg.lib_dir, &lib);
 	qsort(lib.files, lib.length, sizeof(char *), qstrcmp);
-	//TODO: integrate metadata
 	if (invalid) {
 		vmn_config_destroy(&cfg);
 		for (int i = 0; i < lib.length; ++i) {
@@ -63,7 +62,6 @@ int main(int argc, char *argv[]) {
 	initscr();
 	cbreak();
 	noecho();
-	char **base;
 	if (cfg.view == F_PATH) {
 		lib.entries = (char ****)calloc(1, sizeof(char ***));
 		lib.entries[0] = get_lib_dir(cfg.lib_dir, &lib);
@@ -71,12 +69,14 @@ int main(int argc, char *argv[]) {
 		lib.items[0] = create_path_items(lib.entries[0]);
 	}
 	if (cfg.view == M_DATA) {
+		lib.entries = (char ****)calloc(1, sizeof(char ***));
+		lib.entries[0] = (char ***)calloc(1, sizeof(char **));
 		char **tags = parse_tags(cfg.tags);
 		vmn_library_metadata(&lib);
-		lib.selections = (char **)calloc(cfg.tags_len, sizeof(char *));
-		base = get_base_metadata(&cfg, &lib, tags[0]);
+		lib.selections = (char **)calloc(cfg.tags_len+1, sizeof(char *));
+		lib.entries[0][0] = get_base_metadata(&cfg, &lib, tags[0]);
 		lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
-		lib.items[0] = create_meta_items(base);
+		lib.items[0] = create_meta_items(lib.entries[0][0]);
 		for (int i = 0; i < (cfg.tags_len+1); ++i) {
 			free(tags[i]);
 		}
@@ -104,6 +104,9 @@ int main(int argc, char *argv[]) {
 	set_menu_win(lib.menu[0], win);
 	set_menu_sub(lib.menu[0], win);
 	post_menu(lib.menu[0]);
+	ITEM *cur = current_item(lib.menu[0]);
+	const char *name = item_name(cur);
+	vmn_library_selections_add(&lib, name);
 	int c;
 	lib.ctx = mpv_generate(&cfg);
 	while (1) {
@@ -125,6 +128,11 @@ int main(int argc, char *argv[]) {
 		ITEM **items = lib.items[lib.depth];
 		c = wgetch(win);
 		key_event(c, menu, items, &cfg, &lib);
+		if (cfg.view == M_DATA) {
+			ITEM *cur = current_item(lib.menu[lib.depth]);
+			const char *name = item_name(cur);
+			vmn_library_selections_add(&lib, name);
+		}
 		if (lib.mpv_kill) {
 			mpv_terminate_destroy(lib.ctx);
 			lib.ctx = mpv_generate(&cfg);
@@ -140,16 +148,9 @@ int main(int argc, char *argv[]) {
 		vmn_library_destroy_path(&lib);
 	}
 	if (cfg.view == M_DATA) {
-		int n = item_count(lib.menu[0]);
 		vmn_library_destroy_meta(&lib);
-		for (int i = 0; i < n; ++i) {
-			free(base[i]);
-		}
-		free(base);
-		if (lib.selections[0]) {
-			for (int i = 0; i < lib.depth; ++i) {
-				free(lib.selections[i]);
-			}
+		for (int i = 0; i < (cfg.tags_len+1); ++i) {
+			free(lib.selections[i]);
 		}
 		free(lib.selections);
 	}
@@ -228,8 +229,10 @@ void destroy_last_menu_meta(struct vmn_library *lib) {
 	free_menu(lib->menu[lib->depth]);
 	for (int i = 0; i < n; ++i) {
 		free_item(lib->items[lib->depth][i]);
+		free(lib->entries[0][lib->depth][i]);
 	}
 	free(lib->items[lib->depth]);
+	free(lib->entries[0][lib->depth]);
 }
 
 void destroy_last_menu_path(struct vmn_library *lib) {
@@ -283,6 +286,10 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 		for (int j = 0; j < lib->depth; ++j) {
 			AVDictionaryEntry *tag = NULL;
 			tag = av_dict_get(lib->dict[i], tags[j], tag, 0);
+			if (!tag) {
+				index[i] = 1;
+				continue;
+			}
 			if ((strcasecmp(tag->key, tags[j]) == 0) && (strcmp(tag->value, lib->selections[j]) == 0)) {
 				index[i] = 1;
 			} else {
@@ -297,6 +304,13 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 		AVDictionaryEntry *tag = NULL;
 		if (index[i]) {
 			tag = av_dict_get(lib->dict[i], tags[lib->depth], tag, 0);
+			if (!tag) {
+				metadata[len] = (char *)calloc(strlen(tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
+				strcpy(metadata[len], "Unknown ");
+				strcat(metadata[len], tags[lib->depth]);
+				++len;
+				continue;
+			}
 			for (int j = 0; j < len; ++j) {
 				if (strcasecmp(tag->value, metadata[j]) == 0) {
 					match = 1;
@@ -483,9 +497,6 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			path = item_description(cur);
 			move_menu_path_backward(lib);
 		} else if (cfg->view == M_DATA) {
-			cur = current_item(menu);
-			name = item_name(cur);
-			free(lib->selections[lib->depth]);
 			move_menu_meta_backward(lib);
 		}
 	} else if (c == cfg->key.move_down) {
@@ -510,9 +521,6 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			path = item_description(cur);
 			move_menu_path_forward(path, cfg, lib);
 		} else if (cfg->view == M_DATA) {
-			cur = current_item(menu);
-			name = item_name(cur);
-			vmn_library_selections_add(lib, name);
 			move_menu_meta_forward(cfg, lib);
 		}
 	} else if (c == cfg->key.move_up) {
@@ -527,7 +535,6 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			}
 		}
 		menu_driver(menu, REQ_PREV_ITEM);
-		cur = current_item(menu);
 		if (cfg->select) {
 			cur = current_item(menu);
 			set_item_value(cur, true);
@@ -776,7 +783,8 @@ int move_menu_meta_forward(struct vmn_config *cfg, struct vmn_library *lib) {
 		--lib->depth;
 		return 0;
 	}
-	char **metadata = get_next_metadata(cfg, lib);
+	lib->entries[0] = (char ***)realloc(lib->entries[0], sizeof(char **)*(lib->depth+1));
+	lib->entries[0][lib->depth] = get_next_metadata(cfg, lib);
 	double startx = getmaxx(stdscr);
 	for (int i = 1; i < lib->depth; ++i) {
 		wresize(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
@@ -784,7 +792,7 @@ int move_menu_meta_forward(struct vmn_config *cfg, struct vmn_library *lib) {
 		wrefresh(menu_win(lib->menu[i]));
 	}
 	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
-	lib->items[lib->depth] = create_meta_items(metadata);
+	lib->items[lib->depth] = create_meta_items(lib->entries[0][lib->depth]);
 	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
 	lib->menu[lib->depth] = new_menu((ITEM **)lib->items[lib->depth]);
 	set_menu_format(lib->menu[lib->depth], LINES, 0);
@@ -796,12 +804,6 @@ int move_menu_meta_forward(struct vmn_config *cfg, struct vmn_library *lib) {
 	post_menu(lib->menu[lib->depth]);
 	wmove(win, 0, 0);
 	wrefresh(win);
-	//TODO: clean up this memory leak
-	/*int n = item_count(lib->menu[lib->depth]);
-	for (int i = 0; i < n; ++i) {
-		free(metadata[i]);
-	}*/
-	free(metadata);
 	return 0;
 }
 

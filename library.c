@@ -78,11 +78,15 @@ void vmn_library_destroy_meta(struct vmn_library *lib) {
 			int j = 0;
 			while(lib->items[i][j]) {
 				free_item(lib->items[i][j]);
+				free(lib->entries[0][i][j]);
 				++j;
 			}
+			free(lib->entries[0][i]);
 			free(lib->items[i]);
 		}
 		free(lib->items);
+		free(lib->entries[0]);
+		free(lib->entries);
 	}
 }
 
@@ -154,6 +158,6 @@ void vmn_library_metadata(struct vmn_library *lib) {
 }
 
 void vmn_library_selections_add(struct vmn_library *lib, const char *entry) {
-	lib->selections[lib->depth] = (char *)calloc(strlen(entry) + 1, sizeof(char));
+	lib->selections[lib->depth] = (char *)realloc(lib->selections[lib->depth], sizeof(char)*(strlen(entry) + 1));
 	strcpy(lib->selections[lib->depth], entry);
 }	
