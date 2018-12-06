@@ -433,13 +433,15 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 				tags_arg = 1;
 				tags = read_arg(argv[i]);
 				cfg.tags = strdup(tags);
-				char *token = strtok(cfg.tags, ",");
+				char *len_check = strdup(tags);
+				char *token = strtok(len_check, ",");
 				int j = 0;
 				while (token != NULL) {
 					token = strtok(NULL, ",");
 					++j;
 				}
 				cfg.tags_len = j - 1;
+				free(len_check);
 			}
 			if (pos[i] == 6) {
 				view_arg = 1;
@@ -507,7 +509,8 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	if (!tags_arg) {
 		cfg.tags = read_cfg_str(&libcfg, "tags");
 		if (strcmp(cfg.tags, "") == 0) {
-			cfg.tags = "artist,album,title";
+			cfg.tags = (char *)calloc(strlen("artist,album,title") + 1, sizeof(char));
+			strcpy(cfg.tags, "artist,album,title");
 			cfg.tags_len = 2;
 		}
 	}
@@ -539,4 +542,5 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 void vmn_config_destroy(struct vmn_config *cfg) {
 	free(cfg->lib_dir);
 	free(cfg->mpv_cfg_dir);
+	free(cfg->tags);
 }
