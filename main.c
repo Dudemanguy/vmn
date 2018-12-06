@@ -718,6 +718,10 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 		for (int j = 0; j < lib->depth; ++j) {
 			AVDictionaryEntry *tag = NULL;
 			tag = av_dict_get(lib->dict[i], tags[j], tag, 0);
+			if (!tag) {
+				index[i] = 1;
+				continue;
+			}
 			if ((strcasecmp(tag->key, tags[j]) == 0) && (strcmp(tag->value, lib->selections[j]) == 0)) {
 				index[i] = 1;
 			} else {
@@ -728,6 +732,16 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 	for (int i = 0; i < lib->length; ++i ) {
 		AVDictionaryEntry *tag = NULL;
 		if (index[i]) {
+			if (!tag) {
+				for (int j = lib->depth; j >= 0; --j) {
+					tag = av_dict_get(lib->dict[i], tags[j], tag, 0);
+					if (tag && (strcmp(lib->selections[j], tag->value) == 0)) {
+						mpv_queue(lib->ctx, lib->files[i]);
+						break;
+					}
+				}
+				continue;
+			}
 			tag = av_dict_get(lib->dict[i], tags[lib->depth], tag, 0);
 			if (strcmp(tag->value, name) == 0) {
 				mpv_queue(lib->ctx, lib->files[i]);
