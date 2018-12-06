@@ -302,13 +302,19 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	char **metadata = (char **)calloc(lib->length + 1, sizeof(char *));
 	for (int i = 0; i < lib->length; ++i ) {
 		AVDictionaryEntry *tag = NULL;
+		tag = av_dict_get(lib->dict[i], tags[lib->depth], tag, 0);
 		if (index[i]) {
-			tag = av_dict_get(lib->dict[i], tags[lib->depth], tag, 0);
 			if (!tag) {
-				metadata[len] = (char *)calloc(strlen(tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
-				strcpy(metadata[len], "Unknown ");
-				strcat(metadata[len], tags[lib->depth]);
-				++len;
+				for (int j = lib->depth; j >= 0; --j) {
+					tag = av_dict_get(lib->dict[i], tags[j], tag, 0);
+					if (tag && (strcmp(lib->selections[j], tag->value) == 0)) {
+						metadata[len] = (char *)calloc(strlen(tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
+						strcpy(metadata[len], "Unknown ");
+						strcat(metadata[len], tags[lib->depth]);
+						++len;
+						break;
+					}
+				}
 				continue;
 			}
 			for (int j = 0; j < len; ++j) {
