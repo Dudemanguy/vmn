@@ -19,13 +19,13 @@ Options for the mpv client cannot be set as command line arguments and must be s
    Tells the mpv client which directory to search for a configuration file. It will look for the configuration file the same way mpv does. `config` and `mpv.conf` are both valid and the    latter takes priority over the former if both exists. By default, this directory is `$HOME/.config/vmn` which means that mpv configuration values specified in the vmn configuration      file are accepted. This option does nothing if `mpv-cfg` is set to `no`.
 
 ``--sort=<metadata,filename,track-number,random,none>``\
-   A comma, separated list of sorting modes to be used with each metadata tag. The sort array must be the same length as the tag array or it will do nothing. Currently, only metadata       sorting and no sorting work. Metadata sorting simply alphabetically sorts the menu based on the tag names. By default, metadata sorting is used for everything except the "title" tag.
+   A comma, separated list (spaces are allowed) of sorting modes to be used with each metadata tag. The sort array must be the same length as the tag array or it will do nothing.           Currently, only metadata       sorting and no sorting work. Metadata sorting simply alphabetically sorts the menu based on the tag names. By default, metadata sorting is used for        everything except the "title" tag.
 
 ``--tags=<metadata,tags>``\
    A comma, separated list of metadata values (spaces are allowed). vmn will read all valid music files and attempt to organize the curses interface based on the entered tag values. This   only has an effect if the metadata view is used. By default, the organization (from left to right) is "artist, album, title."
 
 ``--view=<file-path|metadata|song-only>``\
-   Controls which view to use for vmn. This defaults to `file-path` which creates a navigable menus that go up and down directories that contain valid audio files. The `metadata` view      uses ffmpeg to read metadata off of every file and organize the menu based on it. The `song-only` view outputs the complete paths to all valid audio files found in alphabetical order.
+   Controls which view to use for vmn. This defaults to `file-path` which creates a navigable menus that go up and down directories that contain valid audio files. The `metadata` view      uses ffmpeg to read metadata off of every file and organizes the menu based on it. The `song-only` view outputs the complete paths to all valid audio files found in alphabetical         order. Note that metadata view can be very slow off of a cold start.
 
 ## Keybindings
 
