@@ -293,14 +293,28 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 		for (int j = 0; j < lib->depth; ++j) {
 			AVDictionaryEntry *tag = NULL;
 			tag = av_dict_get(lib->dict[i], tags[j], tag, 0);
-			if (!tag) {
-				index[i] = 1;
-				continue;
-			}
-			if ((strcasecmp(tag->key, tags[j]) == 0) && (strcmp(tag->value, lib->selections[j]) == 0)) {
-				index[i] = 1;
+			if (j == 0) {
+				if (!tag) {
+					index[i] = 1;
+					continue;
+				}
+				if ((strcasecmp(tag->key, tags[j]) == 0) && (strcmp(tag->value, lib->selections[j]) == 0)) {
+					index[i] = 1;
+				} else {
+					index[i] = 0;
+				}
 			} else {
-				index[i] = 0;
+				if (index[i]) {
+					if (!tag) {
+						index[i] = 1;
+						continue;
+					}
+					if ((strcasecmp(tag->key, tags[j]) == 0) && (strcmp(tag->value, lib->selections[j]) == 0)) {
+						index[i] = 1;
+					} else {
+						index[i] = 0;
+					}
+				}
 			}
 		}
 	}
