@@ -17,7 +17,7 @@
 
 
 int check_arg(struct vmn_config *cfg, char *arg) {
-	char *valid[8] = {"", "--input-mode=", "--library=", "--mpv-cfg=", "--mpv-cfg-dir=", "--tags=", "--sort=", "--view="};
+	char *valid[8] = {"", "--input-mode=", "--library=", "--mpv-cfg=", "--mpv-cfg-dir=", "--sort=", "--tags=", "--view="};
 	int i = 0;
 	int status;
 	for (i = 0; i < 8; ++i) {
@@ -432,10 +432,10 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 			mpv_dir_arg = i;
 		}
 		if (pos[i] == 5) {
-			tags_arg = i;
+			sort_arg = i;
 		}
 		if (pos[i] == 6) {
-			sort_arg = i;
+			tags_arg = i;
 		}
 		if (pos[i] == 7) {
 			view_arg = i;
@@ -522,112 +522,6 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
-	if (tags_arg) {
-		tags = read_arg(argv[tags_arg]);
-		char *tag_clone = strdup(tags);
-		char *len_check = strdup(tags);
-		char *token = strtok(len_check, ",");
-		int j = 0;
-		while (token != NULL) {
-			token = strtok(NULL, ",");
-			++j;
-		}
-		cfg.tags_len = j;
-		cfg.tags = parse_arg(tag_clone);
-		free(tag_clone);
-		free(len_check);
-	} else {
-		char *valid_tags = read_cfg_str(&libcfg, "tags");
-		if (strcmp(valid_tags, "") == 0) {
-			char *default_tags = "artist,album,title";
-			cfg.tags = parse_arg(default_tags);
-			cfg.tags_len = 3;
-		} else {
-			cfg.tags = parse_arg(valid_tags);
-		}
-	}
-
-	if (sort_arg) {
-		sort = read_arg(argv[sort_arg]);
-		char *sort_clone = strdup(sort);
-		char *len_check = strdup(sort);
-		char *token = strtok(len_check, ",");
-		int valid = check_sort(token);
-		int j = 0;
-		while (token != NULL) {
-			if (!valid) {
-				break;
-			}
-			token = strtok(NULL, ",");
-			++j;
-		}
-		cfg.sort_len = j;
-		free(len_check);
-		if (!valid) {
-			printf("Invalid sort argument specified. Resetting to default. \n");
-			free(sort_clone);
-			sort_arg = 0;
-		} else {
-			if (tags_arg) {
-				if (cfg.tags_len != cfg.sort_len) {
-					printf("The length of the sort argument must be exactly equal to the length of the tags argument. Resetting to default. \n");
-					sort_arg = 0;
-				} else {
-					char **sort_arr = parse_arg(sort_clone);
-					cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
-					for (int k = 0; k < cfg.tags_len; ++k) {
-						if (strcmp(sort_arr[k], "metadata") == 0) {
-							cfg.sort[k] = S_DATA;
-						} else if (strcmp(sort_arr[k], "filename") == 0) {
-							cfg.sort[k] = S_FILE;
-						} else if (strcmp(sort_arr[k], "track-number") == 0) {
-							cfg.sort[k] = S_NUMB;
-						} else if (strcmp(sort_arr[k], "random") == 0) {
-							cfg.sort[k] = S_RAND;
-						}
-					}
-					for (int k = 0; k < cfg.sort_len; ++k) {
-						free(sort_arr[k]);
-					}
-					free(sort_arr);
-				}
-			} else {
-				if (cfg.sort_len != 3) {
-					printf("The length of the sort argument must be exactly equal to the default length of tags (3). Resetting to default. \n");
-					sort_arg = 0;
-				} else {
-					char **sort_arr = parse_arg(sort_clone);
-					cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
-					for (int k = 0; k < cfg.tags_len; ++k) {
-						if (strcmp(sort_arr[k], "metadata") == 0) {
-							cfg.sort[k] = S_DATA;
-						} else if (strcmp(sort_arr[k], "filename") == 0) {
-							cfg.sort[k] = S_FILE;
-						} else if (strcmp(sort_arr[k], "track-number") == 0) {
-							cfg.sort[k] = S_NUMB;
-						} else if (strcmp(sort_arr[k], "random") == 0) {
-							cfg.sort[k] = S_RAND;
-						}
-					}
-					for (int k = 0; k < cfg.sort_len; ++k) {
-						free(sort_arr[k]);
-					}
-					free(sort_arr);
-				}
-			}
-			free(sort_clone);
-		}
-	} else {
-		char *valid_sort = read_cfg_str(&libcfg, "sort");
-		if (strcmp(valid_sort, "") == 0) {
-			cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
-			cfg.sort_len = cfg.tags_len;
-			for (int i = 0; i < cfg.tags_len; ++i) {
-				cfg.sort[i] = default_sort(cfg.tags[i]);
-			}
-		}
-	}
-
 	if (view_arg) {
 		viewcfg = read_arg(argv[view_arg]);
 		if (strcmp(viewcfg, "file-path") == 0) {
@@ -657,6 +551,114 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
+	if (cfg.view == V_DATA) {
+		if (tags_arg) {
+			tags = read_arg(argv[tags_arg]);
+			char *tag_clone = strdup(tags);
+			char *len_check = strdup(tags);
+			char *token = strtok(len_check, ",");
+			int j = 0;
+			while (token != NULL) {
+				token = strtok(NULL, ",");
+				++j;
+			}
+			cfg.tags_len = j;
+			cfg.tags = parse_arg(tag_clone);
+			free(tag_clone);
+			free(len_check);
+		} else {
+			char *valid_tags = read_cfg_str(&libcfg, "tags");
+			if (strcmp(valid_tags, "") == 0) {
+				char *default_tags = "artist,album,title";
+				cfg.tags = parse_arg(default_tags);
+				cfg.tags_len = 3;
+			} else {
+				cfg.tags = parse_arg(valid_tags);
+			}
+		}
+
+		if (sort_arg) {
+			sort = read_arg(argv[sort_arg]);
+			char *sort_clone = strdup(sort);
+			char *len_check = strdup(sort);
+			char *token = strtok(len_check, ",");
+			int valid = check_sort(token);
+			int j = 0;
+			while (token != NULL) {
+				if (!valid) {
+					break;
+				}
+				token = strtok(NULL, ",");
+				++j;
+			}
+			cfg.sort_len = j;
+			free(len_check);
+			if (!valid) {
+				printf("Invalid sort argument specified. Resetting to default. \n");
+				free(sort_clone);
+				sort_arg = 0;
+			} else {
+				if (tags_arg) {
+					if (cfg.tags_len != cfg.sort_len) {
+						printf("The length of the sort argument must be exactly equal to the length of the tags argument. Resetting to default. \n");
+						sort_arg = 0;
+					} else {
+						char **sort_arr = parse_arg(sort_clone);
+						cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
+						for (int k = 0; k < cfg.tags_len; ++k) {
+							if (strcmp(sort_arr[k], "metadata") == 0) {
+								cfg.sort[k] = S_DATA;
+							} else if (strcmp(sort_arr[k], "filename") == 0) {
+								cfg.sort[k] = S_FILE;
+							} else if (strcmp(sort_arr[k], "track-number") == 0) {
+								cfg.sort[k] = S_NUMB;
+							} else if (strcmp(sort_arr[k], "random") == 0) {
+								cfg.sort[k] = S_RAND;
+							}
+						}
+						for (int k = 0; k < cfg.sort_len; ++k) {
+							free(sort_arr[k]);
+						}
+						free(sort_arr);
+					}
+				} else {
+					if (cfg.sort_len != 3) {
+						printf("The length of the sort argument must be exactly equal to the default length of tags (3). Resetting to default. \n");
+						sort_arg = 0;
+					} else {
+						char **sort_arr = parse_arg(sort_clone);
+						cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
+						for (int k = 0; k < cfg.tags_len; ++k) {
+							if (strcmp(sort_arr[k], "metadata") == 0) {
+								cfg.sort[k] = S_DATA;
+							} else if (strcmp(sort_arr[k], "filename") == 0) {
+								cfg.sort[k] = S_FILE;
+							} else if (strcmp(sort_arr[k], "track-number") == 0) {
+								cfg.sort[k] = S_NUMB;
+							} else if (strcmp(sort_arr[k], "random") == 0) {
+								cfg.sort[k] = S_RAND;
+							}
+						}
+						for (int k = 0; k < cfg.sort_len; ++k) {
+							free(sort_arr[k]);
+						}
+						free(sort_arr);
+					}
+				}
+				free(sort_clone);
+			}
+		} else {
+			char *valid_sort = read_cfg_str(&libcfg, "sort");
+			if (strcmp(valid_sort, "") == 0) {
+				cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
+				cfg.sort_len = cfg.tags_len;
+				for (int i = 0; i < cfg.tags_len; ++i) {
+					cfg.sort[i] = default_sort(cfg.tags[i]);
+				}
+			}
+		}
+	}
+
 	cfg.select = 0;
 	cfg.select_pos = 0;
 
@@ -668,9 +670,11 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 void vmn_config_destroy(struct vmn_config *cfg) {
 	free(cfg->lib_dir);
 	free(cfg->mpv_cfg_dir);
-	for (int i = 0; i < cfg->tags_len; ++i) {
-		free(cfg->tags[i]);
+	if (cfg->view == V_DATA) {
+		for (int i = 0; i < cfg->tags_len; ++i) {
+			free(cfg->tags[i]);
+		}
+		free(cfg->tags);
+		free(cfg->sort);
 	}
-	free(cfg->tags);
-	free(cfg->sort);
 }

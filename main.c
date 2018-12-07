@@ -95,9 +95,11 @@ int main(int argc, char *argv[]) {
 	set_menu_win(lib.menu[0], win);
 	set_menu_sub(lib.menu[0], win);
 	post_menu(lib.menu[0]);
-	ITEM *cur = current_item(lib.menu[0]);
-	const char *name = item_name(cur);
-	vmn_library_selections_add(&lib, name);
+	if (cfg.view == V_DATA) {
+		ITEM *cur = current_item(lib.menu[0]);
+		const char *name = item_name(cur);
+		vmn_library_selections_add(&lib, name);
+	}
 	int c;
 	lib.ctx = mpv_generate(&cfg);
 	while (1) {
