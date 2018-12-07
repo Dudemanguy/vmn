@@ -259,6 +259,13 @@ char **get_base_metadata(struct vmn_config *cfg, struct vmn_library *lib, char *
 	for (int i = 0; i < lib->length; ++i) {
 		AVDictionaryEntry *tag = NULL;
 		tag = av_dict_get(lib->dict[i], tags, tag, 0);
+		if (!tag) {
+			metadata[len] = (char *)calloc(strlen(tags) + strlen("Unknown ") + 1, sizeof(char));
+			strcpy(metadata[len], "Unknown ");
+			strcat(metadata[len], tags);
+			++len;
+			continue;
+		}
 		for (int j = 0; j < len; ++j) {
 			if (strcmp(tag->value, metadata[j]) == 0) {
 				match = 1;
