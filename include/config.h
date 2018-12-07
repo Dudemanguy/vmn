@@ -36,10 +36,17 @@ struct vmn_key {
 	int volup;
 };
 
+enum vmn_config_sort {
+	S_DATA,
+	S_FILE,
+	S_NUMB,
+	S_RAND,
+};
+
 enum vmn_config_view {
-	F_PATH,
-	M_DATA,
-	S_ONLY,
+	V_PATH,
+	V_DATA,
+	V_SONG,
 };
 
 struct vmn_config {
@@ -50,8 +57,10 @@ struct vmn_config {
 	char *mpv_cfg;
 	char *mpv_cfg_dir;
 	struct vmn_key key;
-	char *tags;
+	char **tags;
 	int tags_len;
+	enum vmn_config_sort sort;
 	enum vmn_config_view view;
+	int sort_len;
 };
 

@@ -17,10 +17,10 @@
 
 
 int check_arg(struct vmn_config *cfg, char *arg) {
-	char *valid[7] = {"", "--input-mode=", "--library=", "--mpv-cfg=", "--mpv-cfg-dir=", "--tags=", "--view="};
+	char *valid[8] = {"", "--input-mode=", "--library=", "--mpv-cfg=", "--mpv-cfg-dir=", "--tags=", "--sort=", "--view="};
 	int i = 0;
 	int status;
-	for (i = 0; i < 7; ++i) {
+	for (i = 0; i < 8; ++i) {
 		regex_t regex;
 		regcomp(&regex, valid[i], 0);
 		status = regexec(&regex, arg, 0, NULL, 0);
@@ -119,6 +119,32 @@ int check_macro(const char *macro) {
 	}
 }
 
+int check_sort(char *str) {
+	if (strcmp(str, "metadata") == 0) {
+		return 1;
+	} else if (strcmp(str, "filename") == 0) {
+		return 1;
+	} else if (strcmp(str, "track-number") == 0) {
+		return 1;
+	} else if (strcmp(str, "random") == 0) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+/*char *default_sort(char *tags, int tags_len) {
+	char *tags_check = strdup(tags);
+	char *token = strtok(len_check, ",");
+	int j = 0;
+	while (token != NULL) {
+		token = strtok(NULL, ",");
+		++j;
+	}
+			cfg.tags = (char *)calloc(strlen("artist,album,title") + 1, sizeof(char));
+			strcpy(cfg.tags, "artist,album,title");
+}*/
+
 char *get_cfg() {
 	char *home = getenv("HOME"); 
 	const char *cfg = "/.config/vmn/config";
@@ -157,6 +183,28 @@ char *read_arg(char *arg) {
 	}
 }
 
+char **parse_arg(char *arg) {
+	char *str = remove_spaces(arg);
+	char *token = strtok(str, ",");
+	int len = 10;
+	char **arr = (char **)calloc(10, sizeof(char*));
+	int i = 0;
+	while (token != NULL) {
+		if (i == len) {
+			len = len*2;
+			arr = (char **)realloc(arr,sizeof(char*)*len);
+		}
+		arr[i] = malloc(strlen(token) + 1);
+		strcpy(arr[i], token);
+		token = strtok(NULL, ",");
+		++i;
+	}
+	arr[i] = '\0';
+	arr = (char **)realloc(arr, sizeof(char*)*(i+1));
+	free(str);
+	return arr;
+}
+
 int parse_modifier(const char *key) {
 	char *str = strdup(key);
 	char *token = strtok(str, "+");
@@ -178,28 +226,6 @@ int parse_modifier(const char *key) {
 		token = strtok(NULL, "+");
 	}
 	return 0;
-}
-
-char **parse_tags(char *tags) {
-	char *str = remove_spaces(tags);
-	char *token = strtok(str, ",");
-	int len = 10;
-	char **arr = (char **)calloc(10, sizeof(char*));
-	int i = 0;
-	while (token != NULL) {
-		if (i == len) {
-			len = len*2;
-			arr = (char **)realloc(arr,sizeof(char*)*len);
-		}
-		arr[i] = malloc(strlen(token) + 1);
-		strcpy(arr[i], token);
-		token = strtok(NULL, ",");
-		++i;
-	}
-	arr[i] = '\0';
-	arr = (char **)realloc(arr, sizeof(char*)*(i+1));
-	free(str);
-	return arr;
 }
 
 int read_cfg_key(config_t *libcfg, const char *opt) {
@@ -370,14 +396,16 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	const char *library;
 	const char *mpv_cfg;
 	const char *mpv_cfg_dir;
+	const char *sort;
 	const char *tags;
 	const char *viewcfg;
-	int pos[5] = {0, 0, 0, 0, 0};
+	int pos[7] = {0, 0, 0, 0, 0, 0, 0};
 	int input_arg = 0;
 	int lib_arg = 0;
 	int mpv_arg = 0;
 	int mpv_dir_arg = 0;
 	int tags_arg = 0;
+	int sort_arg = 0;
 	int view_arg = 0;
 	
 	//check for any command line arguments
@@ -432,28 +460,66 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 			if (pos[i] == 5) {
 				tags_arg = 1;
 				tags = read_arg(argv[i]);
-				cfg.tags = strdup(tags);
-				char *len_check = strdup(tags);
-				char *token = strtok(len_check, ",");
+				char *tag_clone = strdup(tags);
+				char *tag_clone2 = strdup(tags);
+				char *token = strtok(tag_clone, ",");
 				int j = 0;
 				while (token != NULL) {
 					token = strtok(NULL, ",");
 					++j;
 				}
-				cfg.tags_len = j - 1;
-				free(len_check);
+				cfg.tags_len = j;
+				cfg.tags = parse_arg(tag_clone2);
+				free(tag_clone);
+				free(tag_clone2);
 			}
-			if (pos[i] == 6) {
+			/*if (pos[i] == 6) {
+				sort = read_arg(argv[i]);
+				char *len_check = strdup(sort);
+				char *token = strtok(len_check, ",");
+				int valid = check_sort(token);
+				int j = 0;
+				while (token != NULL) {
+					if (!valid) {
+						break;
+					}
+					token = strtok(NULL, ",");
+					++j;
+				}
+				free(len_check);
+				if (!valid) {
+					printf("Invalid sort argument specified. Resetting to default. \n");
+					sort_arg = 0;
+				} else {
+					sort.tags_len = j - 1;
+					if (tags_arg) {
+						if (cfg.tags_len != cfg.sort_len) {
+							printf("The length of the sort argument must be exactly equal to the length of the tags argument. Resetting to default. \n");
+							sort_arg = 0;
+						} else {
+							cfg.sort = strdup(sort);
+						}
+					} else {
+						if (cfg.sort_len != 2) {
+							printf("The length of the sort argument must be exactly equal to the default length of tags (3). Resetting to default. \n");
+							sort_arg = 0;
+						} else {
+							cfg.sort = strdup(sort);
+						}
+					}
+				}
+			}*/
+			if (pos[i] == 7) {
 				view_arg = 1;
 				viewcfg = read_arg(argv[i]);
 				if (strcmp(viewcfg, "file-path") == 0) {
-					cfg.view = F_PATH;
+					cfg.view = V_PATH;
 				} else if (strcmp(viewcfg, "metadata") == 0) {
-					cfg.view = M_DATA;
+					cfg.view = V_DATA;
 				} else if (strcmp(viewcfg, "song-only") == 0) {
-					cfg.view = S_ONLY;
+					cfg.view = V_SONG;
 				} else {
-					cfg.view = F_PATH;
+					cfg.view = V_PATH;
 					printf("Invalid view specified. Falling back to default.\n");
 				}
 			}
@@ -507,25 +573,36 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	}
 
 	if (!tags_arg) {
-		cfg.tags = read_cfg_str(&libcfg, "tags");
-		if (strcmp(cfg.tags, "") == 0) {
-			cfg.tags = (char *)calloc(strlen("artist,album,title") + 1, sizeof(char));
-			strcpy(cfg.tags, "artist,album,title");
-			cfg.tags_len = 2;
+		char *valid_tags = read_cfg_str(&libcfg, "tags");
+		if (strcmp(valid_tags, "") == 0) {
+			char *default_tags = "artist,album,title";
+			cfg.tags = parse_arg(default_tags);
+			cfg.tags_len = 3;
+		} else {
+			cfg.tags = parse_arg(valid_tags);
 		}
+		free(valid_tags);
 	}
+
+	/*if (!sort_arg) {
+		cfg.sort = read_cfg_str(&libcfg, "sort");
+		if (strcmp(cfg.sort, "") == 0) {
+			sort.args = default_sort(cfg.tags);
+		}
+	}*/
+
 	if (!view_arg) {
 		if (!config_lookup_string(&libcfg, "view", &viewcfg)) {
-			cfg.view = F_PATH;
+			cfg.view = V_PATH;
 		} else {
 			if (strcmp(viewcfg, "file-path") == 0) {
-				cfg.view = F_PATH;
+				cfg.view = V_PATH;
 			} else if (strcmp(viewcfg, "metadata") == 0) {
-				cfg.view = M_DATA;
+				cfg.view = V_DATA;
 			} else if (strcmp(viewcfg, "song-only") == 0) {
-				cfg.view = S_ONLY;
+				cfg.view = V_SONG;
 			} else {
-				cfg.view = F_PATH;
+				cfg.view = V_PATH;
 				printf("Invalid view specified. Falling back to default.\n");
 			}
 		}
@@ -542,5 +619,8 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 void vmn_config_destroy(struct vmn_config *cfg) {
 	free(cfg->lib_dir);
 	free(cfg->mpv_cfg_dir);
+	for (int i = 0; i < cfg->tags_len; ++i) {
+		free(cfg->tags[i]);
+	}
 	free(cfg->tags);
 }
