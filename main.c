@@ -715,7 +715,7 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 	char **tags = parse_tags(cfg->tags);
 	int *index = (int *)calloc(lib->length + 1, sizeof(int));
 	for (int i = 0; i < lib->length; ++i) {
-		for (int j = 0; j < lib->depth; ++j) {
+		for (int j = 0; j < (lib->depth+1); ++j) {
 			AVDictionaryEntry *tag = NULL;
 			tag = av_dict_get(lib->dict[i], tags[j], tag, 0);
 			if (!tag) {
