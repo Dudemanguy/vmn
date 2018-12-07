@@ -610,6 +610,8 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 								cfg.sort[k] = S_DATA;
 							} else if (strcmp(sort_arr[k], "filename") == 0) {
 								cfg.sort[k] = S_FILE;
+							} else if (strcmp(sort_arr[k], "none") == 0) {
+								cfg.sort[k] = S_NONE;
 							} else if (strcmp(sort_arr[k], "track-number") == 0) {
 								cfg.sort[k] = S_NUMB;
 							} else if (strcmp(sort_arr[k], "random") == 0) {
@@ -633,6 +635,8 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 								cfg.sort[k] = S_DATA;
 							} else if (strcmp(sort_arr[k], "filename") == 0) {
 								cfg.sort[k] = S_FILE;
+							} else if (strcmp(sort_arr[k], "none") == 0) {
+								cfg.sort[k] = S_NONE;
 							} else if (strcmp(sort_arr[k], "track-number") == 0) {
 								cfg.sort[k] = S_NUMB;
 							} else if (strcmp(sort_arr[k], "random") == 0) {

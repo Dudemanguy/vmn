@@ -39,6 +39,7 @@ struct vmn_key {
 enum vmn_config_sort {
 	S_DATA,
 	S_FILE,
+	S_NONE,
 	S_NUMB,
 	S_RAND,
 };

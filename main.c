@@ -902,6 +902,8 @@ void sort_select(struct vmn_config *cfg, char **metadata, int len, int depth) {
 	if (cfg->sort[depth] == S_DATA) {
 		qsort(metadata, len, sizeof(char *), qstrcmp);
 	} else if (cfg->sort[depth] == S_FILE) {
+	} else if (cfg->sort[depth] == S_NONE) {
+		;
 	} else if (cfg->sort[depth] == S_NUMB) {
 	} else if (cfg->sort[depth] == S_RAND) {
 	}
