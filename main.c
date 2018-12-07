@@ -20,14 +20,10 @@
 
 ITEM **create_meta_items(char **metadata);
 ITEM **create_path_items(char ***files);
-int directory_count(const char *path);
-void destroy_last_menu_meta(struct vmn_library *lib);
-void destroy_last_menu_path(struct vmn_library *lib);
 void input_mode(struct vmn_config *cfg);
 char **get_base_metadata(struct vmn_config *cfg, struct vmn_library *lib);
 char ***get_lib_dir(const char *library, struct vmn_library *lib);
 int get_music_files(const char *library, struct vmn_library *lib);
-char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib);
 void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
 void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name);
 int move_menu_meta_backward(struct vmn_library *lib);
@@ -39,6 +35,7 @@ void mpv_queue(mpv_handle *ctx, const char *audio);
 int path_in_lib(char *path, struct vmn_library *lib);
 int qstrcmp(const void *a, const void *b);
 char *remove_char(char *str);
+void sort_select(struct vmn_config *cfg, char **metadata, int len, int depth);
 
 int main(int argc, char *argv[]) {
 	setlocale(LC_CTYPE, "");
@@ -205,16 +202,6 @@ ITEM **create_path_items(char ***entries) {
 	return items;
 }
 
-int directory_count(const char *path) {
-	const char *where = path;
-	int i = 0;
-	while ((where = strchr(where, '/'))) {
-		++i;
-		++where;
-	};
-	return i;
-}
-
 void destroy_last_menu_meta(struct vmn_library *lib) {
 	int n = item_count(lib->menu[lib->depth]);
 	unpost_menu(lib->menu[lib->depth]);
@@ -277,7 +264,7 @@ char **get_base_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	}
 	metadata[len] = '\0';
 	metadata = (char **)realloc(metadata,sizeof(char *)*(len+1));
-	//qsort(metadata, len, sizeof(char *), qstrcmp);
+	sort_select(cfg, metadata, len, lib->depth);
 	return metadata;
 }
 
@@ -350,7 +337,7 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	}
 	metadata[len] = '\0';
 	metadata = (char **)realloc(metadata, sizeof(char *)*(len+1));
-	//qsort(metadata, len, sizeof(char *), qstrcmp);
+	sort_select(cfg, metadata, len, lib->depth);
 	free(index);
 	return metadata;
 	return 0;
@@ -907,4 +894,13 @@ char *remove_char(char *str) {
 	memcpy(remove, str, sizeof(char)*(len - 1));
 	remove[len - 1] = '\0';
 	return remove;
+}
+
+void sort_select(struct vmn_config *cfg, char **metadata, int len, int depth) {
+	if (cfg->sort[depth] == S_DATA) {
+		qsort(metadata, len, sizeof(char *), qstrcmp);
+	} else if (cfg->sort[depth] == S_FILE) {
+	} else if (cfg->sort[depth] == S_NUMB) {
+	} else if (cfg->sort[depth] == S_RAND) {
+	}
 }
