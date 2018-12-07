@@ -59,7 +59,7 @@ struct vmn_config {
 	struct vmn_key key;
 	char **tags;
 	int tags_len;
-	enum vmn_config_sort sort;
+	enum vmn_config_sort *sort;
 	enum vmn_config_view view;
 	int sort_len;
 };

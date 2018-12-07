@@ -133,17 +133,21 @@ int check_sort(char *str) {
 	}
 }
 
-/*char *default_sort(char *tags, int tags_len) {
-	char *tags_check = strdup(tags);
-	char *token = strtok(len_check, ",");
-	int j = 0;
-	while (token != NULL) {
-		token = strtok(NULL, ",");
-		++j;
+enum vmn_config_sort default_sort(char *tags) {
+	if (strcasecmp(tags, "artist") == 0) {
+		return S_DATA;
+	} else if (strcasecmp(tags, "album") == 0) {
+		return S_DATA;
+	} else if (strcasecmp(tags, "album_artist") == 0 ) {
+		return S_DATA;
+	} else if (strcasecmp(tags, "date") == 0) {
+		return S_DATA;
+	} else if (strcasecmp(tags, "title") == 0) {
+		return S_NUMB;
+	} else {
+		return S_DATA;
 	}
-			cfg.tags = (char *)calloc(strlen("artist,album,title") + 1, sizeof(char));
-			strcpy(cfg.tags, "artist,album,title");
-}*/
+}
 
 char *get_cfg() {
 	char *home = getenv("HOME"); 
@@ -410,123 +414,42 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	
 	//check for any command line arguments
 	//these take priority over any config file options
-	if (argc > 1) {
-		for (int i = 1; i < argc; ++i) {
-			pos[i] = check_arg(&cfg, argv[i]);
+	for (int i = 1; i < argc; ++i) {
+		pos[i] = check_arg(&cfg, argv[i]);
+	}
+
+	for (int i = 1; i < argc; ++i) {
+		if (pos[i] == 1) {
+			input_arg = i;
 		}
-		for (int i = 0; i < argc; ++i) {
-			if (pos[i] == 1) {
-				input_arg = 1;
-				input = read_arg(argv[i]);
-				if ((strcmp(input, "yes") == 0) || (strcmp(input, "no") == 0)) {
-					cfg.input_mode = strdup(input);
-				} else {
-					cfg.input_mode = "yes";
-				}
-			}
-			if (pos[i] == 2) {
-				lib_arg = 1;
-				library = read_arg(argv[i]);
-				DIR *dir = opendir(library);
-				if (dir) {
-					cfg.lib_dir = strdup(library);
-				} else {
-					cfg.lib_dir = get_default_lib();
-					printf("Library directory not found. Falling back to default.\n");
-				}
-				closedir(dir);
-			}
-			if (pos[i] == 3) {
-				mpv_arg = 1;
-				mpv_cfg = read_arg(argv[i]);
-				if ((strcmp(mpv_cfg, "yes") == 0) || (strcmp(mpv_cfg, "no") == 0)) {
-					cfg.mpv_cfg = strdup(mpv_cfg);
-				} else {
-					cfg.mpv_cfg = "yes";
-				}
-			}
-			if (pos[i] == 4) {
-				mpv_dir_arg = 1;
-				mpv_cfg_dir = read_arg(argv[i]);
-				DIR *dir = opendir(mpv_cfg_dir);
-				if (dir) {
-					cfg.mpv_cfg_dir = strdup(mpv_cfg_dir);
-				} else {
-					cfg.mpv_cfg_dir = get_cfg_dir();
-					printf("Mpv config directory not found. Falling back to default.\n");
-				}
-				closedir(dir);
-			}
-			if (pos[i] == 5) {
-				tags_arg = 1;
-				tags = read_arg(argv[i]);
-				char *tag_clone = strdup(tags);
-				char *tag_clone2 = strdup(tags);
-				char *token = strtok(tag_clone, ",");
-				int j = 0;
-				while (token != NULL) {
-					token = strtok(NULL, ",");
-					++j;
-				}
-				cfg.tags_len = j;
-				cfg.tags = parse_arg(tag_clone2);
-				free(tag_clone);
-				free(tag_clone2);
-			}
-			/*if (pos[i] == 6) {
-				sort = read_arg(argv[i]);
-				char *len_check = strdup(sort);
-				char *token = strtok(len_check, ",");
-				int valid = check_sort(token);
-				int j = 0;
-				while (token != NULL) {
-					if (!valid) {
-						break;
-					}
-					token = strtok(NULL, ",");
-					++j;
-				}
-				free(len_check);
-				if (!valid) {
-					printf("Invalid sort argument specified. Resetting to default. \n");
-					sort_arg = 0;
-				} else {
-					sort.tags_len = j - 1;
-					if (tags_arg) {
-						if (cfg.tags_len != cfg.sort_len) {
-							printf("The length of the sort argument must be exactly equal to the length of the tags argument. Resetting to default. \n");
-							sort_arg = 0;
-						} else {
-							cfg.sort = strdup(sort);
-						}
-					} else {
-						if (cfg.sort_len != 2) {
-							printf("The length of the sort argument must be exactly equal to the default length of tags (3). Resetting to default. \n");
-							sort_arg = 0;
-						} else {
-							cfg.sort = strdup(sort);
-						}
-					}
-				}
-			}*/
-			if (pos[i] == 7) {
-				view_arg = 1;
-				viewcfg = read_arg(argv[i]);
-				if (strcmp(viewcfg, "file-path") == 0) {
-					cfg.view = V_PATH;
-				} else if (strcmp(viewcfg, "metadata") == 0) {
-					cfg.view = V_DATA;
-				} else if (strcmp(viewcfg, "song-only") == 0) {
-					cfg.view = V_SONG;
-				} else {
-					cfg.view = V_PATH;
-					printf("Invalid view specified. Falling back to default.\n");
-				}
-			}
+		if (pos[i] == 2) {
+			lib_arg = i;
+		}
+		if (pos[i] == 3) {
+			mpv_arg = i;
+		}
+		if (pos[i] == 4) {
+			mpv_dir_arg = i;
+		}
+		if (pos[i] == 5) {
+			tags_arg = i;
+		}
+		if (pos[i] == 6) {
+			sort_arg = i;
+		}
+		if (pos[i] == 7) {
+			view_arg = i;
 		}
 	}
 
-	if (!input_arg) {
+	if (input_arg) {
+		input = read_arg(argv[input_arg]);
+		if ((strcmp(input, "yes") == 0) || (strcmp(input, "no") == 0)) {
+			cfg.input_mode = strdup(input);
+		} else {
+			cfg.input_mode = "yes";
+		}
+	} else {
 		cfg.input_mode = read_cfg_str(&libcfg, "input-mode");
 		if ((!strcmp(cfg.input_mode, "yes") == 0) && (!strcmp(cfg.input_mode, "no") == 0) &&
 				(!strcmp(cfg.input_mode, "") == 0)) {
@@ -535,7 +458,17 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
-	if (!lib_arg) {
+	if (lib_arg) {
+		library = read_arg(argv[lib_arg]);
+		DIR *dir = opendir(library);
+		if (dir) {
+			cfg.lib_dir = strdup(library);
+		} else {
+			cfg.lib_dir = get_default_lib();
+			printf("Library directory not found. Falling back to default.\n");
+		}
+		closedir(dir);
+	} else {
 		cfg.lib_dir = read_cfg_str(&libcfg, "library");
 		if (strcmp(cfg.lib_dir, "") == 0) {
 			cfg.lib_dir = get_default_lib();
@@ -549,7 +482,14 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
-	if (!mpv_arg) {
+	if (mpv_arg) {
+		mpv_cfg = read_arg(argv[mpv_arg]);
+		if ((strcmp(mpv_cfg, "yes") == 0) || (strcmp(mpv_cfg, "no") == 0)) {
+			cfg.mpv_cfg = strdup(mpv_cfg);
+		} else {
+			cfg.mpv_cfg = "yes";
+		}
+	} else {
 		cfg.mpv_cfg = read_cfg_str(&libcfg, "mpv-cfg");
 		if ((!strcmp(cfg.mpv_cfg, "yes") == 0) && (!strcmp(cfg.mpv_cfg, "no") == 0) &&
 				(!strcmp(cfg.mpv_cfg, "") == 0)) {
@@ -558,7 +498,17 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
-	if (!mpv_dir_arg) {
+	if (mpv_dir_arg) {
+		mpv_cfg_dir = read_arg(argv[mpv_dir_arg]);
+		DIR *dir = opendir(mpv_cfg_dir);
+		if (dir) {
+			cfg.mpv_cfg_dir = strdup(mpv_cfg_dir);
+		} else {
+			cfg.mpv_cfg_dir = get_cfg_dir();
+			printf("Mpv config directory not found. Falling back to default.\n");
+		}
+		closedir(dir);
+	} else {
 		cfg.mpv_cfg_dir = read_cfg_str(&libcfg, "mpv-cfg-dir");
 		if (strcmp(cfg.mpv_cfg_dir, "") == 0) {
 			cfg.mpv_cfg_dir = get_cfg_dir();
@@ -572,7 +522,21 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
-	if (!tags_arg) {
+	if (tags_arg) {
+		tags = read_arg(argv[tags_arg]);
+		char *tag_clone = strdup(tags);
+		char *len_check = strdup(tags);
+		char *token = strtok(len_check, ",");
+		int j = 0;
+		while (token != NULL) {
+			token = strtok(NULL, ",");
+			++j;
+		}
+		cfg.tags_len = j;
+		cfg.tags = parse_arg(tag_clone);
+		free(tag_clone);
+		free(len_check);
+	} else {
 		char *valid_tags = read_cfg_str(&libcfg, "tags");
 		if (strcmp(valid_tags, "") == 0) {
 			char *default_tags = "artist,album,title";
@@ -581,17 +545,102 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		} else {
 			cfg.tags = parse_arg(valid_tags);
 		}
-		free(valid_tags);
 	}
 
-	/*if (!sort_arg) {
-		cfg.sort = read_cfg_str(&libcfg, "sort");
-		if (strcmp(cfg.sort, "") == 0) {
-			sort.args = default_sort(cfg.tags);
+	if (sort_arg) {
+		sort = read_arg(argv[sort_arg]);
+		char *sort_clone = strdup(sort);
+		char *len_check = strdup(sort);
+		char *token = strtok(len_check, ",");
+		int valid = check_sort(token);
+		int j = 0;
+		while (token != NULL) {
+			if (!valid) {
+				break;
+			}
+			token = strtok(NULL, ",");
+			++j;
 		}
-	}*/
+		cfg.sort_len = j;
+		free(len_check);
+		if (!valid) {
+			printf("Invalid sort argument specified. Resetting to default. \n");
+			free(sort_clone);
+			sort_arg = 0;
+		} else {
+			if (tags_arg) {
+				if (cfg.tags_len != cfg.sort_len) {
+					printf("The length of the sort argument must be exactly equal to the length of the tags argument. Resetting to default. \n");
+					sort_arg = 0;
+				} else {
+					char **sort_arr = parse_arg(sort_clone);
+					cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
+					for (int k = 0; k < cfg.tags_len; ++k) {
+						if (strcmp(sort_arr[k], "metadata") == 0) {
+							cfg.sort[k] = S_DATA;
+						} else if (strcmp(sort_arr[k], "filename") == 0) {
+							cfg.sort[k] = S_FILE;
+						} else if (strcmp(sort_arr[k], "track-number") == 0) {
+							cfg.sort[k] = S_NUMB;
+						} else if (strcmp(sort_arr[k], "random") == 0) {
+							cfg.sort[k] = S_RAND;
+						}
+					}
+					for (int k = 0; k < cfg.sort_len; ++k) {
+						free(sort_arr[k]);
+					}
+					free(sort_arr);
+				}
+			} else {
+				if (cfg.sort_len != 3) {
+					printf("The length of the sort argument must be exactly equal to the default length of tags (3). Resetting to default. \n");
+					sort_arg = 0;
+				} else {
+					char **sort_arr = parse_arg(sort_clone);
+					cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
+					for (int k = 0; k < cfg.tags_len; ++k) {
+						if (strcmp(sort_arr[k], "metadata") == 0) {
+							cfg.sort[k] = S_DATA;
+						} else if (strcmp(sort_arr[k], "filename") == 0) {
+							cfg.sort[k] = S_FILE;
+						} else if (strcmp(sort_arr[k], "track-number") == 0) {
+							cfg.sort[k] = S_NUMB;
+						} else if (strcmp(sort_arr[k], "random") == 0) {
+							cfg.sort[k] = S_RAND;
+						}
+					}
+					for (int k = 0; k < cfg.sort_len; ++k) {
+						free(sort_arr[k]);
+					}
+					free(sort_arr);
+				}
+			}
+			free(sort_clone);
+		}
+	} else {
+		char *valid_sort = read_cfg_str(&libcfg, "sort");
+		if (strcmp(valid_sort, "") == 0) {
+			cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
+			cfg.sort_len = cfg.tags_len;
+			for (int i = 0; i < cfg.tags_len; ++i) {
+				cfg.sort[i] = default_sort(cfg.tags[i]);
+			}
+		}
+	}
 
-	if (!view_arg) {
+	if (view_arg) {
+		viewcfg = read_arg(argv[view_arg]);
+		if (strcmp(viewcfg, "file-path") == 0) {
+			cfg.view = V_PATH;
+		} else if (strcmp(viewcfg, "metadata") == 0) {
+			cfg.view = V_DATA;
+		} else if (strcmp(viewcfg, "song-only") == 0) {
+			cfg.view = V_SONG;
+		} else {
+			cfg.view = V_PATH;
+			printf("Invalid view specified. Falling back to default.\n");
+		}
+	} else {
 		if (!config_lookup_string(&libcfg, "view", &viewcfg)) {
 			cfg.view = V_PATH;
 		} else {
@@ -623,4 +672,5 @@ void vmn_config_destroy(struct vmn_config *cfg) {
 		free(cfg->tags[i]);
 	}
 	free(cfg->tags);
+	free(cfg->sort);
 }
