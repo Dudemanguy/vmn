@@ -133,7 +133,7 @@ void vmn_library_metadata(struct vmn_library *lib) {
 	av_log_set_level(AV_LOG_QUIET);
 	AVFormatContext *fmt_ctx = NULL;
 	AVInputFormat *format = NULL;
-	lib->dict = malloc(10*lib->length); //TODO: figure out the right way to allocate memory for this
+	lib->dict = av_malloc_array(lib->length, sizeof(struct AVDictionary *));
 	uint8_t *buffer = NULL;
 	size_t buffer_size;
 	for (int i = 0; i < lib->length; ++i) {
@@ -146,6 +146,7 @@ void vmn_library_metadata(struct vmn_library *lib) {
 			continue;
 		}
 		av_file_unmap(buffer, buffer_size);
+		fmt_ctx = avformat_alloc_context();
 		avformat_open_input(&fmt_ctx, lib->files[i], format, NULL);
 		lib->dict[i] = NULL;
 		if (strcmp(format->name, "ogg") == 0) {
@@ -155,6 +156,7 @@ void vmn_library_metadata(struct vmn_library *lib) {
 		}
 		avformat_close_input(&fmt_ctx);
 	}
+	avformat_free_context(fmt_ctx);
 }
 
 void vmn_library_selections_add(struct vmn_library *lib, const char *entry) {
