@@ -130,6 +130,7 @@ int main(int argc, char *argv[]) {
 			mpv_terminate_destroy(lib.ctx);
 			lib.ctx = mpv_generate(&cfg);
 			lib.mpv_kill = 0;
+			lib.mpv_active = 0;
 		}
 		if (lib.vmn_quit) {
 			break;
