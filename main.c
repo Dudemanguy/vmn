@@ -239,15 +239,19 @@ void destroy_last_menu_path(struct vmn_library *lib) {
 char **get_base_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	int len = 0;
 	int match = 0;
+	int unknown = 0;
 	char **metadata = (char **)calloc(lib->length + 1, sizeof(char *));
 	for (int i = 0; i < lib->length; ++i) {
 		AVDictionaryEntry *tag = NULL;
 		tag = av_dict_get(lib->dict[i], cfg->tags[0], tag, 0);
 		if (!tag) {
-			metadata[len] = (char *)calloc(strlen(cfg->tags[0]) + strlen("Unknown ") + 1, sizeof(char));
-			strcpy(metadata[len], "Unknown ");
-			strcat(metadata[len], cfg->tags[0]);
-			++len;
+			if (!unknown && (!(strcmp(cfg->tags[0], "title") == 0))) {
+				metadata[len] = (char *)calloc(strlen(cfg->tags[0]) + strlen("Unknown ") + 1, sizeof(char));
+				strcpy(metadata[len], "Unknown ");
+				strcat(metadata[len], cfg->tags[0]);
+				unknown = 1;
+				++len;
+			}
 			continue;
 		}
 		for (int j = 0; j < len; ++j) {
@@ -279,7 +283,13 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			tag = av_dict_get(lib->dict[i], cfg->tags[j], tag, 0);
 			if (j == 0) {
 				if (!tag) {
-					index[i] = 1;
+					char *unknown_tag = (char *)calloc(strlen(cfg->tags[0]) + strlen("Unknown ") + 1, sizeof(char));
+					strcpy(unknown_tag, "Unknown ");
+					strcat(unknown_tag, cfg->tags[0]);
+					if (strcmp(unknown_tag, lib->selections[0]) == 0) {
+						index[i] = 1;
+					}
+					free(unknown_tag);
 					continue;
 				}
 				if ((strcasecmp(tag->key, cfg->tags[j]) == 0) && (strcmp(tag->value, lib->selections[j]) == 0)) {
@@ -290,7 +300,13 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			} else {
 				if (index[i]) {
 					if (!tag) {
-						index[i] = 1;
+						char *unknown_tag = (char *)calloc(strlen(cfg->tags[j]) + strlen("Unknown ") + 1, sizeof(char));
+						strcpy(unknown_tag, "Unknown ");
+						strcat(unknown_tag, cfg->tags[j]);
+						if (strcmp(unknown_tag, lib->selections[j]) == 0) {
+							index[i] = 1;
+						}
+						free(unknown_tag);
 						continue;
 					}
 					if ((strcasecmp(tag->key, cfg->tags[j]) == 0) && (strcmp(tag->value, lib->selections[j]) == 0)) {
