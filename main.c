@@ -288,6 +288,8 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 					strcat(unknown_tag, cfg->tags[0]);
 					if (strcmp(unknown_tag, lib->selections[0]) == 0) {
 						index[i] = 1;
+					} else {
+						index[i] = 0;
 					}
 					free(unknown_tag);
 					continue;
@@ -305,6 +307,8 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 						strcat(unknown_tag, cfg->tags[j]);
 						if (strcmp(unknown_tag, lib->selections[j]) == 0) {
 							index[i] = 1;
+						} else {
+							index[i] = 0;
 						}
 						free(unknown_tag);
 						continue;
