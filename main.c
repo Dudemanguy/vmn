@@ -25,7 +25,8 @@ char **get_base_metadata(struct vmn_config *cfg, struct vmn_library *lib);
 char ***get_lib_dir(const char *library, struct vmn_library *lib);
 int get_music_files(const char *library, struct vmn_library *lib);
 void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
-void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name);
+void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, char **names, int len);
+void meta_path_find_single(struct vmn_config *cfg, struct vmn_library *lib, const char *name);
 int move_menu_meta_backward(struct vmn_library *lib);
 int move_menu_path_backward(struct vmn_library *lib);
 int move_menu_meta_forward(struct vmn_config *cfg, struct vmn_library *lib);
@@ -680,18 +681,29 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			}
 		}
 		if (cfg->view == V_DATA) {
+			char **names = (char **)calloc(item_count(menu), sizeof(char*));
 			for (int i = 0; i < item_count(menu); ++i) {
 				if (item_value(items[i])) {
 					name = item_name(items[i]);
-					meta_path_find(cfg, lib, name);
+					char *name_dup = strdup(name);
+					names[n] = (char *)calloc(strlen(name) + 1, sizeof(char));
+					strcpy(names[n], name_dup);
 					++n;
 				}
+				names[n] = '\0';
 			}
-			if (!n) {
+			if (n) {
+				meta_path_find_multiple(cfg, lib, names, n);
+			} else {
 				ITEM *cur = current_item(menu);
 				name = item_name(cur);
-				meta_path_find(cfg, lib, name);
+				meta_path_find_single(cfg, lib, name);
 			}
+			/*int i = 0;
+			while(names) {
+				free(names[i]);
+			}
+			free(names);*/
 		}
 	} else if (c == cfg->key.visual) {
 		if (cfg->select) {
@@ -722,7 +734,39 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 	wrefresh(menu_win(lib->menu[lib->depth]));
 }
 
-void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name) {
+void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, char **names, int len) {
+	int *index = (int *)calloc(lib->length + 1, sizeof(int));
+	for (int i = 0; i < lib->length; ++i) {
+		for (int j = 0; j < 2; ++j) {
+			AVDictionaryEntry *tag = NULL;
+			tag = av_dict_get(lib->dict[i], cfg->tags[j], tag, 0);
+			if (!tag) {
+				index[i] = 1;
+				continue;
+			}
+			if ((strcasecmp(tag->key, cfg->tags[j]) == 0) && (strcmp(tag->value, lib->selections[j]) == 0)) {
+				index[i] = 1;
+			} else {
+				index[i] = 0;
+			}
+		} 
+		if (index[i]) {
+			for (int j = 0; j < len; ++j) {
+				AVDictionaryEntry *tag = NULL;
+				tag = av_dict_get(lib->dict[i], cfg->tags[lib->depth], tag, 0);
+				if (!tag) {
+					continue;
+				}
+				if ((strcasecmp(tag->key, cfg->tags[lib->depth]) == 0) && (strcmp(tag->value, names[j]) == 0)) {
+					mpv_queue(lib->ctx, lib->files[i]);
+				}
+			}
+		}
+	}
+	free(index);
+}
+
+void meta_path_find_single(struct vmn_config *cfg, struct vmn_library *lib, const char *name) {
 	int *index = (int *)calloc(lib->length + 1, sizeof(int));
 	for (int i = 0; i < lib->length; ++i) {
 		for (int j = 0; j < (lib->depth+1); ++j) {
