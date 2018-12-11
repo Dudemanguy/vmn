@@ -688,6 +688,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 					char *name_dup = strdup(name);
 					names[n] = (char *)calloc(strlen(name) + 1, sizeof(char));
 					strcpy(names[n], name_dup);
+					free(name_dup);
 					++n;
 				}
 				names[n] = '\0';
@@ -699,11 +700,10 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				name = item_name(cur);
 				meta_path_find_single(cfg, lib, name);
 			}
-			/*int i = 0;
-			while(names) {
+			for (int i = 0; i < item_count(menu); ++i) {
 				free(names[i]);
 			}
-			free(names);*/
+			free(names);
 		}
 	} else if (c == cfg->key.visual) {
 		if (cfg->select) {
