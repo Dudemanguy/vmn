@@ -253,6 +253,12 @@ char **get_base_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 				unknown = 1;
 				++len;
 			}
+			if (!unknown && (strcmp(cfg->tags[0], "title") == 0)) {
+				char *filename = strrchr(lib->files[i], '/');
+				metadata[len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
+				strcpy(metadata[len], filename+1);
+				++len;
+			}
 			continue;
 		}
 		for (int j = 0; j < len; ++j) {
@@ -331,15 +337,18 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 		tag = av_dict_get(lib->dict[i], cfg->tags[lib->depth], tag, 0);
 		if (index[i]) {
 			if (!tag) {
-				for (int j = lib->depth; j >= 0; --j) {
-					tag = av_dict_get(lib->dict[i], cfg->tags[j], tag, 0);
-					if (tag && (strcmp(lib->selections[j], tag->value) == 0)) {
-						metadata[len] = (char *)calloc(strlen(cfg->tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
-						strcpy(metadata[len], "Unknown ");
-						strcat(metadata[len], cfg->tags[lib->depth]);
-						++len;
-						break;
-					}
+				if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+					char *filename = strrchr(lib->files[i], '/');
+					metadata[len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
+					strcpy(metadata[len], filename+1);
+					++len;
+					continue;
+				} else {
+					metadata[len] = (char *)calloc(strlen(cfg->tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
+					strcpy(metadata[len], "Unknown ");
+					strcat(metadata[len], cfg->tags[lib->depth]);
+					++len;
+					continue;
 				}
 				continue;
 			}
