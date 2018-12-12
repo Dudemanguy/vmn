@@ -1,0 +1,10 @@
+#compdef vmn
+
+_arguments \
+	'--input-mode=[show keycodes]' \
+	'--library=[music directory]' \
+	'--mpv-cfg=[accept mpv configuration]' \
+	'--mpv-cfg-dir=[mpv config file directory]' \
+	'--sort=[select sorting modes]' \
+	'--tags=[select tags]' \
+	'--view=[select view]'

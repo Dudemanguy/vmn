@@ -5,6 +5,12 @@ libconfig = dependency('libconfig')
 menu = dependency('menu')
 mpv = dependency('mpv')
 ncurses = dependency('ncurses')
+datadir = get_option('datadir')
+if (get_option('zsh-completions'))
+  zsh_files = files('completions/zsh/_vmn')
+  zsh_install_dir = datadir + '/zsh/site-functions'
+  install_data(zsh_files, install_dir: zsh_install_dir)
+endif
 subdir('include')
 inc =  include_directories('include')
 vmn_sources = files('main.c', 'config.c', 'library.c')
