@@ -746,7 +746,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, char **names, int len) {
 	int *index = (int *)calloc(lib->length + 1, sizeof(int));
 	for (int i = 0; i < lib->length; ++i) {
-		for (int j = 0; j < 2; ++j) {
+		for (int j = 0; j < lib->depth; ++j) {
 			AVDictionaryEntry *tag = NULL;
 			tag = av_dict_get(lib->dict[i], cfg->tags[j], tag, 0);
 			if (!tag) {
