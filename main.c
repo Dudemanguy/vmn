@@ -718,7 +718,6 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		if (cfg->select) {
 			cfg->select = 0;
 			cfg->select_pos = 0;
-			set_item_value(items[cfg->select_pos], false);
 		} else {
 			cfg->select = 1;
 			cur = current_item(menu);
