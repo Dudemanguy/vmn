@@ -768,12 +768,14 @@ void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, ch
 				AVDictionaryEntry *tag = NULL;
 				tag = av_dict_get(lib->dict[i], cfg->tags[lib->depth], tag, 0);
 				if (!tag) {
-					for (int k = lib->depth; k >= 0; --k) {
-						tag = av_dict_get(lib->dict[i], cfg->tags[k], tag, 0);
-						if (tag && (strcmp(lib->selections[k], tag->value) == 0)) {
-							mpv_queue(lib->ctx, lib->files[i]);
-						}
+					regex_t regex;
+					int status;
+					regcomp(&regex, names[j], 0);
+					status = regexec(&regex, lib->files[i], 0, NULL, 0);
+					if (status == 0) {
+						mpv_queue(lib->ctx, lib->files[i]);
 					}
+					regfree(&regex);
 					continue;
 				}
 				if ((strcasecmp(tag->key, cfg->tags[lib->depth]) == 0) && (strcmp(tag->value, names[j]) == 0)) {
@@ -810,13 +812,14 @@ void meta_path_find_single(struct vmn_config *cfg, struct vmn_library *lib, cons
 			AVDictionaryEntry *tag = NULL;
 			tag = av_dict_get(lib->dict[i], cfg->tags[lib->depth], tag, 0);
 			if (!tag) {
-				for (int j = lib->depth; j >= 0; --j) {
-					tag = av_dict_get(lib->dict[i], cfg->tags[j], tag, 0);
-					if (tag && (strcmp(lib->selections[j], tag->value) == 0)) {
-						mpv_queue(lib->ctx, lib->files[i]);
-						break;
-					}
+				regex_t regex;
+				int status;
+				regcomp(&regex, name, 0);
+				status = regexec(&regex, lib->files[i], 0, NULL, 0);
+				if (status == 0) {
+					mpv_queue(lib->ctx, lib->files[i]);
 				}
+				regfree(&regex);
 				continue;
 			}
 			if ((strcasecmp(tag->key, cfg->tags[lib->depth]) == 0) && (strcmp(tag->value, name) == 0)) {
