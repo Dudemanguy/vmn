@@ -746,6 +746,9 @@ void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, ch
 	int *index = (int *)calloc(lib->length + 1, sizeof(int));
 	for (int i = 0; i < lib->length; ++i) {
 		for (int j = 0; j < lib->depth; ++j) {
+			if (j == 0) {
+				index[i] = 1;
+			}
 			AVDictionaryEntry *tag = NULL;
 			tag = av_dict_get(lib->dict[i], cfg->tags[j], tag, 0);
 			if (!tag) {
@@ -753,7 +756,9 @@ void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, ch
 				continue;
 			}
 			if ((strcasecmp(tag->key, cfg->tags[j]) == 0) && (strcmp(tag->value, lib->selections[j]) == 0)) {
-				index[i] = 1;
+				if (index[i]) {
+					index[i] = 1;
+				}
 			} else {
 				index[i] = 0;
 			}
@@ -763,6 +768,12 @@ void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, ch
 				AVDictionaryEntry *tag = NULL;
 				tag = av_dict_get(lib->dict[i], cfg->tags[lib->depth], tag, 0);
 				if (!tag) {
+					for (int k = lib->depth; k >= 0; --k) {
+						tag = av_dict_get(lib->dict[i], cfg->tags[k], tag, 0);
+						if (tag && (strcmp(lib->selections[k], tag->value) == 0)) {
+							mpv_queue(lib->ctx, lib->files[i]);
+						}
+					}
 					continue;
 				}
 				if ((strcasecmp(tag->key, cfg->tags[lib->depth]) == 0) && (strcmp(tag->value, names[j]) == 0)) {
@@ -778,6 +789,9 @@ void meta_path_find_single(struct vmn_config *cfg, struct vmn_library *lib, cons
 	int *index = (int *)calloc(lib->length + 1, sizeof(int));
 	for (int i = 0; i < lib->length; ++i) {
 		for (int j = 0; j < (lib->depth+1); ++j) {
+			if (j == 0) {
+				index[i] = 1;
+			}
 			AVDictionaryEntry *tag = NULL;
 			tag = av_dict_get(lib->dict[i], cfg->tags[j], tag, 0);
 			if (!tag) {
@@ -785,15 +799,16 @@ void meta_path_find_single(struct vmn_config *cfg, struct vmn_library *lib, cons
 				continue;
 			}
 			if ((strcasecmp(tag->key, cfg->tags[j]) == 0) && (strcmp(tag->value, lib->selections[j]) == 0)) {
-				index[i] = 1;
+				if (index[i]) {
+					index[i] = 1;
+				}
 			} else {
 				index[i] = 0;
 			}
 		}
-	}
-	for (int i = 0; i < lib->length; ++i ) {
-		AVDictionaryEntry *tag = NULL;
 		if (index[i]) {
+			AVDictionaryEntry *tag = NULL;
+			tag = av_dict_get(lib->dict[i], cfg->tags[lib->depth], tag, 0);
 			if (!tag) {
 				for (int j = lib->depth; j >= 0; --j) {
 					tag = av_dict_get(lib->dict[i], cfg->tags[j], tag, 0);
@@ -804,8 +819,7 @@ void meta_path_find_single(struct vmn_config *cfg, struct vmn_library *lib, cons
 				}
 				continue;
 			}
-			tag = av_dict_get(lib->dict[i], cfg->tags[lib->depth], tag, 0);
-			if (strcmp(tag->value, name) == 0) {
+			if ((strcasecmp(tag->key, cfg->tags[lib->depth]) == 0) && (strcmp(tag->value, name) == 0)) {
 				mpv_queue(lib->ctx, lib->files[i]);
 			}
 		}
