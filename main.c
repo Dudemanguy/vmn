@@ -775,6 +775,14 @@ void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, ch
 					status = regexec(&regex, lib->files[i], 0, NULL, 0);
 					if (status == 0) {
 						mpv_queue(lib->ctx, lib->files[i]);
+					} else {
+						for (int k = lib->depth; k >= 0; --k) {
+							tag = av_dict_get(lib->dict[i], cfg->tags[k], tag, 0);
+							if (tag && (strcmp(lib->selections[k], tag->value) == 0)) {
+								mpv_queue(lib->ctx, lib->files[i]);
+								break;
+							}
+						}
 					}
 					regfree(&regex);
 					continue;
@@ -819,6 +827,14 @@ void meta_path_find_single(struct vmn_config *cfg, struct vmn_library *lib, cons
 				status = regexec(&regex, lib->files[i], 0, NULL, 0);
 				if (status == 0) {
 					mpv_queue(lib->ctx, lib->files[i]);
+				} else {
+					for (int j = lib->depth; j >= 0; --j) {
+						tag = av_dict_get(lib->dict[i], cfg->tags[j], tag, 0);
+						if (tag && (strcmp(lib->selections[j], tag->value) == 0)) {
+							mpv_queue(lib->ctx, lib->files[i]);
+							break;
+						}
+					}
 				}
 				regfree(&regex);
 				continue;
