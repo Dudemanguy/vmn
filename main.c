@@ -331,24 +331,25 @@ char **get_next_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	}
 	int len = 0;
 	int match = 0;
+	int unknown = 0;
 	char **metadata = (char **)calloc(lib->length + 1, sizeof(char *));
 	for (int i = 0; i < lib->length; ++i ) {
 		AVDictionaryEntry *tag = NULL;
 		tag = av_dict_get(lib->dict[i], cfg->tags[lib->depth], tag, 0);
 		if (index[i]) {
 			if (!tag) {
-				if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+				if (!unknown && (!(strcmp(cfg->tags[lib->depth], "title") == 0))) {
+					metadata[len] = (char *)calloc(strlen(cfg->tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
+					strcpy(metadata[len], "Unknown ");
+					strcat(metadata[len], cfg->tags[lib->depth]);
+					unknown = 1;
+					++len;
+				}
+				if (!unknown && strcmp(cfg->tags[lib->depth], "title") == 0) {
 					char *filename = strrchr(lib->files[i], '/');
 					metadata[len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
 					strcpy(metadata[len], filename+1);
 					++len;
-					continue;
-				} else {
-					metadata[len] = (char *)calloc(strlen(cfg->tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
-					strcpy(metadata[len], "Unknown ");
-					strcat(metadata[len], cfg->tags[lib->depth]);
-					++len;
-					continue;
 				}
 				continue;
 			}
