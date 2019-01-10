@@ -1,0 +1,68 @@
+# vmn(1) completion
+
+_vmn() {
+	local cur prev words cword split
+    _init_completion -s || return
+
+	case $prev in
+		--input-mode)
+			COMPREPLY=( $(compgen -W 'yes no' -- $cur) )
+			return
+			;;
+		--library)
+			_filedir -d
+			return
+			;;
+		--mpv-cfg)
+			COMPREPLY=( $(compgen -W 'yes no' -- $cur) )
+			return
+			;;
+		--mpv-cfg-dir)
+			_filedir
+			return
+			;;
+		--sort)
+			compopt -o nospace
+			sort_opts='metadata filename track-number random none'
+			if [[ $cur == *,* ]]; then
+				local realcur prefix
+				realcur=${cur##*,}
+				prefix=${cur%,*}
+				COMPREPLY=( $(compgen -W "${sort_opts[*]}" -P "${prefix}," -- ${realcur}) )
+			else 
+				COMPREPLY=( $(compgen -W "${sort_opts[*]}" -- ${cur}) )
+			fi
+			return
+			;;
+		--tags)
+			compopt -o nospace
+			tags_opts='album album_artist artist date genre title track'
+			if [[ $cur == *,* ]]; then
+				local realcur prefix
+				realcur=${cur##*,}
+				prefix=${cur%,*}
+				COMPREPLY=( $(compgen -W "${tags_opts[*]}" -P "${prefix}," -- ${realcur}) )
+			else
+				COMPREPLY=( $(compgen -W "${tags_opts[*]}" -- ${cur}) )
+			fi
+			return
+			;;
+		--view)
+			COMPREPLY=( $(compgen -W 'file-path metadata song-only' -- $cur) )
+			return
+			;;
+	esac
+
+	opts="--input-mode=
+		--library=
+		--mpv-cfg=
+		--mpv-cfg-dir=
+		--sort=
+		--tags=
+		--view="
+	compopt -o nospace
+	COMPREPLY=( $(compgen -W "${opts[*]}" -- $cur) )
+	return
+}
+
+complete -F _vmn vmn

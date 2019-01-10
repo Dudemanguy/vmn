@@ -1,1 +1,2 @@
+option('bash-completions', type: 'boolean', value: true, description: 'Install with bash completions.')
 option('zsh-completions', type: 'boolean', value: true, description: 'Install with zsh completions.')
