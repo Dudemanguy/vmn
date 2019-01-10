@@ -1,10 +1,24 @@
 #compdef vmn
 
-_arguments \
-	'--input-mode=[show keycodes]' \
-	'--library=[music directory]' \
-	'--mpv-cfg=[accept mpv configuration]' \
-	'--mpv-cfg-dir=[mpv config file directory]' \
-	'--sort=[select sorting modes]' \
-	'--tags=[select tags]' \
-	'--view=[select view]'
+_vmn() {
+	local __boolean="(yes no)"
+	local __views="(file-path metadata song-only)"
+	_arguments \
+		'--input-mode=[show keycodes]:1:'"$__boolean" \
+		'--library=[music directory]:1:_dirs' \
+		'--mpv-cfg=[accept mpv configuration]:1:'"$__boolean" \
+		'--mpv-cfg-dir=[mpv config file directory]:1:_dirs' \
+		'--sort=[select sorting modes]':1:_sorting \
+		'--tags=[select tags]':1:_tagging \
+		'--view=[select view]:1:'"$__views"
+}
+
+_sorting() {
+	_values -s, opts metadata filename track-number random none
+}
+
+_tagging() {
+	_values -s, opts album album_artist artist date genre title track
+}
+
+_vmn "$@"
