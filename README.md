@@ -47,6 +47,7 @@ The default keybindings are the following.
 * start: `Enter`
 * visual mode: `v`
 * vmn quit: `q`
+* vmn refresh: `a`
 * voldown: `9`
 * volup: `0`
 

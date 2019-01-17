@@ -104,6 +104,9 @@ Like the main options, keybindings in vmn are defined in the configuration file 
 ``vmn-quit=<key>``\
   Exit vmn.
 
+``vmn-refresh=<key>``\
+  Deletes and reloads all ffmpeg metadata for the currently highlighted item.
+
 ``voldown=<key>``\
   Decrease volume.
 

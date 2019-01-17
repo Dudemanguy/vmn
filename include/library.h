@@ -10,6 +10,7 @@ void vmn_library_add(struct vmn_library *lib, char *entry);
 void vmn_library_destroy_meta(struct vmn_library *lib);
 void vmn_library_destroy_path(struct vmn_library *lib);
 void vmn_library_metadata(struct vmn_library *lib);
+void vmn_library_refresh(struct vmn_library *lib, char *tag);
 void vmn_library_selections_add(struct vmn_library *lib, const char *entry);
 void vmn_library_sort(struct vmn_library *lib);
 

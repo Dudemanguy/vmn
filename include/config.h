@@ -32,6 +32,7 @@ struct vmn_key {
 	int start;
 	int visual;
 	int vmn_quit;
+	int vmn_refresh;
 	int voldown;
 	int volup;
 };

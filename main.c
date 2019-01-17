@@ -683,6 +683,11 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		}
 	} else if (c == cfg->key.vmn_quit) {
 		++lib->vmn_quit;
+	} else if (c == cfg->key.vmn_refresh) {
+		if (cfg->view == V_DATA) {
+			vmn_library_refresh(lib, cfg->tags[lib->depth]);
+			vmn_library_sort(lib);
+		}
 	} else if (c == cfg->key.voldown) {
 		if (lib->mpv_active) {
 			const char *cmd[] = {"add", "volume", "-2", NULL};
@@ -700,6 +705,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 }
 
 void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, char **names, int n) {
+	char *cur = malloc(4096*sizeof(char));
 	char **split;
 	char *home = getenv("HOME"); 
 	const char *cfg_path = "/.config/vmn/cache";
@@ -708,7 +714,6 @@ void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, ch
 	strcat(path, cfg_path);
 	FILE *cache = fopen(path, "r");
 	for (int i = 0; i < lib->length; ++i) {
-		char *cur = (char *)calloc(4096, sizeof(char));
 		fgets(cur, 4096, cache);
 		split = line_split(cur);
 		int len = 0;
@@ -753,8 +758,8 @@ void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, ch
 		for (int j = 0; j < len; ++j) {
 			free(split[j]);
 		}
-		free(cur);
 		free(split);
+		free(cur);
 	}
 	free(path);
 }

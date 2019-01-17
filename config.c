@@ -378,6 +378,10 @@ struct vmn_key key_init(config_t *libcfg) {
 	if (!key.vmn_quit) {
 		key.vmn_quit = 'q';
 	}
+	key.vmn_refresh = read_cfg_key(libcfg, "vmn-refresh");
+	if (!key.vmn_refresh) {
+		key.vmn_refresh = 'a';
+	}
 	key.voldown = read_cfg_key(libcfg, "voldown");
 	if (!key.voldown) {
 		key.voldown = '9';
