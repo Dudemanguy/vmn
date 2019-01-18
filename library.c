@@ -328,6 +328,9 @@ void vmn_library_metadata(struct vmn_library *lib) {
 	size_t buffer_size;
 	int i = 0;
 	while (new[i]) {
+		if (i == 1000) {
+			printf("Storing a large amount of metadata into cache. This may take some time.\n");
+		}
 		struct stat st;
 		stat(new[i], &st);
 		buffer_size = st.st_size;
