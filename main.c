@@ -317,7 +317,7 @@ char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	for (int i = 0; i < file_len; ++i) {
 		fgets(cur, 4096, cache);
 		if (lib->selections[0]) {
-			prev = check_vmn_cache(lib, cur);
+			prev = check_vmn_cache(lib, cur, cfg->tags);
 			if (!prev) {
 				continue;
 			}
@@ -723,7 +723,7 @@ void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, ch
 			}
 		}
 		++len;
-		int prev = check_vmn_cache(lib, cur);
+		int prev = check_vmn_cache(lib, cur, cfg->tags);
 		if (prev) {
 			if (lib->unknown[lib->depth]) {
 				for (int j = 0; j < n; ++j) {
@@ -784,7 +784,7 @@ void meta_path_find_single(struct vmn_config *cfg, struct vmn_library *lib, cons
 			}
 		}
 		++len;
-		int prev = check_vmn_cache(lib, cur);
+		int prev = check_vmn_cache(lib, cur, cfg->tags);
 		if (prev) {
 			if (lib->unknown[lib->depth]) {
 				if (strcmp(cfg->tags[lib->depth], "title") == 0) {

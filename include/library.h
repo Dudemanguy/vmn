@@ -1,5 +1,5 @@
 struct vmn_library lib_init();
-int check_vmn_cache(struct vmn_library *lib, char *str);
+int check_vmn_cache(struct vmn_library *lib, char *str, char **tags);
 int ext_valid(char *ext);
 char *get_file_ext(const char *file);
 char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name);

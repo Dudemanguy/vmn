@@ -62,7 +62,7 @@ char **line_split(char *str) {
 	return arr;
 }
 
-int check_vmn_cache(struct vmn_library *lib, char *str) {
+int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
 	char **split = line_split(str);
 	int len = 0;
 	for (int i = 0; i < strlen(str); ++i) {
@@ -78,7 +78,7 @@ int check_vmn_cache(struct vmn_library *lib, char *str) {
 		}
 		for (int j = 0; j < len; ++j) {
 			match = 0;
-			if (strcmp(lib->selections[i], split[j]) == 0) {
+			if ((strcmp(lib->selections[i], split[j]) == 0) && (strcasecmp(tags[i], split[j-1]) == 0)) {
 				j = 0;
 				match = 1;
 				break;
