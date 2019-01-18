@@ -99,7 +99,7 @@ int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
 	}
 }
 
-char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name) {
+char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name, char *tag) {
 	char *out = (char *)calloc(1, sizeof(char));
 	char **split = line_split(line);
 	int len = 0;
@@ -110,7 +110,7 @@ char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name) {
 	}
 	++len;
 	for (int i = 0; i < len; ++i) {
-		if (strcmp(split[i], name) == 0) {
+		if ((strcmp(split[i], name) == 0) && (strcasecmp(tag, split[i-1]) == 0)) {
 			out = (char *)realloc(out,sizeof(char)*(strlen(split[0])+1));
 			strcpy(out, split[0]);
 		}

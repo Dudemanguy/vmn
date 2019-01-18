@@ -729,7 +729,7 @@ void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, ch
 				for (int j = 0; j < n; ++j) {
 					int known = is_known(cfg->tags[lib->depth], cur);
 					if (known) {
-						char *file = get_vmn_cache_path(lib, cur, names[j]);
+						char *file = get_vmn_cache_path(lib, cur, names[j], cfg->tags[lib->depth]);
 						if (!(strcmp(file, "") == 0)) {
 							mpv_queue(lib->ctx, file);
 						}
@@ -747,7 +747,7 @@ void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, ch
 				}
 			} else {
 				for (int j = 0; j < n; ++j) {
-					char *file = get_vmn_cache_path(lib, cur, names[j]);
+					char *file = get_vmn_cache_path(lib, cur, names[j], cfg->tags[lib->depth]);
 					if (!(strcmp(file, "") == 0)) {
 						mpv_queue(lib->ctx, file);
 					}
@@ -796,7 +796,7 @@ void meta_path_find_single(struct vmn_config *cfg, struct vmn_library *lib, cons
 					mpv_queue(lib->ctx, split[0]);
 				}
 			} else {
-				char *file = get_vmn_cache_path(lib, cur, name_dup);
+				char *file = get_vmn_cache_path(lib, cur, name_dup, cfg->tags[lib->depth]);
 				if (!(strcmp(file, "") == 0)) {
 					mpv_queue(lib->ctx, file);
 				}

@@ -2,7 +2,7 @@ struct vmn_library lib_init();
 int check_vmn_cache(struct vmn_library *lib, char *str, char **tags);
 int ext_valid(char *ext);
 char *get_file_ext(const char *file);
-char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name);
+char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name, char *tag);
 char **line_split(char *str);
 int qstrcmp(const void *a, const void *b);
 char *read_vmn_cache(char *str, char *match);
