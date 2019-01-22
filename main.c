@@ -25,8 +25,7 @@ char ***get_lib_dir(const char *library, struct vmn_library *lib);
 char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib);
 int get_music_files(const char *library, struct vmn_library *lib);
 void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
-void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, char **names, int n);
-void meta_path_find_single(struct vmn_config *cfg, struct vmn_library *lib, const char *name);
+void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name);
 int move_menu_meta_backward(struct vmn_library *lib);
 int move_menu_path_backward(struct vmn_library *lib);
 int move_menu_meta_forward(struct vmn_config *cfg, struct vmn_library *lib);
@@ -647,29 +646,18 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			}
 		}
 		if (cfg->view == V_DATA) {
-			char **names = (char **)calloc(item_count(menu), sizeof(char*));
 			for (int i = 0; i < item_count(menu); ++i) {
 				if (item_value(items[i])) {
 					name = item_name(items[i]);
-					char *name_dup = strdup(name);
-					names[n] = (char *)calloc(strlen(name) + 1, sizeof(char));
-					strcpy(names[n], name_dup);
-					free(name_dup);
+					meta_path_find(cfg, lib, name);
 					++n;
 				}
-				names[n] = '\0';
 			}
-			if (n) {
-				meta_path_find_multiple(cfg, lib, names, n);
-			} else {
+			if (!n) {
 				ITEM *cur = current_item(menu);
 				name = item_name(cur);
-				meta_path_find_single(cfg, lib, name);
+				meta_path_find(cfg, lib, name);
 			}
-			for (int i = 0; i < item_count(menu); ++i) {
-				free(names[i]);
-			}
-			free(names);
 		}
 	} else if (c == cfg->key.visual) {
 		if (cfg->select) {
@@ -704,67 +692,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 	wrefresh(menu_win(lib->menu[lib->depth]));
 }
 
-void meta_path_find_multiple(struct vmn_config *cfg, struct vmn_library *lib, char **names, int n) {
-	char *cur = malloc(4096*sizeof(char));
-	char **split;
-	char *home = getenv("HOME"); 
-	const char *cfg_path = "/.config/vmn/cache";
-	char *path = malloc(strlen(home) + strlen(cfg_path) + 1);
-	strcpy(path, home);
-	strcat(path, cfg_path);
-	FILE *cache = fopen(path, "r");
-	for (int i = 0; i < lib->length; ++i) {
-		fgets(cur, 4096, cache);
-		split = line_split(cur);
-		int len = 0;
-		for (int i = 0; i < strlen(cur); ++ i) {
-			if (cur[i] == '\t') {
-				++len;
-			}
-		}
-		++len;
-		int prev = check_vmn_cache(lib, cur, cfg->tags);
-		if (prev) {
-			if (lib->unknown[lib->depth]) {
-				for (int j = 0; j < n; ++j) {
-					int known = is_known(cfg->tags[lib->depth], cur);
-					if (known) {
-						char *file = get_vmn_cache_path(lib, cur, names[j], cfg->tags[lib->depth]);
-						if (!(strcmp(file, "") == 0)) {
-							mpv_queue(lib->ctx, file);
-						}
-						free(file);
-					} else {
-						if (strcmp(cfg->tags[lib->depth], "title") == 0) {
-							char *filename = strrchr(split[0], '/');
-							if (strcmp(filename+1, names[j]) == 0) {
-								mpv_queue(lib->ctx, split[0]);
-							}
-						} else {
-							mpv_queue(lib->ctx, split[0]);
-						}
-					}
-				}
-			} else {
-				for (int j = 0; j < n; ++j) {
-					char *file = get_vmn_cache_path(lib, cur, names[j], cfg->tags[lib->depth]);
-					if (!(strcmp(file, "") == 0)) {
-						mpv_queue(lib->ctx, file);
-					}
-					free(file);
-				}
-			}
-		}
-		for (int j = 0; j < len; ++j) {
-			free(split[j]);
-		}
-		free(split);
-		free(cur);
-	}
-	free(path);
-}
-
-void meta_path_find_single(struct vmn_config *cfg, struct vmn_library *lib, const char *name) {
+void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name) {
 	char *cur = malloc(4096*sizeof(char));
 	char **split;
 	char *home = getenv("HOME"); 
