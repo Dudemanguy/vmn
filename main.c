@@ -315,6 +315,10 @@ char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	char *temp;
 	for (int i = 0; i < file_len; ++i) {
 		fgets(cur, 4096, cache);
+		int in_lib = check_vmn_lib(lib, cur, cfg->lib_dir);
+		if (!in_lib) {
+			continue;
+		}
 		if (lib->selections[0]) {
 			prev = check_vmn_cache(lib, cur, cfg->tags);
 			if (!prev) {
