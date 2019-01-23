@@ -540,7 +540,7 @@ void vmn_library_refresh(struct vmn_library *lib, char *tag) {
 	vmn_library_metadata(lib);
 }
 
-void vmn_library_sort(struct vmn_library *lib) {
+void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 	char *home = getenv("HOME"); 
 	const char *cfg = "/.config/vmn/cache";
 	char *path = malloc(strlen(home) + strlen(cfg) + 1);
@@ -549,6 +549,7 @@ void vmn_library_sort(struct vmn_library *lib) {
 	FILE *cache = fopen(path, "r");
 	char *cur = (char *)calloc(4096, sizeof(char));
 	int file_len = 0;
+	int file_newlen = 0;
 	char c;
 	while ((c = fgetc(cache)) != EOF) {
 		if (c == '\n') {
@@ -559,17 +560,42 @@ void vmn_library_sort(struct vmn_library *lib) {
 	char **files = (char **)calloc(file_len, sizeof(char *));
 	for (int i = 0; i < file_len; ++i) {
 		fgets(cur, 4096, cache);
-		files[i] = (char *)malloc(sizeof(char)*(strlen(cur)+1));
-		strcpy(files[i], cur);
+		char **split = line_split(cur);
+		int len = 0;
+		for (int j = 0; j < strlen(cur); ++j) {
+			if (cur[j] == '\t') {
+				++len;
+			}
+		}
+		int match = 0;
+		int in_lib = check_vmn_lib(lib, cur, lib_dir);
+		if (in_lib) {
+			for (int j = 0; j < lib->length; ++j) {
+				if (strcmp(split[0], lib->files[j]) == 0) {
+					match = 1;
+					break;
+				}
+			}
+			if (!match) {
+				continue;
+			}
+		}
+		files[file_newlen] = (char *)malloc(sizeof(char)*(strlen(cur)+1));
+		strcpy(files[file_newlen], cur);
+		++file_newlen;
+		for (int j = 0; j < len; ++j) {
+			free(split[j]);
+		}
+		free(split);
 	}
 	fclose(cache);
-	qsort(files, file_len, sizeof(char *), qstrcmp);
+	qsort(files, file_newlen, sizeof(char *), qstrcmp);
 	const char *temp = "/.config/vmn/cache_tmp";
 	char *temp_path = malloc(strlen(home) + strlen(temp) + 1);
 	strcpy(temp_path, home);
 	strcat(temp_path, temp);
 	FILE *cache_temp = fopen(temp_path, "a");
-	for (int i = 0; i < file_len; ++i) {
+	for (int i = 0; i < file_newlen; ++i) {
 		fprintf(cache_temp, "%s", files[i]);
 	}
 	fclose(cache_temp);

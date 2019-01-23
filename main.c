@@ -46,6 +46,9 @@ int main(int argc, char *argv[]) {
 	int invalid = get_music_files(cfg.lib_dir, &lib);
 	qsort(lib.files, lib.length, sizeof(char *), qstrcmp);
 	if (invalid) {
+		if (cfg.view == V_DATA) {
+			vmn_library_sort(&lib, cfg.lib_dir);
+		}
 		vmn_config_destroy(&cfg);
 		for (int i = 0; i < lib.length; ++i) {
 			free(lib.files[i]);
@@ -67,7 +70,7 @@ int main(int argc, char *argv[]) {
 		lib.entries = (char ****)calloc(1, sizeof(char ***));
 		lib.entries[0] = (char ***)calloc(1, sizeof(char **));
 		vmn_library_metadata(&lib);
-		vmn_library_sort(&lib);
+		vmn_library_sort(&lib, cfg.lib_dir);
 		lib.selections = (char **)calloc(cfg.tags_len, sizeof(char *));
 		lib.entries[0][0] = get_metadata(&cfg, &lib);
 		lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
@@ -719,7 +722,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 	} else if (c == cfg->key.vmn_refresh) {
 		if (cfg->view == V_DATA) {
 			vmn_library_refresh(lib, cfg->tags[lib->depth]);
-			vmn_library_sort(lib);
+			vmn_library_sort(lib, cfg->lib_dir);
 		}
 	} else if (c == cfg->key.voldown) {
 		if (lib->mpv_active) {
