@@ -41,7 +41,7 @@ The default keybindings are the following.
 * queue all: `y`
 * queue clear: `u`
 * quit: `Ctrl+[`
-* search mode: `/`
+* search: `/`
 * search next: `n`
 * search prev: `N`
 * start: `Enter`

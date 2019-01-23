@@ -7,25 +7,25 @@ Options for the mpv client cannot be set as command line arguments and must be s
 ### Main Options
 
 ``--input-mode<yes|no>``\
-   Launches vmn in an interactive input mode. This returns the integer value of keys pressed on screen. This can be useful if you want to set a keybind but do not know the correct          keycode to use.
+   Show an interactive prompt for returning ASCII keycodes. Can be useful for setting keybindings. Defaults to `no`.
 
 ``--library=<directory>``\
-   Tells vmn which parent directory to search for audio files. If this option is omitted or the directory is invalid, this defaults to `$HOME/Music`.
+   Select the parent directory to search for audio files. If the path is omitted or invalid, this defaults to `$HOME/Music`.
 
 ``--mpv-cfg=<yes|no>``\
-   Tells the mpv client whether or not it is allowed to accept configuration. This defaults to `yes`.
+   Tells the mpv client whether or not to accept configuration. This defaults to `yes`.
 
 ``--mpv-cfg-dir=<directory>``\
-   Tells the mpv client which directory to search for a configuration file. It will look for the configuration file the same way mpv does. `config` and `mpv.conf` are both valid and the    latter takes priority over the former if both exists. By default, this directory is `$HOME/.config/vmn` which means that mpv configuration values specified in the vmn configuration      file are accepted. This option does nothing if `mpv-cfg` is set to `no`.
+   Tells the mpv client which directory to search for a configuration file. It searches for a configuration file in the same manner as mpv (i.e. `config` and `mpv.conf` are both valid). By default, the path searched is `$HOME/.config/vmn` which means that mpv configuration values specified in the vmn configuration file are valid. This does nothing if `mpv-cfg` is set to `no`.
 
 ``--sort=<metadata,filename,track-number,random,none>``\
-   A comma, separated list (spaces are not allowed) of sorting modes to be used with each metadata tag. The sort array must be the same length as the tag array or it will do nothing.       Currently, only metadata sorting and no sorting work. Metadata sorting simply alphabetically sorts the menu based on the tag names. By default, metadata sorting is used for everything   except the "title" tag.
+   A comma, separated list (spaces are not allowed) of sorting modes to be used with each metadata tag. The sort array must be the same length as the tag array or it will do nothing. Currently, only metadata sorting and no sorting work. Metadata sorting sorts alphabetically based on the tag names. By default, metadata sorting is used for everything except the *title* tag.
 
 ``--tags=<metadata,tags>``\
-   A comma, separated list of metadata values (spaces are not allowed). vmn will read all valid music files and attempt to organize the curses interface based on the entered tag values.    This only has an effect if the metadata view is used. By default, the organization (from left to right) is "artist, album, title."
+   A comman, separated list of metadata values (spaces are not allowed). vmn will read all music files and attempt to organize the curses interface based on the entered tag values. This only has an effect if the metadata view is used. By default, the organization (from let to right) is `artist`,`album`,`title`.
 
 ``--view=<file-path|metadata|song-only>``\
-   Controls which view to use for vmn. This defaults to `file-path` which creates a navigable menus that go up and down directories that contain valid audio files. The `metadata` view      uses ffmpeg to read metadata off of every file and organizes the menu based on it. The `song-only` view outputs the complete paths to all valid audio files found in alphabetical         order. Note that metadata view can be very slow off of a cold start.
+   Controls which view to use for vmn. This defaults to `metadata` which creates navigable menus that are built via the metadata in the valid audio files. The `file-path` view organizes itself based on the directory structure, and the `song-only` view outputs the complete paths of all valid audio files found in alphabetical order. Note that initially storing metadata from a large amount of files into cache can be a tad slow.
 
 ## Keybindings
 
@@ -42,13 +42,13 @@ Like the main options, keybindings in vmn are defined in the configuration file 
   Jump to the last item in the menu.
 
 ``move-backward=<key>``\
-  Move up in the directory and destroy the rightmost menu (only valid in `file-path` view).
+  Move back a menu and destroy the rightmost menu (not valid in *song-only* view).
 
 ``move-down=<key>``\
   Move down one item in the menu.
 
 ``move-forward=<key>``\
-  Move down in the directory and into a new menu (only valid in `file-path` view).
+  Move forward into a new menu (not valid in *song-only* view).
 
 ``move-up=<key>``\
   Move up one item in the menu.
