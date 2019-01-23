@@ -535,12 +535,12 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		} else if (strcmp(viewcfg, "song-only") == 0) {
 			cfg.view = V_SONG;
 		} else {
-			cfg.view = V_PATH;
+			cfg.view = V_DATA;
 			printf("Invalid view specified. Falling back to default.\n");
 		}
 	} else {
 		if (!config_lookup_string(&libcfg, "view", &viewcfg)) {
-			cfg.view = V_PATH;
+			cfg.view = V_DATA;
 		} else {
 			if (strcmp(viewcfg, "file-path") == 0) {
 				cfg.view = V_PATH;
@@ -549,7 +549,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 			} else if (strcmp(viewcfg, "song-only") == 0) {
 				cfg.view = V_SONG;
 			} else {
-				cfg.view = V_PATH;
+				cfg.view = V_DATA;
 				printf("Invalid view specified. Falling back to default.\n");
 			}
 		}
