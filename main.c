@@ -69,7 +69,6 @@ int main(int argc, char *argv[]) {
 		vmn_library_metadata(&lib);
 		vmn_library_sort(&lib);
 		lib.selections = (char **)calloc(cfg.tags_len, sizeof(char *));
-		lib.unknown = (int *)calloc(cfg.tags_len, sizeof(int));
 		lib.entries[0][0] = get_metadata(&cfg, &lib);
 		lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
 		lib.items[0] = create_meta_items(lib.entries[0][0]);
@@ -148,7 +147,6 @@ int main(int argc, char *argv[]) {
 			free(lib.selections[i]);
 		}
 		free(lib.selections);
-		free(lib.unknown);
 	}
 	if (cfg.view == V_SONG) {
 		for (int i = 0; i < lib.length; ++i) {
@@ -310,9 +308,13 @@ char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	int len = 0;
 	int match = 0;
 	int prev;
-	int unknown = 0;
+	int tag_exist = 0;
+	int unknown_len = 16;
+	int *unknown = (int *)calloc(unknown_len, sizeof(int));
+	int unknown_pos = 0;
 	char **metadata = (char **)calloc(lib->length + 1, sizeof(char *));
 	char *temp;
+	int valid_sel = 0;
 	for (int i = 0; i < file_len; ++i) {
 		fgets(cur, 4096, cache);
 		int in_lib = check_vmn_lib(lib, cur, cfg->lib_dir);
@@ -324,27 +326,38 @@ char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			if (!prev) {
 				continue;
 			}
+			if (!valid_sel) {
+				valid_sel = is_sel(lib->selections[lib->depth - 1], cur);
+			}
+			int prev_known = is_known(cfg->tags[lib->depth - 1], cur);
+			if (!prev_known) {
+				if (unknown_pos == unknown_len) {
+					unknown_len = unknown_len*2;
+					unknown = (int *)realloc(unknown, unknown_len*sizeof(int));
+				}
+				unknown[unknown_pos] = i;
+				++unknown_pos;
+				continue;
+			}
 		}
-		temp = read_vmn_cache(cur, cfg->tags[lib->depth]);
-		if (strcmp(temp, "") == 0) {
-			free(temp);
+		int known = is_known(cfg->tags[lib->depth], cur);
+		if (!known) {
 			if (strcmp(cfg->tags[lib->depth], "title") == 0) {
-				lib->unknown[lib->depth] = 1;
 				char *filename = strrchr(lib->files[i], '/');
 				metadata[len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
 				strcpy(metadata[len], filename+1);
 				++len;
 			} else {
-				if (!unknown) {
-					lib->unknown[lib->depth] = 1;
+				if (!tag_exist) {
 					metadata[len] = (char *)calloc(strlen(cfg->tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
 					strcpy(metadata[len], "Unknown ");
 					strcat(metadata[len], cfg->tags[lib->depth]);
-					unknown = 1;
+					tag_exist = 1;
 					++len;
 				}
 			}
 		} else {
+			temp = read_vmn_cache(cur, cfg->tags[lib->depth]);
 			for (int j = 0; j < len; ++j) {
 				if (strcmp(temp, metadata[j]) == 0) {
 					match = 1;
@@ -356,7 +369,6 @@ char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 				free(temp);
 				continue;
 			} else {
-				lib->unknown[lib->depth] = 0;
 				metadata[len] = malloc(sizeof(char *)*(strlen(temp)+1));
 				strcpy(metadata[len], temp);
 				++len;
@@ -364,8 +376,54 @@ char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			}
 		}
 	}
+	if (unknown_pos && !valid_sel) {
+		rewind(cache);
+		unknown_pos = 0;
+		for (int i = 0; i < file_len; ++i) {
+			fgets(cur, 4096, cache);
+			if (i == unknown[unknown_pos]) {
+				++unknown_pos;
+				int known = is_known(cfg->tags[lib->depth], cur);
+				if (!known) {
+					if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+						char *filename = strrchr(lib->files[i], '/');
+						metadata[len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
+						strcpy(metadata[len], filename+1);
+						++len;
+					} else {
+						if (!tag_exist) {
+							metadata[len] = (char *)calloc(strlen(cfg->tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
+							strcpy(metadata[len], "Unknown ");
+							strcat(metadata[len], cfg->tags[lib->depth]);
+							tag_exist = 1;
+							++len;
+						}
+					}
+				} else {
+					temp = read_vmn_cache(cur, cfg->tags[lib->depth]);
+					for (int j = 0; j < len; ++j) {
+						if (strcmp(temp, metadata[j]) == 0) {
+							match = 1;
+							break;
+						}
+					}
+					if (match) {
+						match = 0;
+						free(temp);
+						continue;
+					} else {
+						metadata[len] = malloc(sizeof(char *)*(strlen(temp)+1));
+						strcpy(metadata[len], temp);
+						++len;
+						free(temp);
+					}
+				}
+			}
+		}
+	}
 	free(cur);
 	free(path);
+	free(unknown);
 	metadata[len] = '\0';
 	metadata = (char **)realloc(metadata,sizeof(char *)*(len+1));
 	sort_select(cfg, metadata, len, lib->depth);
@@ -428,23 +486,6 @@ void input_mode(struct vmn_config *cfg) {
 		clear();
 		refresh();
 		endwin();
-}
-
-int is_known(char *tag, char *line) {
-	char **split = line_split(line);
-	int len = 0;
-	for (int i = 0; i < strlen(line); ++i) {
-		if (line[i] == '\t') {
-			++len;
-		}
-	}
-	++len;
-	for (int i = 0; i < len; ++i) {
-		if (strcasecmp(split[i], tag) == 0) {
-			return 1;
-		}
-	}
-	return 0;
 }
 
 void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib) {
@@ -718,7 +759,8 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 		++len;
 		int prev = check_vmn_cache(lib, cur, cfg->tags);
 		if (prev) {
-			if (lib->unknown[lib->depth]) {
+			int known = is_known(cfg->tags[lib->depth], cur);
+			if (!known) {
 				if (strcmp(cfg->tags[lib->depth], "title") == 0) {
 					char *filename = strrchr(split[0], '/');
 					if (strcmp(filename+1, name) == 0) {

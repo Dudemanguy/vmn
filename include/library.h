@@ -4,6 +4,8 @@ int check_vmn_lib(struct vmn_library *lib, char *line, char *lib_dir);
 int ext_valid(char *ext);
 char *get_file_ext(const char *file);
 char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name, char *tag);
+int is_known(char *tag, char *line);
+int is_sel(char *sel, char *line);
 char **line_split(char *str);
 int qstrcmp(const void *a, const void *b);
 char *read_vmn_cache(char *str, char *match);
@@ -26,6 +28,5 @@ struct vmn_library {
 	int mpv_active;
 	int mpv_kill;
 	char **selections;
-	int *unknown;
 	int vmn_quit;
 };

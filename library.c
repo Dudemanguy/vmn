@@ -72,21 +72,21 @@ int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
 		}
 	}
 	++len;
-	int match = 0;
+	int match;
+	int known;
 	for (int i = 0; i < lib->depth; ++i) {
-		if (lib->unknown[i]) {
+		match = 0;
+		known = is_known(tags[i], str);
+		if (!known) {
+			match = 1;
 			continue;
 		}
 		for (int j = 0; j < len; ++j) {
-			match = 0;
 			if ((strcmp(lib->selections[i], split[j]) == 0) && (strcasecmp(tags[i], split[j-1]) == 0)) {
 				j = 0;
 				match = 1;
 				break;
 			}
-		}
-		if (!match) {
-			break;
 		}
 	}
 	for (int i = 0; i < len; ++i) {
@@ -145,6 +145,60 @@ char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name, char *
 	}
 	free(split);
 	return out;
+}
+
+int is_known(char *tag, char *line) {
+	char **split = line_split(line);
+	int known = 0;
+	int len = 0;
+	for (int i = 0; i < strlen(line); ++i) {
+		if (line[i] == '\t') {
+			++len;
+		}
+	}
+	++len;
+	for (int i = 0; i < len; ++i) {
+		if (strcasecmp(split[i], tag) == 0) {
+			known = 1;
+			break;
+		}
+	}
+	for (int i = 0; i < len; ++i) {
+		free(split[i]);
+	}
+	free(split);
+	if (known) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+int is_sel(char *sel, char *line) {
+	char **split = line_split(line);
+	int valid = 0;
+	int len = 0;
+	for (int i = 0; i < strlen(line); ++i) {
+		if (line[i] == '\t') {
+			++len;
+		}
+	}
+	++len;
+	for (int i = 0; i < len; ++i) {
+		if (strcmp(split[i], sel) == 0) {
+			valid = 1;
+			break;
+		}
+	}
+	for (int i = 0; i < len; ++i) {
+		free(split[i]);
+	}
+	free(split);
+	if (valid) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 int qstrcmp(const void *a, const void *b) {
