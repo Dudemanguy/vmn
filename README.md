@@ -9,6 +9,7 @@ Make sure you have the following dependencies installed.
 * meson
 * mpv
 * ncurses
+* [scdoc](https://git.sr.ht/~sircmpwn/scdoc) (optional: for man pages)
 
 After checking out the source, navigate to the directory, and then simply run.
 ```
