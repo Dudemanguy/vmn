@@ -83,10 +83,12 @@ int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
 		}
 		for (int j = 0; j < len; ++j) {
 			if ((strcmp(lib->selections[i], split[j]) == 0) && (strcasecmp(tags[i], split[j-1]) == 0)) {
-				j = 0;
 				match = 1;
 				break;
 			}
+		}
+		if (!match) {
+			break;
 		}
 	}
 	for (int i = 0; i < len; ++i) {
