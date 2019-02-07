@@ -754,7 +754,7 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 		fgets(cur, 4096, cache);
 		split = line_split(cur);
 		int len = 0;
-		for (int i = 0; i < strlen(cur); ++ i) {
+		for (int i = 0; i < strlen(cur); ++i) {
 			if (cur[i] == '\t') {
 				++len;
 			}
