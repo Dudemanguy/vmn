@@ -210,27 +210,50 @@ int qstrcmp(const void *a, const void *b) {
 }
 
 char *read_vmn_cache(char *str, char *match) {
-		char *out = (char *)calloc(1, sizeof(char));
-		char **split = line_split(str);
-		int len = 0;
-		for (int i = 0; i < strlen(str); ++i) {
-			if (str[i] == '\t') {
-				++len;
-			}
+	char *out = (char *)calloc(1, sizeof(char));
+	char **split = line_split(str);
+	int len = 0;
+	for (int i = 0; i < strlen(str); ++i) {
+		if (str[i] == '\t') {
+			++len;
 		}
-		++len;
-		for (int i = 0; i < len; ++i) {
-			if (strcasecmp(split[i], match) == 0) {
-				out = (char *)realloc(out,sizeof(char)*(strlen(split[i+1])+1));
-				strcpy(out, split[i+1]);
-				break;
-			}
+	}
+	++len;
+	for (int i = 0; i < len; ++i) {
+		if (strcasecmp(split[i], match) == 0) {
+			out = (char *)realloc(out,sizeof(char)*(strlen(split[i+1])+1));
+			strcpy(out, split[i+1]);
+			break;
 		}
-		for (int i = 0; i < len; ++i) {
-			free(split[i]);
+	}
+	for (int i = 0; i < len; ++i) {
+		free(split[i]);
+	}
+	free(split);
+	return out;
+}
+
+int read_vmn_cache_int(char *str, char *match) {
+	int out;
+	char **split = line_split(str);
+	int len = 0;
+	for (int i = 0; i < strlen(str); ++i) {
+		if (str[i] == '\t') {
+			++len;
 		}
-		free(split);
-		return out;
+	}
+	++len;
+	for (int i = 0; i < len; ++i) {
+		if (strcasecmp(split[i], match) == 0) {
+			out = atoi(split[i+1]);
+			break;
+		}
+	}
+	for (int i = 0; i < len; ++i) {
+		free(split[i]);
+	}
+	free(split);
+	return out;
 }
 
 struct vmn_library lib_init() {

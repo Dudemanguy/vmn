@@ -9,6 +9,7 @@ int is_sel(char *sel, char *line);
 char **line_split(char *str);
 int qstrcmp(const void *a, const void *b);
 char *read_vmn_cache(char *str, char *match);
+int read_vmn_cache_int(char *str, char *match);
 void vmn_library_add(struct vmn_library *lib, char *entry);
 void vmn_library_destroy_meta(struct vmn_library *lib);
 void vmn_library_destroy_path(struct vmn_library *lib);

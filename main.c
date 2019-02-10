@@ -25,7 +25,7 @@ char ***get_lib_dir(const char *library, struct vmn_library *lib);
 char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib);
 int get_music_files(const char *library, struct vmn_library *lib);
 void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
-void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name);
+void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name, int index);
 int move_menu_meta_backward(struct vmn_library *lib);
 int move_menu_path_backward(struct vmn_library *lib);
 int move_menu_meta_forward(struct vmn_config *cfg, struct vmn_library *lib);
@@ -362,7 +362,7 @@ char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 		} else {
 			temp = read_vmn_cache(cur, cfg->tags[lib->depth]);
 			for (int j = 0; j < len; ++j) {
-				if (strcmp(temp, metadata[j]) == 0) {
+				if ((strcmp(temp, metadata[j]) == 0) && (strcmp(cfg->tags[lib->depth], "title") != 0)) {
 					match = 1;
 					break;
 				}
@@ -697,14 +697,15 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			for (int i = 0; i < item_count(menu); ++i) {
 				if (item_value(items[i])) {
 					name = item_name(items[i]);
-					meta_path_find(cfg, lib, name);
+					meta_path_find(cfg, lib, name, i);
 					++n;
 				}
 			}
 			if (!n) {
 				ITEM *cur = current_item(menu);
+				int index = item_index(cur);
 				name = item_name(cur);
-				meta_path_find(cfg, lib, name);
+				meta_path_find(cfg, lib, name, index);
 			}
 		}
 	} else if (c == cfg->key.visual) {
@@ -740,7 +741,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 	wrefresh(menu_win(lib->menu[lib->depth]));
 }
 
-void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name) {
+void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name, int index) {
 	char *cur = malloc(4096*sizeof(char));
 	char **split;
 	char *home = getenv("HOME"); 
@@ -773,6 +774,15 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 					mpv_queue(lib->ctx, split[0]);
 				}
 			} else {
+				if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+					int track_known = is_known(cfg->tags[lib->depth], cur);
+					if (track_known) {
+						int track_number = read_vmn_cache_int(cur, "track");
+						if (track_number != index+1) {
+							continue;
+						}
+					}
+				}
 				char *file = get_vmn_cache_path(lib, cur, name_dup, cfg->tags[lib->depth]);
 				if (!(strcmp(file, "") == 0)) {
 					mpv_queue(lib->ctx, file);
