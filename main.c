@@ -107,6 +107,9 @@ int main(int argc, char *argv[]) {
 	lib.ctx = mpv_generate(&cfg);
 	while (1) {
 		mpv_event *event = mpv_wait_event(lib.ctx, 0);
+		nodelay(win, TRUE);
+		c = wgetch(win);
+		key_event(c, lib.menu[lib.depth], lib.items[lib.depth], &cfg, &lib);
 		if (event->event_id == MPV_EVENT_SHUTDOWN) {
 			mpv_terminate_destroy(lib.ctx);
 			lib.mpv_active = 0;
@@ -120,9 +123,6 @@ int main(int argc, char *argv[]) {
 				lib.ctx = mpv_generate(&cfg);
 			}
 		}
-		nodelay(win, TRUE);
-		c = wgetch(win);
-		key_event(c, lib.menu[lib.depth], lib.items[lib.depth], &cfg, &lib);
 		if (cfg.view == V_DATA) {
 			ITEM *cur = current_item(lib.menu[lib.depth]);
 			const char *name = item_name(cur);
