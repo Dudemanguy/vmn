@@ -120,6 +120,7 @@ int main(int argc, char *argv[]) {
 				lib.ctx = mpv_generate(&cfg);
 			}
 		}
+		nodelay(win, TRUE);
 		c = wgetch(win);
 		key_event(c, lib.menu[lib.depth], lib.items[lib.depth], &cfg, &lib);
 		if (cfg.view == V_DATA) {
