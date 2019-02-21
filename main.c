@@ -34,7 +34,9 @@ mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
 int path_in_lib(char *path, struct vmn_library *lib);
 char *remove_char(char *str);
-void sort_select(struct vmn_config *cfg, char **metadata, int len, int depth);
+void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char **metadata, int len);
+int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char **metadata, int len);
+void tracksort(char **metadata, int **order, int len);
 
 int main(int argc, char *argv[]) {
 	setlocale(LC_CTYPE, "");
@@ -430,7 +432,7 @@ char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	free(unknown);
 	metadata[len] = '\0';
 	metadata = (char **)realloc(metadata,sizeof(char *)*(len+1));
-	sort_select(cfg, metadata, len, lib->depth);
+	sort_select(cfg, lib, metadata, len);
 	return metadata;
 }
 
@@ -952,13 +954,115 @@ char *remove_char(char *str) {
 	return remove;
 }
 
-void sort_select(struct vmn_config *cfg, char **metadata, int len, int depth) {
-	if (cfg->sort[depth] == S_DATA) {
+void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char **metadata, int len) {
+	if (cfg->sort[lib->depth] == S_DATA) {
 		qsort(metadata, len, sizeof(char *), qstrcmp);
-	} else if (cfg->sort[depth] == S_FILE) {
-	} else if (cfg->sort[depth] == S_NONE) {
+	} else if (cfg->sort[lib->depth] == S_FILE) {
+	} else if (cfg->sort[lib->depth] == S_NONE) {
 		;
-	} else if (cfg->sort[depth] == S_NUMB) {
-	} else if (cfg->sort[depth] == S_RAND) {
+	} else if (cfg->sort[lib->depth] == S_NUMB) {
+		if (strcasecmp(cfg->tags[lib->depth], "title") == 0) {
+			int **order = trackorder(cfg, lib, metadata, len);
+			tracksort(metadata, order, len);
+			for (int i = 0; i < len; ++i) {
+				free(order[i]);
+			}
+			free(order);
+		}
+	} else if (cfg->sort[lib->depth] == S_RAND) {
+	}
+}
+
+int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char **metadata, int len) {
+	char *cur = malloc(4096*sizeof(char));
+	char *home = getenv("HOME"); 
+	const char *cfg_path = "/.config/vmn/cache";
+	char *path = malloc(strlen(home) + strlen(cfg_path) + 1);
+	strcpy(path, home);
+	strcat(path, cfg_path);
+	FILE *cache = fopen(path, "r");
+	int **positions = (int **)malloc(sizeof(int *)*len);
+	for (int i = 0; i < len; ++i) {
+		positions[i] = (int *)malloc(sizeof(int)*2);
+	}
+	int n = 0;
+	for (int i = 0; i < lib->length; ++i) {
+		fgets(cur, 4096, cache);
+		int match = is_known(metadata[n], cur);
+		if (match) {
+			int prev = check_vmn_cache(lib, cur, cfg->tags);
+			if (prev) {
+				int disc_known = is_known("disc", cur);
+				int track_known = is_known("track", cur);
+				if (disc_known) {
+					positions[n][0] = atoi(read_vmn_cache(cur, "disc"));
+				} else {
+					positions[n][0] = -1;
+				}
+				if (track_known) {
+					positions[n][1] = atoi(read_vmn_cache(cur, "track"));
+				} else {
+					positions[n][1] = -1;
+				}
+				++n;
+				if (n == len) {
+					break;
+				}
+			}
+		}
+	}
+	free(cur);
+	free(path);
+	return positions;
+}
+
+void tracksort(char **metadata, int **order, int len) {
+	int swap = 1;
+	while (swap) {
+		for (int i = 0; i < len; ++i) {
+			if (i == 0) {
+				swap = 0;
+			}
+			if (i == (len - 1)) {
+				break;
+			}
+			if (order[i][0] > order[i+1][0]) {
+				int disc_tmp = order[i][0];
+				int track_tmp = order[i][1];
+				order[i][0] = order[i+1][0];
+				order[i][1] = order[i+1][1];
+				order[i+1][0] = disc_tmp;
+				order[i+1][1] = track_tmp;
+				char *tmp = malloc(sizeof(char)*(strlen(metadata[i])+1));
+				strcpy(tmp, metadata[i]);
+				metadata[i] = (char *)realloc(metadata[i], sizeof(char)*(strlen(metadata[i+1])+1));
+				strcpy(metadata[i], metadata[i+1]);
+				metadata[i+1] = (char *)realloc(metadata[i+1], sizeof(char)*(strlen(tmp)+1));
+				strcpy(metadata[i+1], tmp);
+				free(tmp);
+				swap = 1;
+				continue;
+			}
+			if (order[i][1] > order[i+1][1]) {
+				if (order[i][0] != order[i+1][0]) {
+					continue;
+				}
+				int disc_tmp = order[i][0];
+				int track_tmp = order[i][1];
+				order[i][0] = order[i+1][0];
+				order[i][1] = order[i+1][1];
+				order[i+1][0] = disc_tmp;
+				order[i+1][1] = track_tmp;
+				char *tmp = malloc(sizeof(char)*(strlen(metadata[i])+1));
+				strcpy(tmp, metadata[i]);
+				metadata[i] = (char *)realloc(metadata[i], sizeof(char)*(strlen(metadata[i+1])+1));
+				strcpy(metadata[i], metadata[i+1]);
+				metadata[i+1] = (char *)realloc(metadata[i+1], sizeof(char)*(strlen(tmp)+1));
+				strcpy(metadata[i+1], tmp);
+				free(tmp);
+				swap = 1;
+				continue;
+			}
+		}
 	}
 }
