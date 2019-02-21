@@ -23,7 +23,7 @@ _vmn() {
 			;;
 		--sort)
 			compopt -o nospace
-			sort_opts='metadata filename track-number random none'
+			sort_opts='metadata filename tracknumber random none'
 			if [[ $cur == *,* ]]; then
 				local realcur prefix
 				realcur=${cur##*,}

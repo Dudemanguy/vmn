@@ -28,8 +28,8 @@ Options for the mpv client cannot be set as command line arguments and must be s
 *--mpv-cfg-directory=<path>*
 	Tells the mpv client which directory to search for a configuration file. It searches for a configuration file in the same manner as mpv (i.e. *config* and *mpv.conf* are both valid). By default, the path searched is *$HOME/.config/vmn* which means that mpv configuration values specified in the vmn configuration file are valid. This does nothing if *mpv-cfg* is set to *no*.
 
-*--sort=<metadata,filename,track-number,random,none>*
-	A comma, separated list (spaces are not allowed) of sorting modes to be used with each metadata tag. The sort array must be the same length as the tag array or it will do nothing. Currently, only metadata sorting and no sorting work. Metadata sorting sorts alphabetically based on the tag names. By default, metadata sorting is used for everything except the *title* tag.
+*--sort=<metadata,filename,tracknumber,random,none>*
+	A comma, separated list (spaces are not allowed) of sorting modes to be used with each metadata tag. The sort array must be the same length as the tag array or it will do nothing. Currently, metadata sorting, tracknumber sorting, and no sorting work. Metadata sorting sorts alphabetically based on the tag names. By default, metadata sorting is used for everything except the *title* tag. By default, the *title* tag uses tracknumber sorting. Tracknumber sorting sorts based on both the value of the *disc* metadata tag and the *track* tag. It only works with the *title* tag. Using it on another tag will do nothing.
 
 *--tags=<metadata,tags>*
 	A comman, separated list of metadata values (spaces are not allowed). vmn will read all music files and attempt to organize the curses interface based on the entered tag values. This only has an effect if the metadata view is used. By default, the organization (from let to right) is *artist*,*album*,*title*.

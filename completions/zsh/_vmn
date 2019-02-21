@@ -14,7 +14,7 @@ _vmn() {
 }
 
 _sorting() {
-	_values -s, opts metadata filename track-number random none
+	_values -s, opts metadata filename tracknumber random none
 }
 
 _tagging() {

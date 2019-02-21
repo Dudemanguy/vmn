@@ -124,7 +124,7 @@ int check_sort(char *str) {
 		return 1;
 	} else if (strcmp(str, "filename") == 0) {
 		return 1;
-	} else if (strcmp(str, "track-number") == 0) {
+	} else if (strcmp(str, "tracknumber") == 0) {
 		return 1;
 	} else if (strcmp(str, "random") == 0) {
 		return 1;
@@ -616,7 +616,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 								cfg.sort[k] = S_FILE;
 							} else if (strcmp(sort_arr[k], "none") == 0) {
 								cfg.sort[k] = S_NONE;
-							} else if (strcmp(sort_arr[k], "track-number") == 0) {
+							} else if (strcmp(sort_arr[k], "tracknumber") == 0) {
 								cfg.sort[k] = S_NUMB;
 							} else if (strcmp(sort_arr[k], "random") == 0) {
 								cfg.sort[k] = S_RAND;
@@ -641,7 +641,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 								cfg.sort[k] = S_FILE;
 							} else if (strcmp(sort_arr[k], "none") == 0) {
 								cfg.sort[k] = S_NONE;
-							} else if (strcmp(sort_arr[k], "track-number") == 0) {
+							} else if (strcmp(sort_arr[k], "tracknumber") == 0) {
 								cfg.sort[k] = S_NUMB;
 							} else if (strcmp(sort_arr[k], "random") == 0) {
 								cfg.sort[k] = S_RAND;
