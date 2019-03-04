@@ -227,6 +227,10 @@ char *read_vmn_cache(char *str, char *match) {
 			break;
 		}
 	}
+	if (strcmp(match, "") == 0) {
+		out = (char *)realloc(out,sizeof(char)*(strlen(split[0])+1));
+		strcpy(out, split[0]);
+	}
 	for (int i = 0; i < len; ++i) {
 		free(split[i]);
 	}
@@ -350,36 +354,7 @@ char **vmn_library_check(struct vmn_library *lib) {
 	return new;
 }
 
-void vmn_library_destroy_meta(struct vmn_library *lib) {
-	for (int i = 0; i < lib->length; ++i) {
-		free(lib->files[i]);
-	}
-	free(lib->files);
-	if (lib->length) {
-		for (int i = 0; i < (lib->depth + 1); ++i) {
-			unpost_menu(lib->menu[i]);
-			free_menu(lib->menu[i]);
-		}
-		free(lib->menu);
-	}
-	if (lib->length) {
-		for (int i = 0; i < (lib->depth + 1); ++i) {
-			int j = 0;
-			while(lib->items[i][j]) {
-				free_item(lib->items[i][j]);
-				free(lib->entries[0][i][j]);
-				++j;
-			}
-			free(lib->entries[0][i]);
-			free(lib->items[i]);
-		}
-		free(lib->items);
-		free(lib->entries[0]);
-		free(lib->entries);
-	}
-}
-
-void vmn_library_destroy_path(struct vmn_library *lib) {
+void vmn_library_destroy(struct vmn_library *lib) {
 	for (int i = 0; i < lib->length; ++i) {
 		free(lib->files[i]);
 	}

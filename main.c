@@ -18,11 +18,11 @@
 #include "config.h"
 #include "library.h"
 
-ITEM **create_meta_items(char **metadata);
+ITEM **create_meta_items(char ***metadata);
 ITEM **create_path_items(char ***files);
 void input_mode(struct vmn_config *cfg);
 char ***get_lib_dir(const char *library, struct vmn_library *lib);
-char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib);
+char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib);
 int get_music_files(const char *library, struct vmn_library *lib);
 void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
 void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name, int index);
@@ -34,9 +34,9 @@ mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
 int path_in_lib(char *path, struct vmn_library *lib);
 char *remove_char(char *str);
-void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char **metadata, int len);
-int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char **metadata, int len);
-void tracksort(char **metadata, int **order, int len);
+void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len);
+int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len);
+void tracksort(char ***metadata, int **order, int len);
 
 int main(int argc, char *argv[]) {
 	setlocale(LC_CTYPE, "");
@@ -70,13 +70,12 @@ int main(int argc, char *argv[]) {
 	}
 	if (cfg.view == V_DATA) {
 		lib.entries = (char ****)calloc(1, sizeof(char ***));
-		lib.entries[0] = (char ***)calloc(1, sizeof(char **));
 		vmn_library_metadata(&lib);
 		vmn_library_sort(&lib, cfg.lib_dir);
 		lib.selections = (char **)calloc(cfg.tags_len, sizeof(char *));
-		lib.entries[0][0] = get_metadata(&cfg, &lib);
+		lib.entries[0] = get_metadata(&cfg, &lib);
 		lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
-		lib.items[0] = create_meta_items(lib.entries[0][0]);
+		lib.items[0] = create_meta_items(lib.entries[0]);
 	}
 	if (cfg.view == V_SONG) {
 		lib.entries = (char ****)calloc(1, sizeof(char ***));
@@ -145,10 +144,10 @@ int main(int argc, char *argv[]) {
 	mpv_destroy(lib.ctx);
 	vmn_config_destroy(&cfg);
 	if (cfg.view == V_PATH) {
-		vmn_library_destroy_path(&lib);
+		vmn_library_destroy(&lib);
 	}
 	if (cfg.view == V_DATA) {
-		vmn_library_destroy_meta(&lib);
+		vmn_library_destroy(&lib);
 		for (int i = 0; i < cfg.tags_len; ++i) {
 			free(lib.selections[i]);
 		}
@@ -183,15 +182,15 @@ char *append_char(char *str, char c) {
 	return append;
 }
 
-ITEM **create_meta_items(char **metadata) {
+ITEM **create_meta_items(char ***metadata) {
 	ITEM **items;
 	int n = 0;
-	while (metadata[n]) {
+	while (metadata[0][n]) {
 		++n;
 	}
 	items = (ITEM **)calloc(n+1, sizeof(ITEM *));
 	for (int i = 0; i < n; ++i) {
-		items[i] = new_item(metadata[i], metadata[i]);
+		items[i] = new_item(metadata[0][i], metadata[1][i]);
 	}
 	items[n] = (ITEM *)NULL;
 	return items;
@@ -219,10 +218,13 @@ void destroy_last_menu_meta(struct vmn_library *lib) {
 	free_menu(lib->menu[lib->depth]);
 	for (int i = 0; i < n; ++i) {
 		free_item(lib->items[lib->depth][i]);
-		free(lib->entries[0][lib->depth][i]);
+		free(lib->entries[lib->depth][0][i]);
+		free(lib->entries[lib->depth][1][i]);
 	}
 	free(lib->items[lib->depth]);
-	free(lib->entries[0][lib->depth]);
+	free(lib->entries[lib->depth][0]);
+	free(lib->entries[lib->depth][1]);
+	free(lib->entries[lib->depth]);
 }
 
 void destroy_last_menu_path(struct vmn_library *lib) {
@@ -295,7 +297,7 @@ char ***get_lib_dir(const char *library, struct vmn_library *lib) {
 	return dir_info;
 }
 
-char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
+char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	char *home = getenv("HOME"); 
 	const char *cfg_path = "/.config/vmn/cache";
 	char *path = malloc(strlen(home) + strlen(cfg_path) + 1);
@@ -318,7 +320,9 @@ char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	int unknown_len = 16;
 	int *unknown = (int *)calloc(unknown_len, sizeof(int));
 	int unknown_pos = 0;
-	char **metadata = (char **)calloc(lib->length + 1, sizeof(char *));
+	char ***metadata = (char ***)calloc(2, sizeof(char **));
+	metadata[0] = (char **)calloc(lib->length+1, sizeof(char *));
+	metadata[1] = (char **)calloc(lib->length+1, sizeof(char *));
 	char *temp;
 	int valid_sel = 0;
 	for (int i = 0; i < file_len; ++i) {
@@ -347,37 +351,46 @@ char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			}
 		}
 		int known = is_known(cfg->tags[lib->depth], cur);
+		char *filename = read_vmn_cache(cur, "");
 		if (!known) {
 			if (strcmp(cfg->tags[lib->depth], "title") == 0) {
-				char *filename = strrchr(lib->files[i], '/');
-				metadata[len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
-				strcpy(metadata[len], filename+1);
+				metadata[0][len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
+				strcpy(metadata[0][len], filename+1);
+				metadata[1][len] = (char *)calloc(strlen(filename) + 1, sizeof(char));
+				strcpy(metadata[1][len], filename);
 				++len;
 			} else {
 				if (!tag_exist) {
-					metadata[len] = (char *)calloc(strlen(cfg->tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
-					strcpy(metadata[len], "Unknown ");
-					strcat(metadata[len], cfg->tags[lib->depth]);
+					metadata[0][len] = (char *)calloc(strlen(cfg->tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
+					strcpy(metadata[0][len], "Unknown ");
+					strcat(metadata[0][len], cfg->tags[lib->depth]);
 					tag_exist = 1;
 					++len;
 				}
 			}
+			free(filename);
 		} else {
 			temp = read_vmn_cache(cur, cfg->tags[lib->depth]);
 			for (int j = 0; j < len; ++j) {
-				if ((strcmp(temp, metadata[j]) == 0) && (strcmp(cfg->tags[lib->depth], "title") != 0)) {
+				if ((strcmp(temp, metadata[0][j]) == 0) && (strcmp(cfg->tags[lib->depth], "title") != 0)) {
 					match = 1;
 					break;
 				}
 			}
 			if (match) {
 				match = 0;
+				free(filename);
 				free(temp);
 				continue;
 			} else {
-				metadata[len] = malloc(sizeof(char *)*(strlen(temp)+1));
-				strcpy(metadata[len], temp);
+				metadata[0][len] = malloc(sizeof(char *)*(strlen(temp)+1));
+				strcpy(metadata[0][len], temp);
+				if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+					metadata[1][len] = malloc(sizeof(char *)*(strlen(filename)+1));
+					strcpy(metadata[1][len], filename);
+				}
 				++len;
+				free(filename);
 				free(temp);
 			}
 		}
@@ -387,40 +400,49 @@ char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 		unknown_pos = 0;
 		for (int i = 0; i < file_len; ++i) {
 			fgets(cur, 4096, cache);
+			char *filename = read_vmn_cache(cur, "");
 			if (i == unknown[unknown_pos]) {
 				++unknown_pos;
 				int known = is_known(cfg->tags[lib->depth], cur);
 				if (!known) {
 					if (strcmp(cfg->tags[lib->depth], "title") == 0) {
-						char *filename = strrchr(lib->files[i], '/');
-						metadata[len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
-						strcpy(metadata[len], filename+1);
+						metadata[0][len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
+						strcpy(metadata[0][len], filename+1);
+						metadata[1][len] = (char *)calloc(strlen(filename) + 1, sizeof(char));
+						strcpy(metadata[1][len], filename);
 						++len;
 					} else {
 						if (!tag_exist) {
-							metadata[len] = (char *)calloc(strlen(cfg->tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
-							strcpy(metadata[len], "Unknown ");
-							strcat(metadata[len], cfg->tags[lib->depth]);
+							metadata[0][len] = (char *)calloc(strlen(cfg->tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
+							strcpy(metadata[0][len], "Unknown ");
+							strcat(metadata[0][len], cfg->tags[lib->depth]);
 							tag_exist = 1;
 							++len;
 						}
 					}
+					free(filename);
 				} else {
 					temp = read_vmn_cache(cur, cfg->tags[lib->depth]);
 					for (int j = 0; j < len; ++j) {
-						if (strcmp(temp, metadata[j]) == 0) {
+						if (strcmp(temp, metadata[0][j]) == 0) {
 							match = 1;
 							break;
 						}
 					}
 					if (match) {
 						match = 0;
+						free(filename);
 						free(temp);
 						continue;
 					} else {
-						metadata[len] = malloc(sizeof(char *)*(strlen(temp)+1));
-						strcpy(metadata[len], temp);
+						metadata[0][len] = malloc(sizeof(char *)*(strlen(temp)+1));
+						strcpy(metadata[0][len], temp);
+						if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+							metadata[1][len] = malloc(sizeof(char *)*(strlen(filename)+1));
+							strcpy(metadata[1][len], filename);
+						}
 						++len;
+						free(filename);
 						free(temp);
 					}
 				}
@@ -430,8 +452,10 @@ char **get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	free(cur);
 	free(path);
 	free(unknown);
-	metadata[len] = '\0';
-	metadata = (char **)realloc(metadata,sizeof(char *)*(len+1));
+	metadata[0] = (char **)realloc(metadata[0],sizeof(char *)*(len+1));
+	metadata[1] = (char **)realloc(metadata[1],sizeof(char *)*(len+1));
+	metadata[0][len] = '\0';
+	metadata[1][len] = '\0';
 	sort_select(cfg, lib, metadata, len);
 	return metadata;
 }
@@ -699,16 +723,27 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		if (cfg->view == V_DATA) {
 			for (int i = 0; i < item_count(menu); ++i) {
 				if (item_value(items[i])) {
-					name = item_name(items[i]);
-					meta_path_find(cfg, lib, name, i);
-					++n;
+					if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+						path = item_description(items[i]);
+						mpv_queue(lib->ctx, path);
+						++n;
+					} else {
+						name = item_name(items[i]);
+						meta_path_find(cfg, lib, name, i);
+						++n;
+					}
 				}
 			}
 			if (!n) {
 				ITEM *cur = current_item(menu);
 				int index = item_index(cur);
-				name = item_name(cur);
-				meta_path_find(cfg, lib, name, index);
+				if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+					path = item_description(cur);
+					mpv_queue(lib->ctx, path);
+				} else {
+					name = item_name(cur);
+					meta_path_find(cfg, lib, name, index);
+				}
 			}
 		}
 	} else if (c == cfg->key.visual) {
@@ -850,8 +885,8 @@ int move_menu_meta_forward(struct vmn_config *cfg, struct vmn_library *lib) {
 		--lib->depth;
 		return 0;
 	}
-	lib->entries[0] = (char ***)realloc(lib->entries[0], sizeof(char **)*(lib->depth+1));
-	lib->entries[0][lib->depth] = get_metadata(cfg, lib);
+	lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth+1));
+	lib->entries[lib->depth] = get_metadata(cfg, lib);
 	double startx = getmaxx(stdscr);
 	for (int i = 1; i < lib->depth; ++i) {
 		wresize(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
@@ -859,7 +894,7 @@ int move_menu_meta_forward(struct vmn_config *cfg, struct vmn_library *lib) {
 		wrefresh(menu_win(lib->menu[i]));
 	}
 	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
-	lib->items[lib->depth] = create_meta_items(lib->entries[0][lib->depth]);
+	lib->items[lib->depth] = create_meta_items(lib->entries[lib->depth]);
 	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
 	lib->menu[lib->depth] = new_menu((ITEM **)lib->items[lib->depth]);
 	set_menu_format(lib->menu[lib->depth], LINES, 0);
@@ -954,9 +989,9 @@ char *remove_char(char *str) {
 	return remove;
 }
 
-void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char **metadata, int len) {
+void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len) {
 	if (cfg->sort[lib->depth] == S_DATA) {
-		qsort(metadata, len, sizeof(char *), qstrcmp);
+		qsort(metadata[0], len, sizeof(char *), qstrcmp);
 	} else if (cfg->sort[lib->depth] == S_FILE) {
 	} else if (cfg->sort[lib->depth] == S_NONE) {
 		;
@@ -973,7 +1008,7 @@ void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char **metadat
 	}
 }
 
-int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char **metadata, int len) {
+int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len) {
 	char *cur = malloc(4096*sizeof(char));
 	char *home = getenv("HOME"); 
 	const char *cfg_path = "/.config/vmn/cache";
@@ -988,19 +1023,23 @@ int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char **metadat
 	int n = 0;
 	for (int i = 0; i < lib->length; ++i) {
 		fgets(cur, 4096, cache);
-		int match = is_known(metadata[n], cur);
+		int match = is_known(metadata[0][n], cur);
 		if (match) {
 			int prev = check_vmn_cache(lib, cur, cfg->tags);
 			if (prev) {
 				int disc_known = is_known("disc", cur);
 				int track_known = is_known("track", cur);
 				if (disc_known) {
-					positions[n][0] = atoi(read_vmn_cache(cur, "disc"));
+					char *disc = read_vmn_cache(cur, "disc");
+					positions[n][0] = atoi(disc);
+					free(disc);
 				} else {
 					positions[n][0] = -1;
 				}
 				if (track_known) {
-					positions[n][1] = atoi(read_vmn_cache(cur, "track"));
+					char *track = read_vmn_cache(cur, "track");
+					positions[n][1] = atoi(track);
+					free(track);
 				} else {
 					positions[n][1] = -1;
 				}
@@ -1016,7 +1055,7 @@ int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char **metadat
 	return positions;
 }
 
-void tracksort(char **metadata, int **order, int len) {
+void tracksort(char ***metadata, int **order, int len) {
 	int swap = 1;
 	while (swap) {
 		for (int i = 0; i < len; ++i) {
@@ -1033,12 +1072,21 @@ void tracksort(char **metadata, int **order, int len) {
 				order[i][1] = order[i+1][1];
 				order[i+1][0] = disc_tmp;
 				order[i+1][1] = track_tmp;
-				char *tmp = malloc(sizeof(char)*(strlen(metadata[i])+1));
-				strcpy(tmp, metadata[i]);
-				metadata[i] = (char *)realloc(metadata[i], sizeof(char)*(strlen(metadata[i+1])+1));
-				strcpy(metadata[i], metadata[i+1]);
-				metadata[i+1] = (char *)realloc(metadata[i+1], sizeof(char)*(strlen(tmp)+1));
-				strcpy(metadata[i+1], tmp);
+				char **tmp = malloc(sizeof(char *)*2);
+				tmp[0] = malloc(sizeof(char)*(strlen(metadata[0][i])+1));
+				tmp[1] = malloc(sizeof(char)*(strlen(metadata[1][i])+1));
+				strcpy(tmp[0], metadata[0][i]);
+				strcpy(tmp[1], metadata[1][i]);
+				metadata[0][i] = (char *)realloc(metadata[0][i], sizeof(char)*(strlen(metadata[0][i+1])+1));
+				strcpy(metadata[0][i], metadata[0][i+1]);
+				metadata[1][i] = (char *)realloc(metadata[1][i], sizeof(char)*(strlen(metadata[1][i+1])+1));
+				strcpy(metadata[1][i], metadata[1][i+1]);
+				metadata[0][i+1] = (char *)realloc(metadata[0][i+1], sizeof(char)*(strlen(tmp[0])+1));
+				metadata[1][i+1] = (char *)realloc(metadata[1][i+1], sizeof(char)*(strlen(tmp[1])+1));
+				strcpy(metadata[0][i+1], tmp[0]);
+				strcpy(metadata[1][i+1], tmp[1]);
+				free(tmp[0]);
+				free(tmp[1]);
 				free(tmp);
 				swap = 1;
 				continue;
@@ -1053,12 +1101,21 @@ void tracksort(char **metadata, int **order, int len) {
 				order[i][1] = order[i+1][1];
 				order[i+1][0] = disc_tmp;
 				order[i+1][1] = track_tmp;
-				char *tmp = malloc(sizeof(char)*(strlen(metadata[i])+1));
-				strcpy(tmp, metadata[i]);
-				metadata[i] = (char *)realloc(metadata[i], sizeof(char)*(strlen(metadata[i+1])+1));
-				strcpy(metadata[i], metadata[i+1]);
-				metadata[i+1] = (char *)realloc(metadata[i+1], sizeof(char)*(strlen(tmp)+1));
-				strcpy(metadata[i+1], tmp);
+				char **tmp = malloc(sizeof(char *)*2);
+				tmp[0] = malloc(sizeof(char)*(strlen(metadata[0][i])+1));
+				tmp[1] = malloc(sizeof(char)*(strlen(metadata[1][i])+1));
+				strcpy(tmp[0], metadata[0][i]);
+				strcpy(tmp[1], metadata[1][i]);
+				metadata[0][i] = (char *)realloc(metadata[0][i], sizeof(char)*(strlen(metadata[0][i+1])+1));
+				strcpy(metadata[0][i], metadata[0][i+1]);
+				metadata[1][i] = (char *)realloc(metadata[1][i], sizeof(char)*(strlen(metadata[1][i+1])+1));
+				strcpy(metadata[1][i], metadata[1][i+1]);
+				metadata[0][i+1] = (char *)realloc(metadata[0][i+1], sizeof(char)*(strlen(tmp[0])+1));
+				metadata[1][i+1] = (char *)realloc(metadata[1][i+1], sizeof(char)*(strlen(tmp[1])+1));
+				strcpy(metadata[0][i+1], tmp[0]);
+				strcpy(metadata[1][i+1], tmp[1]);
+				free(tmp[0]);
+				free(tmp[1]);
 				free(tmp);
 				swap = 1;
 				continue;
