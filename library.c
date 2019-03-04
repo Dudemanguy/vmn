@@ -110,6 +110,7 @@ int check_vmn_lib(struct vmn_library *lib, char *line, char *lib_dir) {
 			++len;
 		}
 	}
+	++len;
 	regex_t regex;
 	int status;
 	regcomp(&regex, lib_dir, 0);
@@ -592,6 +593,7 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 				++len;
 			}
 		}
+		++len;
 		int match = 0;
 		int in_lib = check_vmn_lib(lib, cur, lib_dir);
 		if (in_lib) {
