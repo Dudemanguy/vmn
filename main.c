@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
 	lib.ctx = mpv_generate(&cfg);
 	while (1) {
 		mpv_event *event = mpv_wait_event(lib.ctx, 0);
-		nodelay(win, TRUE);
+		wtimeout(win, 20);
 		c = wgetch(win);
 		key_event(c, lib.menu[lib.depth], lib.items[lib.depth], &cfg, &lib);
 		if (event->event_id == MPV_EVENT_SHUTDOWN) {
