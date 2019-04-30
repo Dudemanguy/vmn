@@ -122,19 +122,15 @@ int main(int argc, char *argv[]) {
 			resize = 0;
 			struct winsize ws;
 			ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
-			for (int i = 0; i <= lib.depth; ++i) {
-				unpost_menu(lib.menu[i]);
-				wrefresh(menu_win(lib.menu[i]));
-			}
 			resize_term(ws.ws_row, ws.ws_col);
+			int maxx = getmaxx(stdscr);
 			for (int i = 0; i <= lib.depth; ++i) {
-				double startx = getmaxx(stdscr);
-				wresize(menu_win(lib.menu[i]), LINES, (startx*i)/(lib.depth+1));
-				mvwin(menu_win(lib.menu[i]), LINES, (startx*i)/(lib.depth+1));
+				int cur_pos = item_index(current_item(lib.menu[i]));
+				unpost_menu(lib.menu[i]);
 				set_menu_format(lib.menu[i], LINES, 0);
-				menu_opts_off(lib.menu[i], O_ONEVALUE);
-				menu_opts_off(lib.menu[i], O_SHOWDESC);
+				mvwin(menu_win(lib.menu[i]), 0, (int)floor((maxx*i)/(lib.depth+1)));
 				post_menu(lib.menu[i]);
+				set_top_row(lib.menu[i], cur_pos);
 				wrefresh(menu_win(lib.menu[i]));
 			}
 			wrefresh(menu_win(lib.menu[lib.depth]));
