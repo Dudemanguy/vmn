@@ -8,10 +8,12 @@
 #include <mpv/client.h>
 #include <ncurses.h>
 #include <regex.h>
+#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -34,9 +36,13 @@ mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
 int path_in_lib(char *path, struct vmn_library *lib);
 char *remove_char(char *str);
+void resize_detected();
 void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len);
 int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len);
 void tracksort(char ***metadata, int **order, int len);
+
+/* for handling terminal resize events */
+int resize;
 
 int main(int argc, char *argv[]) {
 	setlocale(LC_CTYPE, "");
@@ -107,10 +113,32 @@ int main(int argc, char *argv[]) {
 	int c;
 	lib.ctx = mpv_generate(&cfg);
 	while (1) {
+		signal(SIGWINCH, resize_detected);
 		mpv_event *event = mpv_wait_event(lib.ctx, 0);
 		wtimeout(win, 20);
 		c = wgetch(win);
 		key_event(c, lib.menu[lib.depth], lib.items[lib.depth], &cfg, &lib);
+		if (resize) {
+			resize = 0;
+			struct winsize ws;
+			ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
+			for (int i = 0; i <= lib.depth; ++i) {
+				unpost_menu(lib.menu[i]);
+				wrefresh(menu_win(lib.menu[i]));
+			}
+			resize_term(ws.ws_row, ws.ws_col);
+			for (int i = 0; i <= lib.depth; ++i) {
+				double startx = getmaxx(stdscr);
+				wresize(menu_win(lib.menu[i]), LINES, (startx*i)/(lib.depth+1));
+				mvwin(menu_win(lib.menu[i]), LINES, (startx*i)/(lib.depth+1));
+				set_menu_format(lib.menu[i], LINES, 0);
+				menu_opts_off(lib.menu[i], O_ONEVALUE);
+				menu_opts_off(lib.menu[i], O_SHOWDESC);
+				post_menu(lib.menu[i]);
+				wrefresh(menu_win(lib.menu[i]));
+			}
+			wrefresh(menu_win(lib.menu[lib.depth]));
+		}
 		if (event->event_id == MPV_EVENT_SHUTDOWN) {
 			mpv_terminate_destroy(lib.ctx);
 			lib.mpv_active = 0;
@@ -987,6 +1015,10 @@ char *remove_char(char *str) {
 	memcpy(remove, str, sizeof(char)*(len - 1));
 	remove[len - 1] = '\0';
 	return remove;
+}
+
+void resize_detected() {
+	resize = 1;
 }
 
 void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len) {
