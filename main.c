@@ -128,12 +128,11 @@ int main(int argc, char *argv[]) {
 				int cur_pos = item_index(current_item(lib.menu[i]));
 				unpost_menu(lib.menu[i]);
 				set_menu_format(lib.menu[i], LINES, 0);
-				mvwin(menu_win(lib.menu[i]), 0, (int)floor((maxx*i)/(lib.depth+1)));
-				post_menu(lib.menu[i]);
 				set_top_row(lib.menu[i], cur_pos);
+				mvwin(menu_win(lib.menu[i]), 0, (int)(maxx*i)/(lib.depth+1));
+				post_menu(lib.menu[i]);
 				wrefresh(menu_win(lib.menu[i]));
 			}
-			wrefresh(menu_win(lib.menu[lib.depth]));
 		}
 		if (event->event_id == MPV_EVENT_SHUTDOWN) {
 			mpv_terminate_destroy(lib.ctx);
@@ -869,12 +868,11 @@ int move_menu_meta_backward(struct vmn_library *lib) {
 	--lib->depth;
 	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
 	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
-	double startx = getmaxx(stdscr);
+	int maxx = getmaxx(stdscr);
 	for (int i = 1; i <= lib->depth; ++i) {
 		unpost_menu(lib->menu[i]);
 		wrefresh(menu_win(lib->menu[i]));
-		wresize(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
-		mvwin(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
+		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth+1));
 		post_menu(lib->menu[i]);
 		wrefresh(menu_win(lib->menu[i]));
 	}
@@ -890,12 +888,11 @@ int move_menu_path_backward(struct vmn_library *lib) {
 	--lib->depth;
 	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
 	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
-	double startx = getmaxx(stdscr);
+	int maxx = getmaxx(stdscr);
 	for (int i = 1; i <= lib->depth; ++i) {
 		unpost_menu(lib->menu[i]);
 		wrefresh(menu_win(lib->menu[i]));
-		wresize(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
-		mvwin(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
+		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth+1));
 		post_menu(lib->menu[i]);
 		wrefresh(menu_win(lib->menu[i]));
 	}
@@ -911,10 +908,9 @@ int move_menu_meta_forward(struct vmn_config *cfg, struct vmn_library *lib) {
 	}
 	lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth+1));
 	lib->entries[lib->depth] = get_metadata(cfg, lib);
-	double startx = getmaxx(stdscr);
+	int maxx = getmaxx(stdscr);
 	for (int i = 1; i < lib->depth; ++i) {
-		wresize(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
-		mvwin(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
+		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth+1));
 		wrefresh(menu_win(lib->menu[i]));
 	}
 	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
@@ -924,7 +920,7 @@ int move_menu_meta_forward(struct vmn_config *cfg, struct vmn_library *lib) {
 	set_menu_format(lib->menu[lib->depth], LINES, 0);
 	menu_opts_off(lib->menu[lib->depth], O_ONEVALUE);
 	menu_opts_off(lib->menu[lib->depth], O_SHOWDESC);
-	WINDOW *win = newwin(0, 0, 0, (startx*lib->depth)/(lib->depth+1));
+	WINDOW *win = newwin(0, 0, 0, (int)(maxx*lib->depth)/(lib->depth+1));
 	set_menu_win(lib->menu[lib->depth], win);
 	set_menu_sub(lib->menu[lib->depth], win);
 	post_menu(lib->menu[lib->depth]);
@@ -946,10 +942,9 @@ int move_menu_path_forward(const char *path, struct vmn_config *cfg, struct vmn_
 		lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth+1));
 		return 0;
 	}
-	double startx = getmaxx(stdscr);
+	int maxx = getmaxx(stdscr);
 	for (int i = 1; i < lib->depth; ++i) {
-		wresize(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
-		mvwin(menu_win(lib->menu[i]), 0, (startx*i)/(lib->depth+1));
+		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth+1));
 		wrefresh(menu_win(lib->menu[i]));
 	}
 	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
@@ -959,7 +954,7 @@ int move_menu_path_forward(const char *path, struct vmn_config *cfg, struct vmn_
 	set_menu_format(lib->menu[lib->depth], LINES, 0);
 	menu_opts_off(lib->menu[lib->depth], O_ONEVALUE);
 	menu_opts_off(lib->menu[lib->depth], O_SHOWDESC);
-	WINDOW *win = newwin(0, 0, 0, (startx*lib->depth)/(lib->depth+1));
+	WINDOW *win = newwin(0, 0, 0, (int)(maxx*lib->depth)/(lib->depth+1));
 	set_menu_win(lib->menu[lib->depth], win);
 	set_menu_sub(lib->menu[lib->depth], win);
 	post_menu(lib->menu[lib->depth]);
