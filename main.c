@@ -205,6 +205,12 @@ char *append_char(char *str, char c) {
 	return append;
 }
 
+void create_visual_window(struct vmn_library *lib) {
+	lib->visual = newwin(1, 0, LINES - 1, 0);
+	mvwprintw(lib->visual, 0, 0, "-- VISUAL --\n");
+	wrefresh(lib->visual);
+}
+
 ITEM **create_meta_items(char ***metadata) {
 	ITEM **items;
 	int n = 0;
@@ -265,6 +271,15 @@ void destroy_last_menu_path(struct vmn_library *lib) {
 	free(lib->entries[lib->depth][1]);
 	free(lib->entries[lib->depth]);
 	free(lib->items[lib->depth]);
+}
+
+void destroy_visual_window(struct vmn_library *lib) {
+	delwin(lib->visual);
+	for (int i = 0; i <= lib->depth; ++i) {
+		unpost_menu(lib->menu[i]);
+		post_menu(lib->menu[i]);
+		wrefresh(menu_win(lib->menu[i]));
+	}
 }
 
 char ***get_lib_dir(const char *library, struct vmn_library *lib) {
@@ -678,37 +693,44 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		cur = current_item(menu);
 		menu_driver(menu, REQ_TOGGLE_ITEM);
 	} else if (c == cfg->key.queue_all) {
+		cfg->select = 1;
+		cur = current_item(menu);
+		cfg->select_pos = item_index(cur);
 		for (int i = 0; i < item_count(menu); ++i) {
 			if (!item_value(items[i])) {
 				set_item_value(items[i], true);
 			}
 		}
+		create_visual_window(lib);
 	} else if (c == cfg->key.queue_clear || c == cfg->key.escape) {
 		for (int i = 0; i < item_count(menu); ++i) {
 			if (item_value(items[i])) {
 				set_item_value(items[i], false);
 			}
 		}
+		destroy_visual_window(lib);
 		cfg->select = 0;
+		cfg->select_pos = 0;
 	} else if (c == cfg->key.search) {
 		menu_driver(menu, REQ_CLEAR_PATTERN);
-		WINDOW *wins = newwin(1, 0, LINES - 1, 0);
-		char *search = "";
+		lib->search = newwin(1, 0, LINES - 1, 0);
+		char *entry = "";
 		while (1) {
-			char key = wgetch(wins);
+			mvwprintw(lib->search, 0, 0, "/%s\n", entry);
+			char key = wgetch(lib->search);
 			if (key == 127) {
 				menu_driver(menu, REQ_BACK_PATTERN);
-				search = remove_char(search);
+				entry = remove_char(entry);
 				menu_driver(menu, REQ_PREV_MATCH);
 			} else {
 				menu_driver(menu, key);
 				menu_driver(menu, REQ_NEXT_MATCH);
-				search = append_char(search, key);
+				entry = append_char(entry, key);
 			}
 			wrefresh(menu_win(lib->menu[lib->depth]));
-			if (key == cfg->key.escape || key == 10) {
-				free(search);
-				delwin(wins);
+			if (key == cfg->key.escape || key == 10 || key == 27) {
+				free(entry);
+				delwin(lib->search);
 				for (int i = 0; i <= lib->depth; ++i) {
 					unpost_menu(lib->menu[i]);
 					post_menu(lib->menu[i]);
@@ -716,8 +738,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				}
 				break;
 			}
-			mvwprintw(wins, 0, 0, "%s\n", search);
-			wrefresh(wins);
+			wrefresh(lib->search);
 		}
 	} else if (c == cfg->key.search_next) {
 		menu_driver(menu, REQ_NEXT_MATCH);
@@ -773,7 +794,10 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		if (cfg->select) {
 			cfg->select = 0;
 			cfg->select_pos = 0;
+			destroy_visual_window(lib);
 		} else {
+			menu_driver(menu, REQ_CLEAR_PATTERN);
+			create_visual_window(lib);
 			cfg->select = 1;
 			cur = current_item(menu);
 			set_item_value(cur, true);
