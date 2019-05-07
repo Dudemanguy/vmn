@@ -294,6 +294,10 @@ struct vmn_key key_init(config_t *libcfg) {
 	if (!key.end) {
 		key.end = 'G';
 	}
+	key.escape = read_cfg_key(libcfg, "escape");
+	if (!key.escape) {
+		key.escape = CTRL('[');
+	}
 	key.move_backward = read_cfg_key(libcfg, "move-backward");
 	if (!key.move_backward) {
 		key.move_backward = 'h';
@@ -349,10 +353,6 @@ struct vmn_key key_init(config_t *libcfg) {
 	key.queue_clear = read_cfg_key(libcfg, "queue-clear");
 	if (!key.queue_clear) {
 		key.queue_clear = 'u';
-	}
-	key.quit = read_cfg_key(libcfg, "quit");
-	if (!key.quit) {
-		key.quit = CTRL('[');
 	}
 	key.search = read_cfg_key(libcfg, "search");
 	if (!key.search) {

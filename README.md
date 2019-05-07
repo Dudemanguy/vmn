@@ -27,6 +27,7 @@ The default keybindings are the following.
 
 * beginning: `g`
 * end: `G`
+* escape: `Ctrl+[`
 * move backward: `h`
 * move down: `j`
 * move forward: `l`
@@ -41,7 +42,6 @@ The default keybindings are the following.
 * queue: `i`
 * queue all: `y`
 * queue clear: `u`
-* quit: `Ctrl+[`
 * search: `/`
 * search next: `n`
 * search prev: `N`

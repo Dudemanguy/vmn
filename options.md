@@ -41,6 +41,9 @@ Like the main options, keybindings in vmn are defined in the configuration file 
 ``end=<key>``\
   Jump to the last item in the menu.
 
+``escape=<key>``\
+  Quit visual or search mode and return to normal mode.
+
 ``move-backward=<key>``\
   Move back a menu and destroy the rightmost menu (not valid in *song-only* view).
 
@@ -82,9 +85,6 @@ Like the main options, keybindings in vmn are defined in the configuration file 
 
 ``queue-clear=<key>``\
   Empty queue and clear all items.
-
-``quit=<key>``\
-  Quit visual or search mode and return to normal mode.
 
 ``search=<key>``\
   Enter search mode.

@@ -521,10 +521,10 @@ void input_mode(struct vmn_config *cfg) {
 		noecho();
 		keypad(stdscr, TRUE);
 		while (1) {
-			mvprintw(0, 0, "Input mode is enabled. Keycodes will be returned on the screen. Use quit to exit.\n");
+			mvprintw(0, 0, "Input mode is enabled. Keycodes will be returned on the screen. Use ESC or ctrl+[ to exit.\n");
 			key = getch();
 			mvprintw(1, 0, "Key = %d\n", key);
-			if (key == cfg->key.quit) {
+			if (key == cfg->key.escape) {
 				clear();
 				mvprintw(0, 0, "Are you sure you want to quit input mode? Hit 'y' to confirm.\n");
 				int quit = getch();
@@ -683,7 +683,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				set_item_value(items[i], true);
 			}
 		}
-	} else if (c == cfg->key.queue_clear || c == cfg->key.quit) {
+	} else if (c == cfg->key.queue_clear || c == cfg->key.escape) {
 		for (int i = 0; i < item_count(menu); ++i) {
 			if (item_value(items[i])) {
 				set_item_value(items[i], false);
@@ -706,7 +706,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				search = append_char(search, key);
 			}
 			wrefresh(menu_win(lib->menu[lib->depth]));
-			if (key == cfg->key.quit || key == 10) {
+			if (key == cfg->key.escape || key == 10) {
 				free(search);
 				delwin(wins);
 				for (int i = 0; i <= lib->depth; ++i) {

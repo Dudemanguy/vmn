@@ -51,6 +51,9 @@ Since vmn uses ncurses, the macros for special keys are valid (i.e. *foo="KEY\_R
 *end=<key>*
 	Jump to the last item in the menu. Default *G*.
 
+*escape=<key>*
+	Quit visual or search mode and return to normal mode. Default *Ctrl+[*
+
 *move-backward=<key>*
 	Move back a menu and destroy the rightmost menu (not valid in *song-only* view). Default *h*.
 
@@ -92,9 +95,6 @@ Since vmn uses ncurses, the macros for special keys are valid (i.e. *foo="KEY\_R
 
 *queue-clear=<key>*
 	Empty queue and clear all items. Default *u*.
-
-*quit=<key>*
-	Quit visual or search mode and return to normal mode. Default *Ctrl+[*
 
 *search=<key>*
 	Enter search mode. Default */*.

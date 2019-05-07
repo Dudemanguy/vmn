@@ -11,6 +11,7 @@ void vmn_config_destroy(struct vmn_config *cfg);
 struct vmn_key {
 	int beginning;
 	int end;
+	int escape;
 	int move_backward;
 	int move_down;
 	int move_forward;
@@ -25,7 +26,6 @@ struct vmn_key {
 	int queue;
 	int queue_all;
 	int queue_clear;
-	int quit;
 	int search;
 	int search_next;
 	int search_prev;
