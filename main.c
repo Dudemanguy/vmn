@@ -713,6 +713,9 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		cfg->select_pos = 0;
 	} else if (c == cfg->key.search) {
 		menu_driver(menu, REQ_CLEAR_PATTERN);
+		if (lib->visual) {
+			destroy_visual_window(lib);
+		}
 		lib->search = newwin(1, 0, LINES - 1, 0);
 		char *entry = "";
 		while (1) {
@@ -736,9 +739,11 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 					post_menu(lib->menu[i]);
 					wrefresh(menu_win(lib->menu[i]));
 				}
+				if (cfg->select) {
+					create_visual_window(lib);
+				}
 				break;
 			}
-			wrefresh(lib->search);
 		}
 	} else if (c == cfg->key.search_next) {
 		menu_driver(menu, REQ_NEXT_MATCH);
