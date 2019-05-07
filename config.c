@@ -479,6 +479,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		} else {
 			DIR *dir = opendir(cfg.lib_dir);
 			if (!dir) {
+				free(cfg.lib_dir);
 				cfg.lib_dir = get_default_lib();
 				printf("Library directory not found. Falling back to default.\n");
 			}
@@ -519,6 +520,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		} else {
 			DIR *dir = opendir(cfg.mpv_cfg_dir);
 			if (!dir) {
+				free(cfg.mpv_cfg_dir);
 				cfg.mpv_cfg_dir = get_cfg_dir();
 				printf("mpv config directory not found. Falling back to default.\n");
 			}
