@@ -26,6 +26,7 @@ See the [options](https://github.com/Dudemanguy911/vmn/blob/master/options.md) p
 The default keybindings are the following.
 
 * beginning: `g`
+* command: `:`
 * end: `G`
 * escape: `Ctrl+[`
 * move backward: `h`
@@ -52,7 +53,9 @@ The default keybindings are the following.
 * voldown: `9`
 * volup: `0`
 
-To change keybindings, see the [options](https://github.com/Dudemanguy911/vmn/blob/master/options.md).
+To change keybindings, see the [options](https://github.com/Dudemanguy911/vmn/blob/master/options.md) page.
+
+For more information on command mode, see the [command](https://github.com/Dudemanguy911/vmn/blob/master/command.md) page.
 
 All items that are queued will be played by mpv upon hitting enter. If no items are selected, then the currently highlighted items will be played upon hitting enter. Items can be either directories or individual audio files. Playing back a directory will add all valid audio files to mpv for playback.
 

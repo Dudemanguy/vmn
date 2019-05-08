@@ -10,6 +10,7 @@ void vmn_config_destroy(struct vmn_config *cfg);
 
 struct vmn_key {
 	int beginning;
+	int command;
 	int end;
 	int escape;
 	int move_backward;

@@ -290,6 +290,10 @@ struct vmn_key key_init(config_t *libcfg) {
 	if (!key.beginning) {
 		key.beginning = 'g';
 	}
+	key.command = read_cfg_key(libcfg, "command");
+	if (!key.command) {
+		key.command = ':';
+	}
 	key.end = read_cfg_key(libcfg, "end");
 	if (!key.end) {
 		key.end = 'G';

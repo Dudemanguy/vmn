@@ -42,9 +42,9 @@ AVInputFormat *get_input_format(const char *file) {
 	}
 }
 
-char **line_split(char *str) {
+char **line_split(char *str, char *delim) {
 	char *str_dup = strdup(str);
-	char *token = strtok(str_dup, "\t");
+	char *token = strtok(str_dup, delim);
 	int len = 20;
 	char **arr = (char **)calloc(len, sizeof(char*));
 	int i = 0;
@@ -55,7 +55,7 @@ char **line_split(char *str) {
 		}
 		arr[i] = malloc(strlen(token) + 1);
 		strcpy(arr[i], token);
-		token = strtok(NULL, "\t");
+		token = strtok(NULL, delim);
 		++i;
 	}
 	arr = (char **)realloc(arr, sizeof(char*)*i);
@@ -64,7 +64,7 @@ char **line_split(char *str) {
 }
 
 int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
-	char **split = line_split(str);
+	char **split = line_split(str, "\t");
 	int len = 0;
 	for (int i = 0; i < strlen(str); ++i) {
 		if (str[i] == '\t') {
@@ -103,7 +103,7 @@ int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
 }
 
 int check_vmn_lib(struct vmn_library *lib, char *line, char *lib_dir) {
-	char **split = line_split(line);
+	char **split = line_split(line, "\t");
 	int len = 0;
 	for (int i = 0; i < strlen(line); ++i) {
 		if (line[i] == '\t') {
@@ -129,7 +129,7 @@ int check_vmn_lib(struct vmn_library *lib, char *line, char *lib_dir) {
 
 char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name, char *tag) {
 	char *out = (char *)calloc(1, sizeof(char));
-	char **split = line_split(line);
+	char **split = line_split(line, "\t");
 	int len = 0;
 	for (int i = 0; i < strlen(line); ++i) {
 		if (line[i] == '\t') {
@@ -151,7 +151,7 @@ char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name, char *
 }
 
 int is_known(char *tag, char *line) {
-	char **split = line_split(line);
+	char **split = line_split(line, "\t");
 	int known = 0;
 	int len = 0;
 	for (int i = 0; i < strlen(line); ++i) {
@@ -178,7 +178,7 @@ int is_known(char *tag, char *line) {
 }
 
 int is_sel(char *sel, char *line) {
-	char **split = line_split(line);
+	char **split = line_split(line, "\t");
 	int valid = 0;
 	int len = 0;
 	for (int i = 0; i < strlen(line); ++i) {
@@ -212,7 +212,7 @@ int qstrcmp(const void *a, const void *b) {
 
 char *read_vmn_cache(char *str, char *match) {
 	char *out = (char *)calloc(1, sizeof(char));
-	char **split = line_split(str);
+	char **split = line_split(str, "\t");
 	int len = 0;
 	for (int i = 0; i < strlen(str); ++i) {
 		if (str[i] == '\t') {
@@ -240,7 +240,7 @@ char *read_vmn_cache(char *str, char *match) {
 
 int read_vmn_cache_int(char *str, char *match) {
 	int out;
-	char **split = line_split(str);
+	char **split = line_split(str, "\t");
 	int len = 0;
 	for (int i = 0; i < strlen(str); ++i) {
 		if (str[i] == '\t') {
@@ -493,7 +493,7 @@ void vmn_library_refresh(struct vmn_library *lib, char *tag) {
 	rewind(cache);
 	for (int i = 0; i < file_len; ++i) {
 		fgets(cur, 4096, cache);
-		char **split = line_split(cur);
+		char **split = line_split(cur, "\t");
 		int len = 0;
 		for (int j = 0; j < strlen(cur); ++j) {
 			if (cur[j] == '\t') {
@@ -561,7 +561,7 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 	char **files = (char **)calloc(file_len, sizeof(char *));
 	for (int i = 0; i < file_len; ++i) {
 		fgets(cur, 4096, cache);
-		char **split = line_split(cur);
+		char **split = line_split(cur, "\t");
 		int len = 0;
 		for (int j = 0; j < strlen(cur); ++j) {
 			if (cur[j] == '\t') {

@@ -6,7 +6,7 @@ char *get_file_ext(const char *file);
 char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name, char *tag);
 int is_known(char *tag, char *line);
 int is_sel(char *sel, char *line);
-char **line_split(char *str);
+char **line_split(char *str, char *delim);
 int qstrcmp(const void *a, const void *b);
 char *read_vmn_cache(char *str, char *match);
 int read_vmn_cache_int(char *str, char *match);
@@ -19,6 +19,7 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir);
 
 struct vmn_library {
 	mpv_handle *ctx;
+	WINDOW *command;
 	int depth;
 	char **files;
 	char ****entries;

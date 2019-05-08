@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "command.h"
 #include "config.h"
 #include "library.h"
 
@@ -194,15 +195,6 @@ int main(int argc, char *argv[]) {
 	}
 	endwin();
 	return 0;
-}
-
-char *append_char(char *str, char c) {
-	int len = strlen(str);
-	char *append = malloc(len + 2);
-	strcpy(append, str);
-	append[len] = c;
-	append[len + 1] = '\0';
-	return append;
 }
 
 void create_visual_window(struct vmn_library *lib) {
@@ -575,6 +567,8 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				}
 			}
 		}
+	} else if (c == cfg->key.command) {
+		init_command_mode(cfg, lib);
 	} else if (c == cfg->key.end) {
 		menu_driver(menu, REQ_LAST_ITEM);
 		if (cfg->select) {
@@ -843,7 +837,7 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 	char *name_dup = strdup(name);
 	for (int i = 0; i < lib->length; ++i) {
 		fgets(cur, 4096, cache);
-		split = line_split(cur);
+		split = line_split(cur, "\t");
 		int len = 0;
 		for (int i = 0; i < strlen(cur); ++i) {
 			if (cur[i] == '\t') {
@@ -1023,18 +1017,6 @@ int path_in_lib(char *path, struct vmn_library *lib) {
 	}
 	regfree(&regex);
 	return 0;
-}
-
-char *remove_char(char *str) {
-	int len = strlen(str);
-	if (!len) {
-		return "";
-	}
-	char *remove;
-	remove = malloc(len - 1);
-	memcpy(remove, str, sizeof(char)*(len - 1));
-	remove[len - 1] = '\0';
-	return remove;
 }
 
 void resize_detected() {

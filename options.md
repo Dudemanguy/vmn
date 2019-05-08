@@ -38,6 +38,9 @@ Like the main options, keybindings in vmn are defined in the configuration file 
 ``beginning=<key>``\
   Jump to the first item in the menu.
 
+``command=<key>``\
+  Enter command mode.
+
 ``end=<key>``\
   Jump to the last item in the menu.
 
