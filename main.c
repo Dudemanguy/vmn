@@ -17,9 +17,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "command.h"
 #include "config.h"
 #include "library.h"
+#include "command.h"
 
 ITEM **create_meta_items(char ***metadata);
 ITEM **create_path_items(char ***files);
@@ -993,8 +993,7 @@ mpv_handle *mpv_generate(struct vmn_config *cfg) {
 	mpv_set_option_string(ctx, "force-window", "yes");
 	mpv_set_option_string(ctx, "config-dir", cfg->mpv_cfg_dir);
 	mpv_set_option_string(ctx, "config", cfg->mpv_cfg);
-	int val = 1;
-	mpv_set_option(ctx, "osc", MPV_FORMAT_FLAG, &val);
+	mpv_set_option_string(ctx, "osc", "yes");
 	return ctx;
 }
 
