@@ -7,7 +7,7 @@
 #include "config.h"
 #include "library.h"
 
-char *append_char(char *str, char c) {
+char *command_append_char(char *str, char c) {
 	int len = strlen(str);
 	char *append = malloc(len + 2);
 	strcpy(append, str);
@@ -49,7 +49,7 @@ void execute_command(struct vmn_library *lib, char **parse_arr, char *entry) {
 	free(parse_arr);
 }
 
-char *remove_char(char *str) {
+char *command_remove_char(char *str) {
 	int len = strlen(str);
 	if (!len) {
 		return "";
@@ -89,7 +89,7 @@ void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
 		mvwprintw(lib->command, 0, 0, ":%s\n", entry);
 		char key = wgetch(lib->command);
 		if (key == 127) {
-			entry = remove_char(entry);
+			entry = command_remove_char(entry);
 		} else if (key == 10) {
 			if (strlen(entry) && (entry[0] != ' ')) {
 				char **parse_arr = parse_command(entry);
@@ -105,7 +105,7 @@ void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
 			destroy_command_window(lib);
 			break;
 		} else {
-			entry = append_char(entry, key);
+			entry = command_append_char(entry, key);
 		}
 	}
 }

@@ -197,6 +197,15 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
+char *append_char(char *str, char c) {
+	int len = strlen(str);
+	char *append = malloc(len + 2);
+	strcpy(append, str);
+	append[len] = c;
+	append[len + 1] = '\0';
+	return append;
+}
+
 void create_visual_window(struct vmn_library *lib) {
 	lib->visual = newwin(1, 0, LINES - 1, 0);
 	mvwprintw(lib->visual, 0, 0, "-- VISUAL --\n");
@@ -1016,6 +1025,18 @@ int path_in_lib(char *path, struct vmn_library *lib) {
 	}
 	regfree(&regex);
 	return 0;
+}
+
+char *remove_char(char *str) {
+	int len = strlen(str);
+	if (!len) {
+		return "";
+	}
+	char *remove;
+	remove = malloc(len - 1);
+	memcpy(remove, str, sizeof(char)*(len - 1));
+	remove[len - 1] = '\0';
+	return remove;
 }
 
 void resize_detected() {

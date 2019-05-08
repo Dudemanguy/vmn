@@ -14,7 +14,6 @@
 #define CTRL(c) ((c) & 037)
 #endif
 
-
 int check_arg(struct vmn_config *cfg, char *arg) {
 	char *valid[8] = {"", "--input-mode=", "--library=", "--mpv-cfg=", "--mpv-cfg-dir=", "--sort=", "--tags=", "--view="};
 	int i = 0;
