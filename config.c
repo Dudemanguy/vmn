@@ -1,4 +1,3 @@
-#include <ctype.h>
 #include <dirent.h>
 #include <libconfig.h>
 #include <ncurses.h>
@@ -273,7 +272,7 @@ char *remove_spaces(char *str) {
 	char *trim = (char *)calloc(strlen(str) + 1, sizeof(char));
 	int i = 0;
 	while (*str != '\0') {
-		if (!isspace(*str)) {
+		if (*str != ' ') {
 			trim[i] = *str;
 			++i;
 		}
@@ -607,6 +606,11 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 				printf("Invalid sort argument specified. Resetting to default. \n");
 				free(sort_clone);
 				sort_arg = 0;
+				cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
+				cfg.sort_len = cfg.tags_len;
+				for (int i = 0; i < cfg.tags_len; ++i) {
+					cfg.sort[i] = default_sort(cfg.tags[i]);
+				}
 			} else {
 				if (tags_arg) {
 					if (cfg.tags_len != cfg.sort_len) {
