@@ -890,6 +890,7 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 	}
 	free(cur);
 	free(name_dup);
+	free(path);
 }
 
 int move_menu_meta_backward(struct vmn_library *lib) {
