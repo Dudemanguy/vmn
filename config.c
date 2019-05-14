@@ -35,27 +35,6 @@ int check_arg(struct vmn_config *cfg, char *arg) {
 	return 0;
 }
 
-int check_cfg(char *cfg_file) {
-	config_t cfg;
-	config_init(&cfg);
-
-	if (!config_read_file(&cfg, cfg_file)) {
-		fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg),
-			config_error_line(&cfg), config_error_text(&cfg));
-		config_destroy(&cfg);
-		return(EXIT_FAILURE);
-	}
-	return 0;
-}
-
-void check_dir() {
-	char *cfgdir = get_cfg_dir();
-	struct stat st = {0};
-	if (stat(cfgdir, &st) == -1) {
-		mkdir(cfgdir, 0777);
-	}
-}
-
 int check_func(const char *func) {
 	if (strcmp(func, "f1") == 0) {
 		return KEY_F(1);
