@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "config.h"
+#include "utils.h"
 
 #ifndef CTRL
 #define CTRL(c) ((c) & 037)
@@ -265,21 +266,6 @@ char *read_cfg_str(config_t *libcfg, const char *opt) {
 	}
 	char *out = strdup(output);
 	return out;
-}
-
-char *remove_spaces(char *str) {
-	char *trim = (char *)calloc(strlen(str) + 1, sizeof(char));
-	int i = 0;
-	while (*str != '\0') {
-		if (*str != ' ') {
-			trim[i] = *str;
-			++i;
-		}
-		++str;
-	}
-	trim[i] = '\0';
-	trim = (char *)realloc(trim, sizeof(char)*(i+1));
-	return trim;
 }
 
 struct vmn_key key_init(config_t *libcfg) {

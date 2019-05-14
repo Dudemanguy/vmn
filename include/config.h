@@ -5,7 +5,6 @@ char *get_cfg();
 char *get_cfg_dir();
 char *get_cfg_lib();
 char **parse_tags(char *tags);
-char *remove_spaces(char *str);
 void vmn_config_destroy(struct vmn_config *cfg);
 
 struct vmn_key {

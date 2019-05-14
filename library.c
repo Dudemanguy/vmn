@@ -10,25 +10,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "library.h"
-
-int ext_valid(char *ext) {
-	const char *file_type[] = { "aac", "aiff", "alac", "ape", "flac", "m4a", "mp3", "ogg", "opus", "wav" };
-	int len = 10;
-	for (int i = 0; i < len; ++i) {
-		if (strcmp(file_type[i], ext) == 0) {
-			return 1;
-		}
-	}
-	return 0;
-}
-
-char *get_file_ext(const char *file) {
-	char *dot = strrchr(file, '.');
-	if (!dot || dot == file) {
-		return "";
-	}
-	return dot + 1;
-}
+#include "utils.h"
 
 AVInputFormat *get_input_format(const char *file) {
 	char *ext = get_file_ext(file);
@@ -40,27 +22,6 @@ AVInputFormat *get_input_format(const char *file) {
 		format = av_find_input_format(ext);
 		return format;
 	}
-}
-
-char **line_split(char *str, char *delim) {
-	char *str_dup = strdup(str);
-	char *token = strtok(str_dup, delim);
-	int len = 20;
-	char **arr = (char **)calloc(len, sizeof(char*));
-	int i = 0;
-	while (token != NULL) {
-		if (i == len) {
-			len = len*2;
-			arr = (char **)realloc(arr,sizeof(char*)*len);
-		}
-		arr[i] = malloc(strlen(token) + 1);
-		strcpy(arr[i], token);
-		token = strtok(NULL, delim);
-		++i;
-	}
-	arr = (char **)realloc(arr, sizeof(char*)*i);
-	free(str_dup);
-	return arr;
 }
 
 int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
@@ -202,12 +163,6 @@ int is_sel(char *sel, char *line) {
 	} else {
 		return 0;
 	}
-}
-
-int qstrcmp(const void *a, const void *b) {
-	const char *aa = *(const char**)a;
-	const char *bb = *(const char**)b;
-	return strcasecmp(aa, bb);
 }
 
 char *read_vmn_cache(char *str, char *match) {
