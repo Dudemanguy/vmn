@@ -8,8 +8,7 @@ Just like in vim, you can enter command mode (default `:`). Command allows you t
 
 ``<mpv/vmn> <exec> <exec_args>``
 
-Multiple spaces between command arguments is allowed. However, it cannot begin with a space. Your input will be ignored if it does. Checking for errors has not yet been implemented, so typing in an invalid command will silently fail.
-
+Multiple spaces between command arguments is allowed. However, it cannot begin with a space. Your input will be ignored if it does.
 
 The first argument specifies whether the command should be sent to the libmpv backend or vmn. Currently only support for mpv commands are implemented.
 
