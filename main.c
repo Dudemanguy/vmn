@@ -20,6 +20,7 @@
 #include "config.h"
 #include "library.h"
 #include "command.h"
+#include "utils.h"
 
 ITEM **create_meta_items(char ***metadata);
 ITEM **create_path_items(char ***files);
@@ -36,7 +37,6 @@ int move_menu_path_forward(const char *path, struct vmn_config *cfg, struct vmn_
 mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
 int path_in_lib(char *path, struct vmn_library *lib);
-char *remove_char(char *str);
 void resize_detected();
 void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len);
 int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len);
@@ -195,15 +195,6 @@ int main(int argc, char *argv[]) {
 	}
 	endwin();
 	return 0;
-}
-
-char *append_char(char *str, char c) {
-	int len = strlen(str);
-	char *append = malloc(len + 2);
-	strcpy(append, str);
-	append[len] = c;
-	append[len + 1] = '\0';
-	return append;
 }
 
 void create_visual_window(struct vmn_library *lib) {
@@ -1026,18 +1017,6 @@ int path_in_lib(char *path, struct vmn_library *lib) {
 	}
 	regfree(&regex);
 	return 0;
-}
-
-char *remove_char(char *str) {
-	int len = strlen(str);
-	if (!len) {
-		return "";
-	}
-	char *remove;
-	remove = malloc(len - 1);
-	memcpy(remove, str, sizeof(char)*(len - 1));
-	remove[len - 1] = '\0';
-	return remove;
 }
 
 void resize_detected() {

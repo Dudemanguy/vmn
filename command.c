@@ -6,15 +6,7 @@
 #include <string.h>
 #include "config.h"
 #include "library.h"
-
-char *command_append_char(char *str, char c) {
-	int len = strlen(str);
-	char *append = malloc(len + 2);
-	strcpy(append, str);
-	append[len] = c;
-	append[len + 1] = '\0';
-	return append;
-}
+#include "utils.h"
 
 void destroy_command_window(struct vmn_library *lib) {
 	delwin(lib->command);
@@ -49,18 +41,6 @@ void execute_command(struct vmn_library *lib, char **parse_arr, char *entry) {
 	free(parse_arr);
 }
 
-char *command_remove_char(char *str) {
-	int len = strlen(str);
-	if (!len) {
-		return "";
-	}
-	char *remove;
-	remove = malloc(len - 1);
-	memcpy(remove, str, sizeof(char)*(len - 1));
-	remove[len - 1] = '\0';
-	return remove;
-}
-
 char **parse_command(char *entry) {
 	char **split = line_split(entry, " ");
 	int len = 0;
@@ -89,7 +69,7 @@ void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
 		mvwprintw(lib->command, 0, 0, ":%s\n", entry);
 		char key = wgetch(lib->command);
 		if (key == 127) {
-			entry = command_remove_char(entry);
+			entry = remove_char(entry);
 		} else if (key == 10) {
 			if (strlen(entry) && (entry[0] != ' ')) {
 				char **parse_arr = parse_command(entry);
@@ -105,7 +85,7 @@ void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
 			destroy_command_window(lib);
 			break;
 		} else {
-			entry = command_append_char(entry, key);
+			entry = append_char(entry, key);
 		}
 	}
 }
