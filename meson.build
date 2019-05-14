@@ -22,7 +22,7 @@ scdoc = find_program('scdoc', required: get_option('man-pages'))
 if scdoc.found()
   sh = find_program('sh')
   mandir = get_option('mandir')
-  man_files = ['vmn.1.scd']
+  man_files = ['docs/vmn.1.scd']
   foreach filename : man_files
 		topic = filename.split('.')[-3].split('/')[-1]
 		section = filename.split('.')[-2]
@@ -43,5 +43,5 @@ endif
 
 subdir('include')
 inc =  include_directories('include')
-vmn_sources = files('command.c', 'config.c', 'library.c', 'main.c', 'utils.c')
+vmn_sources = files('src/command.c', 'src/config.c', 'src/library.c', 'src/main.c', 'src/utils.c')
 executable('vmn', vmn_sources, dependencies: [libavformat, libavutil, libconfig, menu, mpv, ncurses], include_directories: inc, install: true)
