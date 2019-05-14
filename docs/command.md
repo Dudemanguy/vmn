@@ -1,7 +1,33 @@
-# Command Mode
+# Command Mode #
 
 **Note**: The command mode is currently in progress, but much is planned in the future.
 
-Just like in vim, you can enter command mode (default `:`). Currently, command mode allows you to type in commands to send to the libmpv client. The proper syntax to use is `mpv cmd your-command-and-args`. The `your-command-and-args` section is formatted exactly like mpv's input config bindings. See this [document](https://github.com/mpv-player/mpv/blob/master/DOCS/man/input.rst) for details. For example, you would type `mpv cmd add volume 10` to increase the volume of the currently playing item by 10.
+Just like in vim, you can enter command mode (default `:`). Command allows you to interact directly with the libmpv backend in numerous ways. Interacting directly with vmn is also planned.
 
-Checking for errors has not yet been implemented, so typing in an invalid command will silently fail. Multiple spaces between command arguments is allowed, but the command cannot being with a space. Your input will be ignored if it does. 
+## Syntax ##
+
+``<mpv/vmn> <exec> <exec_args>``
+
+Multiple spaces between command arguments is allowed. However, it cannot begin with a space. Your input will be ignored if it does. Checking for errors has not yet been implemented, so typing in an invalid command will silently fail.
+
+
+The first argument specifies whether the command should be sent to the libmpv backend or vmn. Currently only support for mpv commands are implemented.
+
+### mpv ###
+These are the supported commands for mpv. The same formatting and names from mpv's input config bindings are used. See this [document](https://github.com/mpv-player/mpv/blob/master/DOCS/man/input.rst) for details.
+
+`cmd`\
+Executes the `mpv_command` function (for using mpv's input commands).
+
+`set`\
+Executes the `mpv_set_option_string` function (for setting mpv properties).
+
+The additional arguments are used as arguments for their respective function.
+
+## Examples ##
+
+`mpv cmd add volume 10` \
+Raises volume by 10.
+
+`mpv set osc no` \
+Turns the osc off.

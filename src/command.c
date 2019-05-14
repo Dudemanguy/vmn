@@ -33,6 +33,8 @@ void execute_command(struct vmn_library *lib, char **parse_arr, char *entry) {
 			}
 			cmd[len-2] = NULL;
 			mpv_command(lib->ctx, cmd);
+		} else if (strcmp(parse_arr[1], "set") == 0) {
+			mpv_set_option_string(lib->ctx, parse_arr[2], parse_arr[3]);
 		}
 	}
 	for (int i = 0; i < len; ++i) {
