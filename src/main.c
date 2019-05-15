@@ -139,8 +139,7 @@ int main(int argc, char *argv[]) {
 			mpv_terminate_destroy(lib.ctx);
 			lib.mpv_active = 0;
 			lib.ctx = mpv_generate(&cfg);
-		}
-		if (event->event_id == MPV_EVENT_END_FILE) {
+		} else if (event->event_id == MPV_EVENT_END_FILE) {
 			char *idle = mpv_get_property_string(lib.ctx, "idle-active");
 			if (strcmp(idle, "yes") == 0) {
 				mpv_terminate_destroy(lib.ctx);
