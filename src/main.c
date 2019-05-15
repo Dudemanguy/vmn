@@ -157,6 +157,7 @@ int main(int argc, char *argv[]) {
 		}
 		if (lib.mpv_kill) {
 			mpv_terminate_destroy(lib.ctx);
+			lib.ctx = NULL;
 			lib.ctx = mpv_generate(&cfg);
 			lib.mpv_kill = 0;
 			lib.mpv_active = 0;
