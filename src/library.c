@@ -56,10 +56,10 @@ int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
 		free(split[i]);
 	}
 	free(split);
-	if (!match) {
-		return 0;
-	} else {
+	if (match) {
 		return 1;
+	} else {
+		return 0;
 	}
 }
 

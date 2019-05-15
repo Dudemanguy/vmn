@@ -847,8 +847,11 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 			}
 		}
 		++len;
-		int prev = check_vmn_cache(lib, cur, cfg->tags);
-		if (prev) {
+		int prev;
+		if (lib->depth) {
+			prev = check_vmn_cache(lib, cur, cfg->tags);
+		}
+		if (prev || lib->depth == 0) {
 			int known = is_known(cfg->tags[lib->depth], cur);
 			if (!known) {
 				if (strcmp(cfg->tags[lib->depth], "title") == 0) {
