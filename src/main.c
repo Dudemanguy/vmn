@@ -147,6 +147,7 @@ int main(int argc, char *argv[]) {
 				lib.mpv_active = 0;
 				lib.ctx = mpv_generate(&cfg);
 			}
+			mpv_free(idle);
 		}
 		if (cfg.view == V_DATA) {
 			ITEM *cur = current_item(lib.menu[lib.depth]);
