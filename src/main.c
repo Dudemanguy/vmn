@@ -479,6 +479,7 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			}
 		}
 	}
+	fclose(cache);
 	free(cur);
 	free(path);
 	free(unknown);
@@ -879,6 +880,7 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 		}
 		free(split);
 	}
+	fclose(cache);
 	free(cur);
 	free(name_dup);
 	free(path);
@@ -1084,6 +1086,7 @@ int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char ***metada
 			}
 		}
 	}
+	fclose(cache);
 	free(cur);
 	free(path);
 	return positions;
