@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <libconfig.h>
+#include <limits.h>
 #include <mpv/client.h>
 #include <ncurses.h>
 #include <regex.h>
@@ -173,7 +174,9 @@ char *read_arg(char *arg) {
 		strcpy(path, home);
 		strcat(path, out_shift);
 	} else {
-		path = strdup(out);
+		char *tmp = strdup(out);
+		path = realpath(tmp, NULL);
+		free(tmp);
 	}
 	if (path) {
 		return path;
