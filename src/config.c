@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <libconfig.h>
+#include <mpv/client.h>
 #include <ncurses.h>
 #include <regex.h>
 #include <stdio.h>
@@ -152,6 +153,12 @@ char *get_default_lib() {
 	strcpy(path, home);
 	strcat(path, library);
 	return path;
+}
+
+void mpv_set_opts(mpv_handle *ctx, struct vmn_config *cfg) {
+	for (int i = 0; i < cfg->mpv_opts_len; i=i+2) {
+		mpv_set_option_string(ctx, cfg->mpv_opts[i], cfg->mpv_opts[i+1]);
+	}
 }
 
 char *read_arg(char *arg) {
@@ -644,6 +651,22 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	cfg.select = 0;
 	cfg.select_pos = 0;
 
+	//create default mpv_opts array
+	cfg.mpv_opts_len = 12;
+	cfg.mpv_opts = malloc(cfg.mpv_opts_len*sizeof(char*));
+	cfg.mpv_opts[0] = strdup("input-default-bindings");
+	cfg.mpv_opts[1] = strdup("yes");
+	cfg.mpv_opts[2] = strdup("input-vo-keyboard");
+	cfg.mpv_opts[3] = strdup("yes");
+	cfg.mpv_opts[4] = strdup("force-window");
+	cfg.mpv_opts[5] = strdup("yes");
+	cfg.mpv_opts[6] = strdup("config-dir");
+	cfg.mpv_opts[7] = strdup(cfg.mpv_cfg_dir);
+	cfg.mpv_opts[8] = strdup("config");
+	cfg.mpv_opts[9] = strdup(cfg.mpv_cfg);
+	cfg.mpv_opts[10] = strdup("osc");
+	cfg.mpv_opts[11] = strdup("yes");
+
 	free(cfg_file);
 	config_destroy(&libcfg);
 	return cfg;
@@ -652,6 +675,10 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 void vmn_config_destroy(struct vmn_config *cfg) {
 	free(cfg->lib_dir);
 	free(cfg->mpv_cfg_dir);
+	for (int i = 0; i < cfg->mpv_opts_len; ++i) {
+		free(cfg->mpv_opts[i]);
+	}
+	free(cfg->mpv_opts);
 	if (cfg->view == V_DATA) {
 		for (int i = 0; i < cfg->tags_len; ++i) {
 			free(cfg->tags[i]);
