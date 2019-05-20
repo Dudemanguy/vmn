@@ -10,7 +10,7 @@
 
 void destroy_command_window(struct vmn_library *lib) {
 	delwin(lib->command);
-	for (int i = 0; i <= lib->depth; ++i) {
+	for (int i = 0; i < lib->depth; ++i) {
 		unpost_menu(lib->menu[i]);
 		post_menu(lib->menu[i]);
 		wrefresh(menu_win(lib->menu[i]));

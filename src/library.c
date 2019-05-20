@@ -35,7 +35,7 @@ int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
 	++len;
 	int match;
 	int known;
-	for (int i = 0; i < lib->depth; ++i) {
+	for (int i = 0; i < lib->depth-1; ++i) {
 		match = 0;
 		known = is_known(tags[i], str);
 		if (!known) {
@@ -218,7 +218,7 @@ int read_vmn_cache_int(char *str, char *match) {
 
 struct vmn_library lib_init() {
 	struct vmn_library lib;
-	lib.depth = 0;
+	lib.depth = 1;
 	lib.files = NULL;
 	lib.length = 0;
 	lib.mpv_active = 0;
@@ -315,7 +315,7 @@ void vmn_library_destroy(struct vmn_library *lib) {
 	}
 	free(lib->files);
 	if (lib->length) {
-		for (int i = 0; i < (lib->depth + 1); ++i) {
+		for (int i = 0; i < lib->depth; ++i) {
 			int j = 0;
 			while (lib->entries[i][0][j]) {
 				free(lib->entries[i][0][j]);
@@ -329,14 +329,14 @@ void vmn_library_destroy(struct vmn_library *lib) {
 		free(lib->entries);
 	}
 	if (lib->length) {
-		for (int i = 0; i < (lib->depth + 1); ++i) {
+		for (int i = 0; i < lib->depth; ++i) {
 			unpost_menu(lib->menu[i]);
 			free_menu(lib->menu[i]);
 		}
 		free(lib->menu);
 	}
 	if (lib->length) {
-		for (int i = 0; i < (lib->depth + 1); ++i) {
+		for (int i = 0; i < lib->depth; ++i) {
 			int j = 0;
 			while(lib->items[i][j]) {
 				free_item(lib->items[i][j]);
@@ -458,7 +458,7 @@ void vmn_library_refresh(struct vmn_library *lib, char *tag) {
 		++len;
 		int skip = 0;
 		for (int j = 0; j < len; ++j) {
-			if ((strcasecmp(split[j], tag) == 0) && (strcmp(split[j+1], lib->selections[lib->depth]) == 0)) {
+			if ((strcasecmp(split[j], tag) == 0) && (strcmp(split[j+1], lib->selections[lib->depth-1]) == 0)) {
 				skip = 1;
 				++n;
 				break;
@@ -568,6 +568,6 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 }
 
 void vmn_library_selections_add(struct vmn_library *lib, const char *entry) {
-	lib->selections[lib->depth] = (char *)realloc(lib->selections[lib->depth], sizeof(char)*(strlen(entry) + 1));
-	strcpy(lib->selections[lib->depth], entry);
+	lib->selections[lib->depth-1] = (char *)realloc(lib->selections[lib->depth-1], sizeof(char)*(strlen(entry) + 1));
+	strcpy(lib->selections[lib->depth-1], entry);
 }	

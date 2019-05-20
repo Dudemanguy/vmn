@@ -118,19 +118,19 @@ int main(int argc, char *argv[]) {
 		mpv_event *event = mpv_wait_event(lib.ctx, 0);
 		wtimeout(win, 20);
 		c = wgetch(win);
-		key_event(c, lib.menu[lib.depth], lib.items[lib.depth], &cfg, &lib);
+		key_event(c, lib.menu[lib.depth-1], lib.items[lib.depth-1], &cfg, &lib);
 		if (resize) {
 			resize = 0;
 			struct winsize ws;
 			ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
 			resize_term(ws.ws_row, ws.ws_col);
 			int maxx = getmaxx(stdscr);
-			for (int i = 0; i <= lib.depth; ++i) {
+			for (int i = 0; i < lib.depth; ++i) {
 				int cur_pos = item_index(current_item(lib.menu[i]));
 				unpost_menu(lib.menu[i]);
 				set_menu_format(lib.menu[i], LINES, 0);
 				set_top_row(lib.menu[i], cur_pos);
-				mvwin(menu_win(lib.menu[i]), 0, (int)(maxx*i)/(lib.depth+1));
+				mvwin(menu_win(lib.menu[i]), 0, (int)(maxx*i)/(lib.depth));
 				post_menu(lib.menu[i]);
 				wrefresh(menu_win(lib.menu[i]));
 			}
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
 			mpv_free(idle);
 		}
 		if (cfg.view == V_DATA) {
-			ITEM *cur = current_item(lib.menu[lib.depth]);
+			ITEM *cur = current_item(lib.menu[lib.depth-1]);
 			const char *name = item_name(cur);
 			if (name) {
 				vmn_library_selections_add(&lib, name);
@@ -233,42 +233,42 @@ ITEM **create_path_items(char ***entries) {
 }
 
 void destroy_last_menu_meta(struct vmn_library *lib) {
-	int n = item_count(lib->menu[lib->depth]);
-	unpost_menu(lib->menu[lib->depth]);
-	wrefresh(menu_win(lib->menu[lib->depth]));
-	delwin(menu_win(lib->menu[lib->depth]));
-	free_menu(lib->menu[lib->depth]);
+	int n = item_count(lib->menu[lib->depth-1]);
+	unpost_menu(lib->menu[lib->depth-1]);
+	wrefresh(menu_win(lib->menu[lib->depth-1]));
+	delwin(menu_win(lib->menu[lib->depth-1]));
+	free_menu(lib->menu[lib->depth-1]);
 	for (int i = 0; i < n; ++i) {
-		free_item(lib->items[lib->depth][i]);
-		free(lib->entries[lib->depth][0][i]);
-		free(lib->entries[lib->depth][1][i]);
+		free_item(lib->items[lib->depth-1][i]);
+		free(lib->entries[lib->depth-1][0][i]);
+		free(lib->entries[lib->depth-1][1][i]);
 	}
-	free(lib->items[lib->depth]);
-	free(lib->entries[lib->depth][0]);
-	free(lib->entries[lib->depth][1]);
-	free(lib->entries[lib->depth]);
+	free(lib->items[lib->depth-1]);
+	free(lib->entries[lib->depth-1][0]);
+	free(lib->entries[lib->depth-1][1]);
+	free(lib->entries[lib->depth-1]);
 }
 
 void destroy_last_menu_path(struct vmn_library *lib) {
-	int n = item_count(lib->menu[lib->depth]);
-	unpost_menu(lib->menu[lib->depth]);
-	wrefresh(menu_win(lib->menu[lib->depth]));
-	delwin(menu_win(lib->menu[lib->depth]));
-	free_menu(lib->menu[lib->depth]);
+	int n = item_count(lib->menu[lib->depth-1]);
+	unpost_menu(lib->menu[lib->depth-1]);
+	wrefresh(menu_win(lib->menu[lib->depth-1]));
+	delwin(menu_win(lib->menu[lib->depth-1]));
+	free_menu(lib->menu[lib->depth-1]);
 	for (int i = 0; i < n; ++i) {
-		free_item(lib->items[lib->depth][i]);
-		free(lib->entries[lib->depth][0][i]);
-		free(lib->entries[lib->depth][1][i]);
+		free_item(lib->items[lib->depth-1][i]);
+		free(lib->entries[lib->depth-1][0][i]);
+		free(lib->entries[lib->depth-1][1][i]);
 	}
-	free(lib->entries[lib->depth][0]);
-	free(lib->entries[lib->depth][1]);
-	free(lib->entries[lib->depth]);
-	free(lib->items[lib->depth]);
+	free(lib->entries[lib->depth-1][0]);
+	free(lib->entries[lib->depth-1][1]);
+	free(lib->entries[lib->depth-1]);
+	free(lib->items[lib->depth-1]);
 }
 
 void destroy_visual_window(struct vmn_library *lib) {
 	delwin(lib->visual);
-	for (int i = 0; i <= lib->depth; ++i) {
+	for (int i = 0; i < lib->depth; ++i) {
 		unpost_menu(lib->menu[i]);
 		post_menu(lib->menu[i]);
 		wrefresh(menu_win(lib->menu[i]));
@@ -368,9 +368,9 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 				continue;
 			}
 			if (!valid_sel) {
-				valid_sel = is_sel(lib->selections[lib->depth - 1], cur);
+				valid_sel = is_sel(lib->selections[lib->depth-2], cur);
 			}
-			int prev_known = is_known(cfg->tags[lib->depth - 1], cur);
+			int prev_known = is_known(cfg->tags[lib->depth-2], cur);
 			if (!prev_known) {
 				if (unknown_pos == unknown_len) {
 					unknown_len = unknown_len*2;
@@ -381,10 +381,10 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 				continue;
 			}
 		}
-		int known = is_known(cfg->tags[lib->depth], cur);
+		int known = is_known(cfg->tags[lib->depth-1], cur);
 		char *filename = read_vmn_cache(cur, "");
 		if (!known) {
-			if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+			if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
 				metadata[0][len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
 				strcpy(metadata[0][len], filename+1);
 				metadata[1][len] = (char *)calloc(strlen(filename) + 1, sizeof(char));
@@ -392,18 +392,18 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 				++len;
 			} else {
 				if (!tag_exist) {
-					metadata[0][len] = (char *)calloc(strlen(cfg->tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
+					metadata[0][len] = (char *)calloc(strlen(cfg->tags[lib->depth-1]) + strlen("Unknown ") + 1, sizeof(char));
 					strcpy(metadata[0][len], "Unknown ");
-					strcat(metadata[0][len], cfg->tags[lib->depth]);
+					strcat(metadata[0][len], cfg->tags[lib->depth-1]);
 					tag_exist = 1;
 					++len;
 				}
 			}
 			free(filename);
 		} else {
-			temp = read_vmn_cache(cur, cfg->tags[lib->depth]);
+			temp = read_vmn_cache(cur, cfg->tags[lib->depth-1]);
 			for (int j = 0; j < len; ++j) {
-				if ((strcmp(temp, metadata[0][j]) == 0) && (strcmp(cfg->tags[lib->depth], "title") != 0)) {
+				if ((strcmp(temp, metadata[0][j]) == 0) && (strcmp(cfg->tags[lib->depth-1], "title") != 0)) {
 					match = 1;
 					break;
 				}
@@ -416,7 +416,7 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			} else {
 				metadata[0][len] = malloc(sizeof(char *)*(strlen(temp)+1));
 				strcpy(metadata[0][len], temp);
-				if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+				if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
 					metadata[1][len] = malloc(sizeof(char *)*(strlen(filename)+1));
 					strcpy(metadata[1][len], filename);
 				}
@@ -434,9 +434,9 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			char *filename = read_vmn_cache(cur, "");
 			if (i == unknown[unknown_pos]) {
 				++unknown_pos;
-				int known = is_known(cfg->tags[lib->depth], cur);
+				int known = is_known(cfg->tags[lib->depth-1], cur);
 				if (!known) {
-					if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+					if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
 						metadata[0][len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
 						strcpy(metadata[0][len], filename+1);
 						metadata[1][len] = (char *)calloc(strlen(filename) + 1, sizeof(char));
@@ -444,16 +444,16 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 						++len;
 					} else {
 						if (!tag_exist) {
-							metadata[0][len] = (char *)calloc(strlen(cfg->tags[lib->depth]) + strlen("Unknown ") + 1, sizeof(char));
+							metadata[0][len] = (char *)calloc(strlen(cfg->tags[lib->depth-1]) + strlen("Unknown ") + 1, sizeof(char));
 							strcpy(metadata[0][len], "Unknown ");
-							strcat(metadata[0][len], cfg->tags[lib->depth]);
+							strcat(metadata[0][len], cfg->tags[lib->depth-1]);
 							tag_exist = 1;
 							++len;
 						}
 					}
 					free(filename);
 				} else {
-					temp = read_vmn_cache(cur, cfg->tags[lib->depth]);
+					temp = read_vmn_cache(cur, cfg->tags[lib->depth-1]);
 					for (int j = 0; j < len; ++j) {
 						if (strcmp(temp, metadata[0][j]) == 0) {
 							match = 1;
@@ -468,7 +468,7 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 					} else {
 						metadata[0][len] = malloc(sizeof(char *)*(strlen(temp)+1));
 						strcpy(metadata[0][len], temp);
-						if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+						if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
 							metadata[1][len] = malloc(sizeof(char *)*(strlen(filename)+1));
 							strcpy(metadata[1][len], filename);
 						}
@@ -726,11 +726,11 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				menu_driver(menu, REQ_NEXT_MATCH);
 				entry = append_char(entry, key);
 			}
-			wrefresh(menu_win(lib->menu[lib->depth]));
+			wrefresh(menu_win(lib->menu[lib->depth-1]));
 			if (key == cfg->key.escape || key == 10 || key == 27) {
 				free(entry);
 				delwin(lib->search);
-				for (int i = 0; i <= lib->depth; ++i) {
+				for (int i = 0; i < lib->depth; ++i) {
 					unpost_menu(lib->menu[i]);
 					post_menu(lib->menu[i]);
 					wrefresh(menu_win(lib->menu[i]));
@@ -768,7 +768,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		if (cfg->view == V_DATA) {
 			for (int i = 0; i < item_count(menu); ++i) {
 				if (item_value(items[i])) {
-					if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+					if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
 						path = item_description(items[i]);
 						mpv_queue(lib->ctx, path);
 						++n;
@@ -782,7 +782,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			if (!n) {
 				ITEM *cur = current_item(menu);
 				int index = item_index(cur);
-				if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+				if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
 					path = item_description(cur);
 					mpv_queue(lib->ctx, path);
 				} else {
@@ -808,7 +808,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		++lib->vmn_quit;
 	} else if (c == cfg->key.vmn_refresh) {
 		if (cfg->view == V_DATA) {
-			vmn_library_refresh(lib, cfg->tags[lib->depth]);
+			vmn_library_refresh(lib, cfg->tags[lib->depth-1]);
 			vmn_library_sort(lib, cfg->lib_dir);
 		}
 	} else if (c == cfg->key.voldown) {
@@ -824,7 +824,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 	} else {
 		;
 	}
-	wrefresh(menu_win(lib->menu[lib->depth]));
+	wrefresh(menu_win(lib->menu[lib->depth-1]));
 }
 
 void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name, int index) {
@@ -848,13 +848,13 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 		}
 		++len;
 		int prev;
-		if (lib->depth) {
+		if (lib->depth-1) {
 			prev = check_vmn_cache(lib, cur, cfg->tags);
 		}
-		if (prev || lib->depth == 0) {
-			int known = is_known(cfg->tags[lib->depth], cur);
+		if (prev || lib->depth == 1) {
+			int known = is_known(cfg->tags[lib->depth-1], cur);
 			if (!known) {
-				if (strcmp(cfg->tags[lib->depth], "title") == 0) {
+				if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
 					char *filename = strrchr(split[0], '/');
 					if (strcmp(filename+1, name) == 0) {
 						mpv_queue(lib->ctx, split[0]);
@@ -863,8 +863,8 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 					mpv_queue(lib->ctx, split[0]);
 				}
 			} else {
-				if (strcmp(cfg->tags[lib->depth], "title") == 0) {
-					int track_known = is_known(cfg->tags[lib->depth], cur);
+				if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
+					int track_known = is_known(cfg->tags[lib->depth-1], cur);
 					if (track_known) {
 						int track_number = read_vmn_cache_int(cur, "track");
 						if (track_number != index+1) {
@@ -872,7 +872,7 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 						}
 					}
 				}
-				char *file = get_vmn_cache_path(lib, cur, name_dup, cfg->tags[lib->depth]);
+				char *file = get_vmn_cache_path(lib, cur, name_dup, cfg->tags[lib->depth-1]);
 				if (!(strcmp(file, "") == 0)) {
 					mpv_queue(lib->ctx, file);
 				}
@@ -891,69 +891,69 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 }
 
 int move_menu_meta_backward(struct vmn_library *lib) {
-	if (lib->depth == 0) {
+	if (lib->depth == 1) {
 		return 0;
 	}
 	destroy_last_menu_meta(lib);
 	--lib->depth;
-	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
-	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
+	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth));
+	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth));
 	int maxx = getmaxx(stdscr);
-	for (int i = 1; i <= lib->depth; ++i) {
+	for (int i = 1; i < lib->depth; ++i) {
 		unpost_menu(lib->menu[i]);
 		wrefresh(menu_win(lib->menu[i]));
-		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth+1));
+		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth));
 		post_menu(lib->menu[i]);
 		wrefresh(menu_win(lib->menu[i]));
 	}
-	wrefresh(menu_win(lib->menu[lib->depth]));
+	wrefresh(menu_win(lib->menu[lib->depth-1]));
 	return 0;
 }
 
 int move_menu_path_backward(struct vmn_library *lib) {
-	if (lib->depth == 0) {
+	if (lib->depth == 1) {
 		return 0;
 	}
 	destroy_last_menu_path(lib);
 	--lib->depth;
-	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
-	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
+	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth));
+	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth));
 	int maxx = getmaxx(stdscr);
-	for (int i = 1; i <= lib->depth; ++i) {
+	for (int i = 1; i < lib->depth; ++i) {
 		unpost_menu(lib->menu[i]);
 		wrefresh(menu_win(lib->menu[i]));
-		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth+1));
+		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth));
 		post_menu(lib->menu[i]);
 		wrefresh(menu_win(lib->menu[i]));
 	}
-	wrefresh(menu_win(lib->menu[lib->depth]));
+	wrefresh(menu_win(lib->menu[lib->depth-1]));
 	return 0;
 }
 
 int move_menu_meta_forward(struct vmn_config *cfg, struct vmn_library *lib) {
 	++lib->depth;
-	if (lib->depth == cfg->tags_len) {
+	if (lib->depth > cfg->tags_len) {
 		--lib->depth;
 		return 0;
 	}
-	lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth+1));
-	lib->entries[lib->depth] = get_metadata(cfg, lib);
+	lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth));
+	lib->entries[lib->depth-1] = get_metadata(cfg, lib);
 	int maxx = getmaxx(stdscr);
-	for (int i = 1; i < lib->depth; ++i) {
-		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth+1));
+	for (int i = 1; i < lib->depth-1; ++i) {
+		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth));
 		wrefresh(menu_win(lib->menu[i]));
 	}
-	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
-	lib->items[lib->depth] = create_meta_items(lib->entries[lib->depth]);
-	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
-	lib->menu[lib->depth] = new_menu((ITEM **)lib->items[lib->depth]);
-	set_menu_format(lib->menu[lib->depth], LINES, 0);
-	menu_opts_off(lib->menu[lib->depth], O_ONEVALUE);
-	menu_opts_off(lib->menu[lib->depth], O_SHOWDESC);
-	WINDOW *win = newwin(0, 0, 0, (int)(maxx*lib->depth)/(lib->depth+1));
-	set_menu_win(lib->menu[lib->depth], win);
-	set_menu_sub(lib->menu[lib->depth], win);
-	post_menu(lib->menu[lib->depth]);
+	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth));
+	lib->items[lib->depth-1] = create_meta_items(lib->entries[lib->depth-1]);
+	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth));
+	lib->menu[lib->depth-1] = new_menu((ITEM **)lib->items[lib->depth-1]);
+	set_menu_format(lib->menu[lib->depth-1], LINES, 0);
+	menu_opts_off(lib->menu[lib->depth-1], O_ONEVALUE);
+	menu_opts_off(lib->menu[lib->depth-1], O_SHOWDESC);
+	WINDOW *win = newwin(0, 0, 0, (int)((maxx*(lib->depth-1))/lib->depth));
+	set_menu_win(lib->menu[lib->depth-1], win);
+	set_menu_sub(lib->menu[lib->depth-1], win);
+	post_menu(lib->menu[lib->depth-1]);
 	wmove(win, 0, 0);
 	wrefresh(win);
 	return 0;
@@ -965,29 +965,29 @@ int move_menu_path_forward(const char *path, struct vmn_config *cfg, struct vmn_
 		return 0;
 	}
 	++lib->depth;
-	lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth+1));
-	lib->entries[lib->depth] = get_lib_dir(path, lib);
-	if (!lib->entries[lib->depth]) {
+	lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth));
+	lib->entries[lib->depth-1] = get_lib_dir(path, lib);
+	if (!lib->entries[lib->depth-1]) {
 		--lib->depth;
-		lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth+1));
+		lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth));
 		return 0;
 	}
 	int maxx = getmaxx(stdscr);
-	for (int i = 1; i < lib->depth; ++i) {
-		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth+1));
+	for (int i = 1; i < lib->depth-1; ++i) {
+		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth));
 		wrefresh(menu_win(lib->menu[i]));
 	}
-	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth+1));
-	lib->items[lib->depth] = create_path_items(lib->entries[lib->depth]);
-	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth+1));
-	lib->menu[lib->depth] = new_menu((ITEM **)lib->items[lib->depth]);
-	set_menu_format(lib->menu[lib->depth], LINES, 0);
-	menu_opts_off(lib->menu[lib->depth], O_ONEVALUE);
-	menu_opts_off(lib->menu[lib->depth], O_SHOWDESC);
-	WINDOW *win = newwin(0, 0, 0, (int)(maxx*lib->depth)/(lib->depth+1));
-	set_menu_win(lib->menu[lib->depth], win);
-	set_menu_sub(lib->menu[lib->depth], win);
-	post_menu(lib->menu[lib->depth]);
+	lib->items = (ITEM ***)realloc(lib->items, sizeof(ITEM **)*(lib->depth));
+	lib->items[lib->depth-1] = create_path_items(lib->entries[lib->depth-1]);
+	lib->menu = (MENU **)realloc(lib->menu, sizeof(MENU *)*(lib->depth));
+	lib->menu[lib->depth-1] = new_menu((ITEM **)lib->items[lib->depth-1]);
+	set_menu_format(lib->menu[lib->depth-1], LINES, 0);
+	menu_opts_off(lib->menu[lib->depth-1], O_ONEVALUE);
+	menu_opts_off(lib->menu[lib->depth-1], O_SHOWDESC);
+	WINDOW *win = newwin(0, 0, 0, (int)((maxx*(lib->depth-1))/lib->depth));
+	set_menu_win(lib->menu[lib->depth-1], win);
+	set_menu_sub(lib->menu[lib->depth-1], win);
+	post_menu(lib->menu[lib->depth-1]);
 	wmove(win, 0, 0);
 	wrefresh(win);
 	return 0;
@@ -1025,13 +1025,13 @@ void resize_detected() {
 }
 
 void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len) {
-	if (cfg->sort[lib->depth] == S_DATA) {
+	if (cfg->sort[lib->depth-1] == S_DATA) {
 		qsort(metadata[0], len, sizeof(char *), qstrcmp);
-	} else if (cfg->sort[lib->depth] == S_FILE) {
-	} else if (cfg->sort[lib->depth] == S_NONE) {
+	} else if (cfg->sort[lib->depth-1] == S_FILE) {
+	} else if (cfg->sort[lib->depth-1] == S_NONE) {
 		;
-	} else if (cfg->sort[lib->depth] == S_NUMB) {
-		if (strcasecmp(cfg->tags[lib->depth], "title") == 0) {
+	} else if (cfg->sort[lib->depth-1] == S_NUMB) {
+		if (strcasecmp(cfg->tags[lib->depth-1], "title") == 0) {
 			int **order = trackorder(cfg, lib, metadata, len);
 			tracksort(metadata, order, len);
 			for (int i = 0; i < len; ++i) {
@@ -1039,7 +1039,7 @@ void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char ***metada
 			}
 			free(order);
 		}
-	} else if (cfg->sort[lib->depth] == S_RAND) {
+	} else if (cfg->sort[lib->depth-1] == S_RAND) {
 	}
 }
 
