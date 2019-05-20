@@ -162,11 +162,21 @@ void mpv_set_opts(mpv_handle *ctx, struct vmn_config *cfg) {
 }
 
 char *read_arg(char *arg) {
+	char *path;
 	char *sep = "=";
 	char *out = strtok(arg, sep);
 	out = strtok(NULL, "");
-	if (out) {
-		return out;
+	if ((out[0] == '~') && (out[1] == '/')) {
+		char *out_shift = out + 1;
+		char *home = getenv("HOME");
+		path = malloc(strlen(home) + strlen(out_shift) + 1);
+		strcpy(path, home);
+		strcat(path, out_shift);
+	} else {
+		path = strdup(out);
+	}
+	if (path) {
+		return path;
 	} else {
 		return "";
 	}
@@ -374,13 +384,13 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	char *cfg_file = get_cfg();
 	config_read_file(&libcfg, cfg_file);
 	cfg.key = key_init(&libcfg);
-	const char *input;
-	const char *library;
-	const char *mpv_cfg;
-	const char *mpv_cfg_dir;
-	const char *sort;
-	const char *tags;
-	const char *viewcfg;
+	char *input;
+	char *library;
+	char *mpv_cfg;
+	char *mpv_cfg_dir;
+	char *sort;
+	char *tags;
+	char *viewcfg;
 	int pos[7] = {0, 0, 0, 0, 0, 0, 0};
 	int input_arg = 0;
 	int lib_arg = 0;
@@ -427,6 +437,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		} else {
 			cfg.input_mode = "yes";
 		}
+		free(input);
 	} else {
 		cfg.input_mode = read_cfg_str(&libcfg, "input-mode");
 		if ((!strcmp(cfg.input_mode, "yes") == 0) && (!strcmp(cfg.input_mode, "no") == 0) &&
@@ -446,11 +457,21 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 			printf("Library directory not found. Falling back to default.\n");
 		}
 		closedir(dir);
+		free(library);
 	} else {
-		cfg.lib_dir = read_cfg_str(&libcfg, "library");
-		if (strcmp(cfg.lib_dir, "") == 0) {
+		library = read_cfg_str(&libcfg, "library");
+		if (strcmp(library, "") == 0) {
 			cfg.lib_dir = get_default_lib();
 		} else {
+			if ((library[0] == '~') && (library[1] == '/')) {
+				char *shift = library + 1;
+				char *home = getenv("HOME");
+				cfg.lib_dir = malloc(strlen(home) + strlen(shift) + 1);
+				strcpy(cfg.lib_dir, home);
+				strcat(cfg.lib_dir, shift);
+			} else {
+				cfg.lib_dir = strdup(library);
+			}
 			DIR *dir = opendir(cfg.lib_dir);
 			if (!dir) {
 				free(cfg.lib_dir);
@@ -458,6 +479,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 				printf("Library directory not found. Falling back to default.\n");
 			}
 			closedir(dir);
+			free(library);
 		}
 	}
 
@@ -468,6 +490,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		} else {
 			cfg.mpv_cfg = "yes";
 		}
+		free(mpv_cfg);
 	} else {
 		cfg.mpv_cfg = read_cfg_str(&libcfg, "mpv-cfg");
 		if ((!strcmp(cfg.mpv_cfg, "yes") == 0) && (!strcmp(cfg.mpv_cfg, "no") == 0) &&
@@ -487,11 +510,21 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 			printf("Mpv config directory not found. Falling back to default.\n");
 		}
 		closedir(dir);
+		free(mpv_cfg_dir);
 	} else {
-		cfg.mpv_cfg_dir = read_cfg_str(&libcfg, "mpv-cfg-dir");
-		if (strcmp(cfg.mpv_cfg_dir, "") == 0) {
+		mpv_cfg_dir = read_cfg_str(&libcfg, "mpv-cfg-dir");
+		if (strcmp(mpv_cfg_dir, "") == 0) {
 			cfg.mpv_cfg_dir = get_cfg_dir();
 		} else {
+			if ((mpv_cfg_dir[0] == '~') && (mpv_cfg_dir[1] == '/')) {
+				char *shift = mpv_cfg_dir + 1;
+				char *home = getenv("HOME");
+				cfg.mpv_cfg_dir = malloc(strlen(home) + strlen(shift) + 1);
+				strcpy(cfg.mpv_cfg_dir, home);
+				strcat(cfg.mpv_cfg_dir, shift);
+			} else {
+				cfg.mpv_cfg_dir = strdup(mpv_cfg_dir);
+			}
 			DIR *dir = opendir(cfg.mpv_cfg_dir);
 			if (!dir) {
 				free(cfg.mpv_cfg_dir);
@@ -499,6 +532,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 				printf("mpv config directory not found. Falling back to default.\n");
 			}
 			closedir(dir);
+			free(mpv_cfg_dir);
 		}
 	}
 
@@ -514,8 +548,10 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 			cfg.view = V_DATA;
 			printf("Invalid view specified. Falling back to default.\n");
 		}
+		free(viewcfg);
 	} else {
-		if (!config_lookup_string(&libcfg, "view", &viewcfg)) {
+		viewcfg = read_cfg_str(&libcfg, "view");
+		if (strcmp(viewcfg, "") == 0) {
 			cfg.view = V_DATA;
 		} else {
 			if (strcmp(viewcfg, "file-path") == 0) {
@@ -528,6 +564,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 				cfg.view = V_DATA;
 				printf("Invalid view specified. Falling back to default.\n");
 			}
+			free(viewcfg);
 		}
 	}
 
@@ -544,6 +581,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 			}
 			cfg.tags_len = j;
 			cfg.tags = parse_arg(tag_clone);
+			free(tags);
 			free(tag_clone);
 			free(len_check);
 		} else {
@@ -573,6 +611,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 			}
 			cfg.sort_len = j;
 			free(len_check);
+			free(sort);
 			if (!valid) {
 				printf("Invalid sort argument specified. Resetting to default. \n");
 				free(sort_clone);
