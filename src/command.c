@@ -33,7 +33,7 @@ const char *mpv_err_msg(int err_index) {
 			err_msg = "Error: An invalid parameter was used.";
 			break;
 		case -5:
-			err_msg = "Error: Trying to set an option that doesn't exit.";
+			err_msg = "Error: Trying to set an option that doesn't exist.";
 			break;
 		case -6:
 			err_msg = "Error: Trying to set an option using an unsupported MPV_FORMAT.";
@@ -84,8 +84,28 @@ const char *mpv_err_msg(int err_index) {
 	return err_msg;
 }
 
+void mpv_cfg_add(struct vmn_config *cfg, char *opt, char *value) {
+	int match;
+	int pos;
+	for (int i = 0; i < cfg->mpv_opts_len; ++i) {
+		if (strcmp(opt, cfg->mpv_opts[i]) == 0) {
+			match = 1;
+			pos = i;
+			break;
+		}
+	}
+	if (match) {
+		free(cfg->mpv_opts[pos+1]);
+		cfg->mpv_opts[pos+1] = strdup(value);
+	} else {
+		cfg->mpv_opts_len += 2;
+		cfg->mpv_opts = (char **)realloc(cfg->mpv_opts, sizeof(char*)*cfg->mpv_opts_len);
+		cfg->mpv_opts[cfg->mpv_opts_len-2] = strdup(opt);
+		cfg->mpv_opts[cfg->mpv_opts_len-1] = strdup(value);
+	}
+}
 
-const char *execute_command(struct vmn_library *lib, char **parse_arr, char *entry) {
+const char *execute_command(struct vmn_config *cfg, struct vmn_library *lib, char **parse_arr, char *entry) {
 	int len = 0;
 	for (int i = 0; i < strlen(entry); ++i) {
 		if ((entry[i] == ' ') && (entry[i-1] != ' ')) {
@@ -104,6 +124,9 @@ const char *execute_command(struct vmn_library *lib, char **parse_arr, char *ent
 			mpv_err = mpv_command(lib->ctx, cmd);
 		} else if (strcmp(parse_arr[1], "set") == 0) {
 			mpv_err = mpv_set_option_string(lib->ctx, parse_arr[2], parse_arr[3]);
+			if (!mpv_err) {
+				mpv_cfg_add(cfg, parse_arr[2], parse_arr[3]);
+			}
 		}
 		if (mpv_err < 0) {
 			const char *err_msg = mpv_err_msg(mpv_err);
@@ -140,17 +163,22 @@ char **parse_command(char *entry) {
 
 void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
 	lib->command = newwin(1, 0, LINES - 1, 0);
-	char *entry = "";
-	const char *err_msg;
+	char *entry = strdup("");
+	int pos = 0;
+	const char *err_msg = "";
 	while (1) {
 		mvwprintw(lib->command, 0, 0, ":%s\n", entry);
 		char key = wgetch(lib->command);
 		if (key == 127) {
-			entry = remove_char(entry);
+			if (pos) {
+				--pos;
+				remove_char(entry);
+				entry = realloc(entry, sizeof(char)*(pos+1));
+			}
 		} else if (key == 10) {
 			if (strlen(entry) && (entry[0] != ' ')) {
 				char **parse_arr = parse_command(entry);
-				err_msg = execute_command(lib, parse_arr, entry);
+				err_msg = execute_command(cfg, lib, parse_arr, entry);
 				free(entry);
 				if (strlen(err_msg)) {
 					destroy_command_window(lib);
@@ -169,10 +197,12 @@ void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
 			destroy_command_window(lib);
 			break;
 		} else {
-			entry = append_char(entry, key);
+			entry = realloc(entry, sizeof(char)*(pos+2));
+			append_char(entry, key);
+			++pos;
 		}
 	}
-	if (strlen(err_msg)) {
+	if (!(strcmp(err_msg, ""))) {
 		while (1) {
 			char key = wgetch(lib->command);
 			if (key) {

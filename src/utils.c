@@ -1,13 +1,26 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-char *append_char(char *str, char c) {
-	int len = strlen(str);
-	char *append = malloc(len + 2);
-	strcpy(append, str);
+void append_char(char *str, char c) {
+	while(*str) {
+		++str;
+	}
+	*str = c;
+	++str;
+	*str = '\0';
+	//*str++ = c;
+	//*str++ = '\0';
+	/*char *append = malloc(sizeof(char)*(len+3));
+	if (len > 0) {
+		append = strdup(str);
+	}
 	append[len] = c;
 	append[len + 1] = '\0';
-	return append;
+	if (len) {
+		free(str);
+	}
+	return append;*/
 }
 
 int ext_valid(char *ext) {
@@ -56,16 +69,12 @@ int qstrcmp(const void *a, const void *b) {
 	return strcasecmp(aa, bb);
 }
 
-char *remove_char(char *str) {
-	int len = strlen(str);
-	if (!len) {
-		return "";
+void remove_char(char *str) {
+	while(*str) {
+		++str;
 	}
-	char *remove;
-	remove = malloc(len - 1);
-	memcpy(remove, str, sizeof(char)*(len - 1));
-	remove[len - 1] = '\0';
-	return remove;
+	--str;
+	*str = '\0';
 }
 
 char *remove_spaces(char *str) {

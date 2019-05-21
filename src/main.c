@@ -713,18 +713,25 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			destroy_visual_window(lib);
 		}
 		lib->search = newwin(1, 0, LINES - 1, 0);
-		char *entry = "";
+		char *entry = strdup("");
+		int pos = 0;
 		while (1) {
 			mvwprintw(lib->search, 0, 0, "/%s\n", entry);
 			char key = wgetch(lib->search);
 			if (key == 127) {
-				menu_driver(menu, REQ_BACK_PATTERN);
-				entry = remove_char(entry);
-				menu_driver(menu, REQ_PREV_MATCH);
+				if (pos) {
+					menu_driver(menu, REQ_BACK_PATTERN);
+					--pos;
+					remove_char(entry);
+					entry = realloc(entry, sizeof(char)*(pos+1));
+					menu_driver(menu, REQ_PREV_MATCH);
+				}
 			} else {
 				menu_driver(menu, key);
 				menu_driver(menu, REQ_NEXT_MATCH);
-				entry = append_char(entry, key);
+				entry = realloc(entry, sizeof(char)*(pos+2));
+				append_char(entry, key);
+				++pos;
 			}
 			wrefresh(menu_win(lib->menu[lib->depth-1]));
 			if (key == cfg->key.escape || key == 10 || key == 27) {
