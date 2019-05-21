@@ -690,9 +690,6 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		}
 	}
 
-	cfg.select = 0;
-	cfg.select_pos = 0;
-
 	//create default mpv_opts array
 	cfg.mpv_opts_len = 12;
 	cfg.mpv_opts = malloc(cfg.mpv_opts_len*sizeof(char*));

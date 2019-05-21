@@ -24,6 +24,8 @@ struct vmn_library {
 	MENU **menu;
 	int mpv_active;
 	int mpv_kill;
+	int select;
+	int select_pos;
 	char **selections;
 	WINDOW *search;
 	WINDOW *visual;

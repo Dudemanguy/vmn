@@ -223,6 +223,8 @@ struct vmn_library lib_init() {
 	lib.length = 0;
 	lib.mpv_active = 0;
 	lib.mpv_kill = 0;
+	lib.select = 0;
+	lib.select_pos = 0;
 	lib.vmn_quit = 0;
 	return lib;
 }

@@ -9,18 +9,6 @@ void append_char(char *str, char c) {
 	*str = c;
 	++str;
 	*str = '\0';
-	//*str++ = c;
-	//*str++ = '\0';
-	/*char *append = malloc(sizeof(char)*(len+3));
-	if (len > 0) {
-		append = strdup(str);
-	}
-	append[len] = c;
-	append[len + 1] = '\0';
-	if (len) {
-		free(str);
-	}
-	return append;*/
 }
 
 int ext_valid(char *ext) {
@@ -88,6 +76,5 @@ char *remove_spaces(char *str) {
 		++str;
 	}
 	trim[i] = '\0';
-	trim = (char *)realloc(trim, sizeof(char)*(i+1));
 	return trim;
 }

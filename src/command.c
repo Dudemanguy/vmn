@@ -105,14 +105,7 @@ void mpv_cfg_add(struct vmn_config *cfg, char *opt, char *value) {
 	}
 }
 
-const char *execute_command(struct vmn_config *cfg, struct vmn_library *lib, char **parse_arr, char *entry) {
-	int len = 0;
-	for (int i = 0; i < strlen(entry); ++i) {
-		if ((entry[i] == ' ') && (entry[i-1] != ' ')) {
-			++len;
-		}
-	}
-	++len;
+const char *execute_command(struct vmn_config *cfg, struct vmn_library *lib, char **parse_arr, int len) {
 	if (strcmp(parse_arr[0], "mpv") == 0) {
 		int mpv_err;
 		if (strcmp(parse_arr[1], "cmd") == 0) {
@@ -133,26 +126,17 @@ const char *execute_command(struct vmn_config *cfg, struct vmn_library *lib, cha
 			return err_msg;
 		}
 	}
-	for (int i = 0; i < len; ++i) {
-		free(parse_arr[i]);
-	}
-	free(parse_arr);
 	return "";
 }
 
-char **parse_command(char *entry) {
+char **parse_command(char *entry, int len) {
 	char **split = line_split(entry, " ");
-	int len = 0;
-	for (int i = 0; i < strlen(entry); ++i) {
-		if ((entry[i] == ' ') && (entry[i-1] != ' ')) {
-			++len;
-		}
-	}
-	++len;
 	char **parse_arr = (char **)calloc(len, sizeof(char*));
 	for (int i = 0; i < len; ++i) {
-		parse_arr[i] = malloc(strlen(split[i]) + 1);
-		parse_arr[i] = remove_spaces(split[i]);
+		char *tmp = remove_spaces(split[i]);
+		parse_arr[i] = malloc(sizeof(char)*(strlen(split[i])+1));
+		strcpy(parse_arr[i], tmp);
+		free(tmp);
 	}
 	for (int i = 0; i < len; ++i) {
 		free(split[i]);
@@ -177,9 +161,20 @@ void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
 			}
 		} else if (key == 10) {
 			if (strlen(entry) && (entry[0] != ' ')) {
-				char **parse_arr = parse_command(entry);
-				err_msg = execute_command(cfg, lib, parse_arr, entry);
+				int len = 0;
+				for (int i = 0; i < strlen(entry); ++i) {
+					if ((entry[i] == ' ') && (entry[i-1] != ' ')) {
+						++len;
+					}
+				}
+				++len;
+				char **parse_arr = parse_command(entry, len);
+				err_msg = execute_command(cfg, lib, parse_arr, len);
 				free(entry);
+				for (int i = 0; i < len; ++i) {
+					free(parse_arr[i]);
+				}
+				free(parse_arr);
 				if (strlen(err_msg)) {
 					destroy_command_window(lib);
 					lib->command = newwin(1, 0, LINES - 1, 0);
@@ -202,7 +197,7 @@ void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
 			++pos;
 		}
 	}
-	if (!(strcmp(err_msg, ""))) {
+	if (!(strcmp(err_msg, "") == 0)) {
 		while (1) {
 			char key = wgetch(lib->command);
 			if (key) {

@@ -559,12 +559,12 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 
 	if (c == cfg->key.beginning) {
 		menu_driver(menu, REQ_FIRST_ITEM);
-		if (cfg->select) {
+		if (lib->select) {
 			for (int i = 0; i < item_count(menu); ++i) {
-				if (i > cfg->select_pos) {
+				if (i > lib->select_pos) {
 					set_item_value(items[i], false);
 				}
-				if (i < cfg->select_pos) {
+				if (i < lib->select_pos) {
 					set_item_value(items[i], true);
 				}
 			}
@@ -573,12 +573,12 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		init_command_mode(cfg, lib);
 	} else if (c == cfg->key.end) {
 		menu_driver(menu, REQ_LAST_ITEM);
-		if (cfg->select) {
+		if (lib->select) {
 			for (int i = 0; i < item_count(menu); ++i) {
-				if (i > cfg->select_pos) {
+				if (i > lib->select_pos) {
 					set_item_value(items[i], true);
 				}
-				if (i < cfg->select_pos) {
+				if (i < lib->select_pos) {
 					set_item_value(items[i], false);
 				}
 			}
@@ -592,18 +592,18 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			move_menu_meta_backward(lib);
 		}
 	} else if (c == cfg->key.move_down) {
-		if (cfg->select) {
+		if (lib->select) {
 			cur = current_item(menu);
 			int cur_pos = item_index(cur);
-			if (cur_pos > cfg->select_pos) {
+			if (cur_pos > lib->select_pos) {
 				set_item_value(cur, true);
 			}
-			if (cur_pos < cfg->select_pos) {
+			if (cur_pos < lib->select_pos) {
 				set_item_value(cur, false);
 			}
 		}
 		menu_driver(menu, REQ_NEXT_ITEM);
-		if (cfg->select) {
+		if (lib->select) {
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
@@ -616,18 +616,18 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			move_menu_meta_forward(cfg, lib);
 		}
 	} else if (c == cfg->key.move_up) {
-		if (cfg->select) {
+		if (lib->select) {
 			cur = current_item(menu);
 			int cur_pos = item_index(cur);
-			if (cur_pos > cfg->select_pos) {
+			if (cur_pos > lib->select_pos) {
 				set_item_value(cur, false);
 			}
-			if (cur_pos < cfg->select_pos) {
+			if (cur_pos < lib->select_pos) {
 				set_item_value(cur, true);
 			}
 		}
 		menu_driver(menu, REQ_PREV_ITEM);
-		if (cfg->select) {
+		if (lib->select) {
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
@@ -638,37 +638,37 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			mpv_command_string(lib->ctx, "cycle mute");
 		}
 	} else if (c == cfg->key.page_down) {
-		if (cfg->select) {
+		if (lib->select) {
 			cur = current_item(menu);
 			init_pos = item_index(cur);
 		}
 		menu_driver(menu, REQ_SCR_DPAGE);
-		if (cfg->select) {
+		if (lib->select) {
 			cur = current_item(menu);
 			end_pos = item_index(cur);
 			for (int i = init_pos; i <= end_pos; ++i) {
-				if (i > cfg->select_pos) {
+				if (i > lib->select_pos) {
 					set_item_value(items[i], true);
 				}
-				if (i < cfg->select_pos) {
+				if (i < lib->select_pos) {
 					set_item_value(items[i], false);
 				}
 			}
 		}
 	} else if (c == cfg->key.page_up) {
-		if (cfg->select) {
+		if (lib->select) {
 			cur = current_item(menu);
 			init_pos = item_index(cur);
 		}
 		menu_driver(menu, REQ_SCR_UPAGE);
-		if (cfg->select) {
+		if (lib->select) {
 			cur = current_item(menu);
 			end_pos = item_index(cur);
 			for (int i = end_pos; i <= init_pos; ++i) {
-				if (i > cfg->select_pos) {
+				if (i > lib->select_pos) {
 					set_item_value(items[i], false);
 				}
-				if (i < cfg->select_pos) {
+				if (i < lib->select_pos) {
 					set_item_value(items[i], true);
 				}
 			}
@@ -689,9 +689,9 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		cur = current_item(menu);
 		menu_driver(menu, REQ_TOGGLE_ITEM);
 	} else if (c == cfg->key.queue_all) {
-		cfg->select = 1;
+		lib->select = 1;
 		cur = current_item(menu);
-		cfg->select_pos = item_index(cur);
+		lib->select_pos = item_index(cur);
 		for (int i = 0; i < item_count(menu); ++i) {
 			if (!item_value(items[i])) {
 				set_item_value(items[i], true);
@@ -705,11 +705,11 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			}
 		}
 		destroy_visual_window(lib);
-		cfg->select = 0;
-		cfg->select_pos = 0;
+		lib->select = 0;
+		lib->select_pos = 0;
 	} else if (c == cfg->key.search) {
 		menu_driver(menu, REQ_CLEAR_PATTERN);
-		if (lib->visual) {
+		if (lib->select) {
 			destroy_visual_window(lib);
 		}
 		lib->search = newwin(1, 0, LINES - 1, 0);
@@ -742,7 +742,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 					post_menu(lib->menu[i]);
 					wrefresh(menu_win(lib->menu[i]));
 				}
-				if (cfg->select) {
+				if (lib->select) {
 					create_visual_window(lib);
 				}
 				break;
@@ -799,17 +799,17 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			}
 		}
 	} else if (c == cfg->key.visual) {
-		if (cfg->select) {
-			cfg->select = 0;
-			cfg->select_pos = 0;
+		if (lib->select) {
+			lib->select = 0;
+			lib->select_pos = 0;
 			destroy_visual_window(lib);
 		} else {
 			menu_driver(menu, REQ_CLEAR_PATTERN);
 			create_visual_window(lib);
-			cfg->select = 1;
+			lib->select = 1;
 			cur = current_item(menu);
 			set_item_value(cur, true);
-			cfg->select_pos = item_index(cur);
+			lib->select_pos = item_index(cur);
 		}
 	} else if (c == cfg->key.vmn_quit) {
 		++lib->vmn_quit;
@@ -832,6 +832,10 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		;
 	}
 	wrefresh(menu_win(lib->menu[lib->depth-1]));
+	if (lib->select) {
+		delwin(lib->visual);
+		create_visual_window(lib);
+	}
 }
 
 void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name, int index) {
