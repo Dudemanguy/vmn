@@ -60,4 +60,4 @@ For more information on command mode, see the [command](https://github.com/Dudem
 All items that are queued will be played by mpv upon hitting enter. If no items are selected, then the currently highlighted items will be played upon hitting enter. Items can be either directories or individual audio files. Playing back a directory will add all valid audio files to mpv for playback.
 
 ## License
-GPLv2 or later.
+GPLv3
