@@ -158,6 +158,11 @@ char *get_default_lib() {
 
 void mpv_set_opts(mpv_handle *ctx, struct vmn_config *cfg) {
 	for (int i = 0; i < cfg->mpv_opts_len; i=i+2) {
+		if ((strcmp(cfg->mpv_opts[i], "config") == 0) && 
+				(strcmp(cfg->mpv_opts[i+1], "yes") == 0)) {
+			mpv_load_config_file(ctx, cfg->mpv_cfg_dir);
+			continue;
+		}
 		mpv_set_option_string(ctx, cfg->mpv_opts[i], cfg->mpv_opts[i+1]);
 	}
 }
@@ -496,8 +501,9 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 		free(mpv_cfg);
 	} else {
 		cfg.mpv_cfg = read_cfg_str(&libcfg, "mpv-cfg");
-		if ((!strcmp(cfg.mpv_cfg, "yes") == 0) && (!strcmp(cfg.mpv_cfg, "no") == 0) &&
-				(!strcmp(cfg.mpv_cfg, "") == 0)) {
+		if (strcmp(cfg.mpv_cfg, "") == 0) {
+			cfg.mpv_cfg = "yes";
+		} else if ((!strcmp(cfg.mpv_cfg, "yes") == 0) && (!strcmp(cfg.mpv_cfg, "no") == 0)) {
 			printf("mpv-cfg can only be set to 'yes' or 'no'\n");
 			cfg.mpv_cfg = "yes";
 		}
@@ -693,16 +699,16 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	//create default mpv_opts array
 	cfg.mpv_opts_len = 12;
 	cfg.mpv_opts = malloc(cfg.mpv_opts_len*sizeof(char*));
-	cfg.mpv_opts[0] = strdup("input-default-bindings");
-	cfg.mpv_opts[1] = strdup("yes");
-	cfg.mpv_opts[2] = strdup("input-vo-keyboard");
-	cfg.mpv_opts[3] = strdup("yes");
-	cfg.mpv_opts[4] = strdup("force-window");
+	cfg.mpv_opts[0] = strdup("config-dir");
+	cfg.mpv_opts[1] = strdup(cfg.mpv_cfg_dir);
+	cfg.mpv_opts[2] = strdup("config");
+	cfg.mpv_opts[3] = strdup(cfg.mpv_cfg);
+	cfg.mpv_opts[4] = strdup("input-default-bindings");
 	cfg.mpv_opts[5] = strdup("yes");
-	cfg.mpv_opts[6] = strdup("config-dir");
-	cfg.mpv_opts[7] = strdup(cfg.mpv_cfg_dir);
-	cfg.mpv_opts[8] = strdup("config");
-	cfg.mpv_opts[9] = strdup(cfg.mpv_cfg);
+	cfg.mpv_opts[6] = strdup("input-vo-keyboard");
+	cfg.mpv_opts[7] = strdup("yes");
+	cfg.mpv_opts[8] = strdup("force-window");
+	cfg.mpv_opts[9] = strdup("yes");
 	cfg.mpv_opts[10] = strdup("osc");
 	cfg.mpv_opts[11] = strdup("yes");
 
