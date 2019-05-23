@@ -84,27 +84,6 @@ const char *mpv_err_msg(int err_index) {
 	return err_msg;
 }
 
-void mpv_cfg_add(struct vmn_config *cfg, char *opt, char *value) {
-	int match;
-	int pos;
-	for (int i = 0; i < cfg->mpv_opts_len; ++i) {
-		if (strcmp(opt, cfg->mpv_opts[i]) == 0) {
-			match = 1;
-			pos = i;
-			break;
-		}
-	}
-	if (match) {
-		free(cfg->mpv_opts[pos+1]);
-		cfg->mpv_opts[pos+1] = strdup(value);
-	} else {
-		cfg->mpv_opts_len += 2;
-		cfg->mpv_opts = (char **)realloc(cfg->mpv_opts, sizeof(char*)*cfg->mpv_opts_len);
-		cfg->mpv_opts[cfg->mpv_opts_len-2] = strdup(opt);
-		cfg->mpv_opts[cfg->mpv_opts_len-1] = strdup(value);
-	}
-}
-
 const char *execute_command(struct vmn_config *cfg, struct vmn_library *lib, char **parse_arr, int len) {
 	if (strcmp(parse_arr[0], "mpv") == 0) {
 		int mpv_err;

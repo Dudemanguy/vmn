@@ -6,8 +6,6 @@ _vmn() {
 	_arguments \
 		'--input-mode=[show keycodes]:1:'"$__boolean" \
 		'--library=[music directory]:1:_dirs' \
-		'--mpv-cfg=[accept mpv configuration]:1:'"$__boolean" \
-		'--mpv-cfg-dir=[mpv config file directory]:1:_dirs' \
 		'--sort=[select sorting modes]':1:_sorting \
 		'--tags=[select tags]':1:_tagging \
 		'--view=[select view]:1:'"$__views"

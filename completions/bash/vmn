@@ -13,14 +13,6 @@ _vmn() {
 			_filedir -d
 			return
 			;;
-		--mpv-cfg)
-			COMPREPLY=( $(compgen -W 'yes no' -- $cur) )
-			return
-			;;
-		--mpv-cfg-dir)
-			_filedir
-			return
-			;;
 		--sort)
 			compopt -o nospace
 			sort_opts='metadata filename tracknumber random none'
@@ -55,8 +47,6 @@ _vmn() {
 
 	opts="--input-mode=
 		--library=
-		--mpv-cfg=
-		--mpv-cfg-dir=
 		--sort=
 		--tags=
 		--view="

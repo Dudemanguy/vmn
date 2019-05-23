@@ -1,5 +1,6 @@
 struct vmn_config cfg_init(int argc, char *argv[]);
 void vmn_config_destroy(struct vmn_config *cfg);
+void mpv_cfg_add(struct vmn_config *cfg, char *opt, char *value);
 void mpv_set_opts(mpv_handle *ctx, struct vmn_config *cfg);
 
 struct vmn_key {
@@ -49,8 +50,6 @@ enum vmn_config_view {
 struct vmn_config {
 	char *input_mode;
 	char *lib_dir;
-	char *mpv_cfg;
-	char *mpv_cfg_dir;
 	char **mpv_opts;
 	int mpv_opts_len;
 	struct vmn_key key;
@@ -58,6 +57,5 @@ struct vmn_config {
 	int tags_len;
 	enum vmn_config_sort *sort;
 	enum vmn_config_view view;
-	int sort_len;
 };
 

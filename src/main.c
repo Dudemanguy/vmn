@@ -1,7 +1,6 @@
 #include <dirent.h>
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
-#include <libconfig.h>
 #include <locale.h>
 #include <math.h>
 #include <menu.h>

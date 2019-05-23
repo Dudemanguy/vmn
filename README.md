@@ -5,7 +5,6 @@
 Make sure you have the following dependencies installed.
 
 * ffmpeg
-* libconfig
 * meson
 * mpv
 * ncurses
@@ -57,7 +56,7 @@ To change keybindings, see the [options](https://github.com/Dudemanguy911/vmn/bl
 
 For more information on command mode, see the [command](https://github.com/Dudemanguy911/vmn/blob/master/docs/command.md) page.
 
-All items that are queued will be played by mpv upon hitting enter. If no items are selected, then the currently highlighted items will be played upon hitting enter. Items can be either directories or individual audio files. Playing back a directory will add all valid audio files to mpv for playback.
+All items that are queued will be played by mpv upon hitting enter. If no items are selected, then the currently highlighted items will be played upon hitting enter. Items can be a directory, a metadata tag, or individual audio files. Playing back a directory or metadata tag will add all valid audio files to mpv for playback.
 
 ## License
 GPLv3

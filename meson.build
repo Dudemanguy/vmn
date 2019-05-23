@@ -1,7 +1,6 @@
 project('vmn', 'c')
 libavformat = dependency('libavformat')
 libavutil = dependency('libavutil')
-libconfig = dependency('libconfig')
 menu = dependency('menu')
 mpv = dependency('mpv')
 ncurses = dependency('ncurses')
@@ -44,4 +43,4 @@ endif
 subdir('include')
 inc =  include_directories('include')
 vmn_sources = files('src/command.c', 'src/config.c', 'src/library.c', 'src/main.c', 'src/utils.c')
-executable('vmn', vmn_sources, dependencies: [libavformat, libavutil, libconfig, menu, mpv, ncurses], include_directories: inc, install: true)
+executable('vmn', vmn_sources, dependencies: [libavformat, libavutil, menu, mpv, ncurses], include_directories: inc, install: true)

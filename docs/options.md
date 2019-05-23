@@ -1,8 +1,6 @@
 # Options
 
-vmn has two different kinds of configuration parameters: one for vmn itself and another for the mpv client. Options for vmn itself can be specified via command line or in the configuration file located at `$HOME/.config/vmn/config`. Any option specified via command line will take priority over any value specified in the configuration file. The syntax for arguments is simply `--foo=value`. In the configuration file, `value` needs to be enclosed in quotes like so: `foo="value"`. 
-
-Options for the mpv client cannot be set as command line arguments and must be set in the configuration file. These options follow standard [mpv.conf syntax](https://github.com/mpv-player/mpv/blob/master/etc/mpv.conf). Most mpv options should work without a problem.
+Options for vmn follow the `foo=value` syntax. It's essentially identical to mpv's syntax except that you do not enclose `value` in quotes (i.e. if there are spaces inbetween values). mpv options can also be set in the config file (i.e. `volume=50` is valid). Refer to the full list of [mpv's options](https://github.com/mpv-player/mpv/blob/master/DOCS/man/options.rst). The config file's location is at `$HOME/.config/vmn/config`. Options specified via command line will overwrite anything specified in the configuration file. For command line arguments, the syntax is simply `--foo=value`. Currently, mpv-specific options cannot be set as command line arguments.
 
 ### Main Options
 
@@ -11,12 +9,6 @@ Options for the mpv client cannot be set as command line arguments and must be s
 
 ``--library=<directory>``\
    Select the parent directory to search for audio files. If the path is omitted or invalid, this defaults to `$HOME/Music`.
-
-``--mpv-cfg=<yes|no>``\
-   Tells the mpv client whether or not to accept configuration. This defaults to `yes`.
-
-``--mpv-cfg-dir=<directory>``\
-   Tells the mpv client which directory to search for a configuration file. It searches for a configuration file in the same manner as mpv (i.e. `config` and `mpv.conf` are both valid). By default, the path searched is `$HOME/.config/vmn` which means that mpv configuration values specified in the vmn configuration file are valid. This does nothing if `mpv-cfg` is set to `no`.
 
 ``--sort=<metadata,filename,tracknumber,random,none>``\
 	A comma, separated list (spaces are not allowed) of sorting modes to be used with each metadata tag. The sort array must be the same length as the tag array or it will do nothing. Currently, metadata sorting, tracknumber sorting, and no sorting work. Metadata sorting sorts alphabetically based on the tag names. By default, metadata sorting is used for everything except the *title* tag. By default, the *title* tag uses tracknumber sorting. Tracknumber sorting sorts based on both the value of the *disc* metadata tag and the *track* tag. It only works with the *title* tag. Using it on another tag will do nothing.
@@ -29,10 +21,10 @@ Options for the mpv client cannot be set as command line arguments and must be s
 
 ## Keybindings
 
-Like the main options, keybindings in vmn are defined in the configuration file as `foo="value"`. However, these options cannot be set as command line arguments. Settings for keybindings are read as strings, but are internally used as ASCII characters. If more than a single character is specified for an option (i.e. `foo="key"`), then only the first character will be read and the rest will be ignored (so `foo` is set to `k`). Currently, the only modifier key supported is `Ctrl` which can be specified in the configuration by adding `Ctrl+`. For example, `foo="Ctrl+i"` sets `foo` to Ctrl and i. Note that the order does not matter, so `foo="i+Ctrl"` is also valid. If multiple "+'s" are given, vmn will use the first non-Ctrl character and ignore the rest. So `foo="Ctrl+i+j+k"` is read as just `Ctrl+i`. `foo="i+j+Ctrl+k"` also becomes `Ctrl+i`. Additionally, setting integer values for keybindings (`foo="12"`) is also supported since ncurses uses ASCII. ``input-mode`` can be used to find specific integer values of certain key/key combinations. Integers can also be combined with `Ctrl+` like normal characters. 
+Like the main options, keybindings in vmn are defined in the configuration file as `foo=value`. However, these options cannot be set as command line arguments. Settings for keybindings are read as strings, but are internally used as ASCII characters. If more than a single character is specified for an option (i.e. `foo=key`), then only the first character will be read and the rest will be ignored (so `foo` is set to `k`). Currently, the only modifier key supported is `Ctrl` which can be specified in the configuration by adding `Ctrl+`. For example, `foo=Ctrl+i` sets `foo` to Ctrl and i. Note that the order does not matter, so `foo=i+Ctrl` is also valid. If multiple "+'s" are given, vmn will use the first non-Ctrl character and ignore the rest. So `foo=Ctrl+i+j+k` is read as just `Ctrl+i`. `foo=i+j+Ctrl+k` also becomes `Ctrl+i`. Additionally, setting integer values for keybindings (`foo=12`) is also supported since ncurses uses ASCII. ``input-mode`` can be used to find specific integer values of certain key/key combinations. Integers can also be combined with `Ctrl+` like normal characters. 
 
+ Since vmn uses ncurses, the [macros](https://www.gnu.org/software/guile-ncurses/manual/html_node/Getting-characters-from-the-keyboard.html) for special keys are valid (i.e. `foo=KEY_RIGHT` sets foo to the right arrow key). Function keys (f1, f2, f3, etc.) are also supported via `foo=f1`. Note that the vast majority of those macros are for keys that are completely obsolete and nonexistent on current keyboards. Only the common keys are currently enabled in vmn, but support for one of the more esoteric keys can trivially be added upon request. Combining these macros with `Ctrl+` unfortunately does not work. If this is done, an error is given and vmn reverts back to the default settings. 
 
- Since vmn uses ncurses, the [macros](https://www.gnu.org/software/guile-ncurses/manual/html_node/Getting-characters-from-the-keyboard.html) for special keys are valid (i.e. `foo="KEY_RIGHT"` sets foo to the right arrow key). Function keys (f1, f2, f3, etc.) are also supported via `foo="f1"`. Note that the vast majority of those macros are for keys that are completely obsolete and nonexistent on current keyboards. Only the common keys are currently enabled in vmn, but support for one of the more esoteric keys can trivially be added upon request. Combining these macros with `Ctrl+` unfortunately does not work. If this is done, an error is given and vmn reverts back to the default settings. 
  ### Keybind commands
 
 ``beginning=<key>``\

@@ -11,6 +11,16 @@ void append_char(char *str, char c) {
 	*str = '\0';
 }
 
+int char_count(char *str, char c) {
+	int count = 0;
+	for (int i = 0; i < strlen(str); ++i) {
+		if (str[i] == c) {
+			++count;
+		}
+	}
+	return count;
+}
+
 int ext_valid(char *ext) {
 	const char *file_type[] = { "aac", "aiff", "alac", "ape", "flac", "m4a", "mp3", "ogg", "opus", "wav" };
 	int len = 10;
@@ -28,6 +38,20 @@ char *get_file_ext(const char *file) {
 		return "";
 	}
 	return dot + 1;
+}
+
+char **cfg_split(char *str) {
+	char *str_dup = strdup(str);
+	char *token = strtok(str_dup, "=");
+	char **arr = (char **)calloc(2, sizeof(char*));
+	arr[0] = malloc(strlen(token) + 1);
+	strcpy(arr[0], token);
+	token = strtok(NULL, "=");
+	arr[1] = malloc(strlen(token) + 1);
+	strcpy(arr[1], token);
+	arr[1][strcspn(arr[1], "\n")] = 0;
+	free(str_dup);
+	return arr;
 }
 
 char **line_split(char *str, char *delim) {
