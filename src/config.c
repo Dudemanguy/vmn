@@ -597,7 +597,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	char *sort;
 	char *tags;
 	char *viewcfg;
-	int pos[7] = {0, 0, 0, 0, 0,};
+	int pos[6] = {0, 0, 0, 0, 0, 0};
 	int input_arg = 0;
 	int lib_arg = 0;
 	int tags_arg = 0;
