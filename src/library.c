@@ -4,7 +4,6 @@
 #include <libavutil/file.h>
 #include <menu.h>
 #include <mpv/client.h>
-#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,20 +71,16 @@ int check_vmn_lib(struct vmn_library *lib, char *line, char *lib_dir) {
 		}
 	}
 	++len;
-	regex_t regex;
-	int status;
-	regcomp(&regex, lib_dir, 0);
-	status = regexec(&regex, split[0], 0, NULL, 0);
-	regfree(&regex);
+	int check = 0;
+	int lib_dir_len = strlen(lib_dir);
+	if (strncmp(lib_dir, split[0], lib_dir_len) == 0) {
+		check = 1;
+	}
 	for (int i = 0; i < len; ++i) {
 		free(split[i]);
 	}
 	free(split);
-	if (status == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return check;
 }
 
 char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name, char *tag) {

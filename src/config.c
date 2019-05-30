@@ -18,20 +18,14 @@
 
 int check_arg(struct vmn_config *cfg, char *arg) {
 	char *valid[6] = {"", "--input-mode=", "--library=", "--sort=", "--tags=", "--view="};
-	int i = 0;
-	int status;
-	for (i = 0; i < 6; ++i) {
-		regex_t regex;
-		regcomp(&regex, valid[i], 0);
-		status = regexec(&regex, arg, 0, NULL, 0);
-		if (status == 0) {
-			if (i > 0) {
-				regfree(&regex);
-				return i;
-				break;
-			}
+	int len[6];
+	for (int i = 0; i < 6; ++i) {
+		len[i] = strlen(valid[i]);
+	}
+	for (int i = 1; i < 6; ++i) {
+		if (strncmp(arg, valid[i], len[i]) == 0) {
+			return i;
 		}
-		regfree(&regex);
 	}
 	return 0;
 }

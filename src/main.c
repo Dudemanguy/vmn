@@ -6,7 +6,6 @@
 #include <menu.h>
 #include <mpv/client.h>
 #include <ncurses.h>
-#include <regex.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -1015,18 +1014,12 @@ void mpv_queue(mpv_handle *ctx, const char *audio) {
 }
 
 int path_in_lib(char *path, struct vmn_library *lib) {
-	regex_t regex;
-	int status;
-	regcomp(&regex, path, 0);
+	int len = strlen(path);
 	for (int i = 0; i < lib->length; ++i) {
-		status = regexec(&regex, lib->files[i], 0, NULL, 0);
-		if (status == 0) {
-			regfree(&regex);
+		if (strncmp(path, lib->files[i], len) == 0) {
 			return 1;
-			break;
 		}
 	}
-	regfree(&regex);
 	return 0;
 }
 
