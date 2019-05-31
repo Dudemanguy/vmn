@@ -529,6 +529,9 @@ void vmn_set_option(struct vmn_config *cfg, char *opt, char *value) {
 
 void read_cfg_file(struct vmn_config *cfg, char *cfg_file) {
 	FILE *file = fopen(cfg_file, "r");
+	if (!file) {
+		return;
+	}
 	int file_len = 0;
 	char c;
 	while ((c = fgetc(file)) != EOF) {
