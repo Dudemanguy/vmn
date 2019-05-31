@@ -198,7 +198,11 @@ char *read_dir_arg(char *arg) {
 	}
 	path = realpath(tmp, NULL);
 	free(tmp);
-	return path;
+	if (!path) {
+		return "";
+	} else {
+		return path;
+	}
 }
 
 char **parse_arg(char *arg) {
@@ -643,15 +647,13 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 
 	if (lib_arg) {
 		library = read_dir_arg(argv[lib_arg]);
-		DIR *dir = opendir(library);
-		if (dir) {
+		if (strcmp(library, "") == 0) {
+			printf("Library directory not found. Falling back to default.\n");
+		} else {
 			free(cfg.lib_dir);
 			cfg.lib_dir = strdup(library);
-		} else {
-			printf("Library directory not found. Falling back to default.\n");
+			free(library);
 		}
-		closedir(dir);
-		free(library);
 	}
 
 	if (view_arg) {

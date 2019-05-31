@@ -501,6 +501,7 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 	strcat(path, cfg);
 	FILE *cache = fopen(path, "r");
 	if (!cache) {
+		free(path);
 		return;
 	}
 	char *cur = (char *)calloc(4096, sizeof(char));
