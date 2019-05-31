@@ -46,6 +46,9 @@ int resize;
 int main(int argc, char *argv[]) {
 	setlocale(LC_CTYPE, "");
 	struct vmn_config cfg = cfg_init(argc, argv);
+	if (cfg.err) {
+		return 0;
+	}
 	struct vmn_library lib = lib_init();
 	if (strcmp(cfg.input_mode, "yes") == 0) {
 		input_mode(&cfg);

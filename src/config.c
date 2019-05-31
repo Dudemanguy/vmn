@@ -596,6 +596,20 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	struct vmn_config cfg;
 	cfg_default(&cfg);
 	cfg.key = key_default();
+	char *cfg_dir = get_cfg_dir();
+	DIR *dir = opendir(cfg_dir);
+	if (!dir) {
+		int err = mkdir(cfg_dir, 0755);
+		free(cfg_dir);
+		if (err) {
+			printf("An error occured while trying to create the config directory. Make sure your permissions are correct.\n");
+			cfg.err = 1;
+			return cfg;
+		}
+	} else {
+		closedir(dir);
+		free(cfg_dir);
+	}
 	char *cfg_file = get_cfg();
 	read_cfg_file(&cfg, cfg_file);
 
