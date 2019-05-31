@@ -18,6 +18,9 @@ ninja -C build
 sudo ninja -C build install
 ```
 
+## Releases
+The release tags are super arbitrary and pretty much just personal bookkeeping for when I feel enough significant things have been accomplished. I would recommend just using the master branch.
+
 ## Configuration
 See the [options](https://github.com/Dudemanguy911/vmn/blob/master/docs/options.md) page for details.
 
