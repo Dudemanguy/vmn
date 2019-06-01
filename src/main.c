@@ -860,7 +860,7 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 			}
 		}
 		++len;
-		int prev;
+		int prev = 0;
 		if (lib->depth-1) {
 			prev = check_vmn_cache(lib, cur, cfg->tags);
 		}
