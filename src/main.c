@@ -67,6 +67,7 @@ int main(int argc, char *argv[]) {
 		printf("No audio files were found.\n");
 		return 0;
 	}
+	freopen("/dev/null", "w", stderr);
 	initscr();
 	cbreak();
 	noecho();
