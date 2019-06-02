@@ -5,7 +5,7 @@
 Make sure you have the following dependencies installed.
 
 * ffmpeg
-* meson
+* meson (0.47 or higher)
 * mpv
 * ncurses
 * [scdoc](https://git.sr.ht/~sircmpwn/scdoc) (optional: for man pages)
