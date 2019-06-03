@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 	}
-	mpv_destroy(lib.ctx);
+	mpv_terminate_destroy(lib.ctx);
 	vmn_config_destroy(&cfg);
 	if (cfg.view == V_PATH) {
 		vmn_library_destroy(&lib);

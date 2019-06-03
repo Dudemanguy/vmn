@@ -528,7 +528,7 @@ void vmn_set_option(struct vmn_config *cfg, char *opt, char *value) {
 	if (mpv_err != -5) {
 		mpv_cfg_add(cfg, opt, value);
 	}
-	mpv_destroy(test_ctx);
+	mpv_terminate_destroy(test_ctx);
 }
 
 void read_cfg_file(struct vmn_config *cfg, char *cfg_file) {
