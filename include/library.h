@@ -17,8 +17,9 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir);
 
 struct vmn_entry {
 	char *filename;
-	int in_lib;
 	int *known;
+	int in_lib;
+	char *path;
 	int *selected;
 };
 

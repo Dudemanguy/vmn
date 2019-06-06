@@ -128,6 +128,7 @@ struct vmn_entry create_entry(struct vmn_library *lib, char *line, char *lib_dir
 			entry.selected[i] = 0;
 		}
 	}
+	entry.path = strdup(split[0]);
 	entry.filename = strdup(strrchr(split[0], '/'));
 	for (int i = 0; i < len; ++i) {
 		free(split[i]);
@@ -139,6 +140,7 @@ struct vmn_entry create_entry(struct vmn_library *lib, char *line, char *lib_dir
 void entry_destroy(struct vmn_entry *entry) {
 	free(entry->filename);
 	free(entry->known);
+	free(entry->path);
 	free(entry->selected);
 }
 

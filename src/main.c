@@ -379,8 +379,8 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
 				metadata[0][len] = (char *)calloc(strlen(entry.filename+1) + 1, sizeof(char));
 				strcpy(metadata[0][len], entry.filename+1);
-				metadata[1][len] = (char *)calloc(strlen(entry.filename) + 1, sizeof(char));
-				strcpy(metadata[1][len], entry.filename);
+				metadata[1][len] = (char *)calloc(strlen(entry.path) + 1, sizeof(char));
+				strcpy(metadata[1][len], entry.path);
 				++len;
 			} else {
 				char *unknown_tag = (char *)calloc(strlen(cfg->tags[lib->depth-1]) + strlen("Unknown ") + 1, sizeof(char));
@@ -416,8 +416,8 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 				metadata[0][len] = malloc(sizeof(char *)*(strlen(temp)+1));
 				strcpy(metadata[0][len], temp);
 				if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
-					metadata[1][len] = malloc(sizeof(char *)*(strlen(entry.filename)+1));
-					strcpy(metadata[1][len], entry.filename);
+					metadata[1][len] = malloc(sizeof(char *)*(strlen(entry.path)+1));
+					strcpy(metadata[1][len], entry.path);
 				}
 				++len;
 			}
