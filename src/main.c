@@ -82,6 +82,7 @@ int main(int argc, char *argv[]) {
 		vmn_library_metadata(&lib);
 		vmn_library_sort(&lib, cfg.lib_dir);
 		lib.selections = (char **)calloc(cfg.tags_len, sizeof(char *));
+		lib.unknown = (int **)calloc(cfg.tags_len, sizeof(int *));
 		lib.entries[0] = get_metadata(&cfg, &lib);
 		lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
 		lib.items[0] = create_meta_items(lib.entries[0]);
@@ -179,6 +180,7 @@ int main(int argc, char *argv[]) {
 			free(lib.selections[i]);
 		}
 		free(lib.selections);
+		free(lib.unknown);
 	}
 	if (cfg.view == V_SONG) {
 		for (int i = 0; i < lib.length; ++i) {
@@ -347,63 +349,58 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	rewind(cache);
 	char *cur = malloc(4096*sizeof(char));
 	int len = 0;
-	int match = 0;
-	int prev;
-	int tag_exist = 0;
-	int unknown_len = 16;
-	int *unknown = (int *)calloc(unknown_len, sizeof(int));
-	int unknown_pos = 0;
 	char ***metadata = (char ***)calloc(2, sizeof(char **));
 	metadata[0] = (char **)calloc(lib->length+1, sizeof(char *));
 	metadata[1] = (char **)calloc(lib->length+1, sizeof(char *));
 	char *temp;
-	int valid_sel = 0;
 	for (int i = 0; i < file_len; ++i) {
 		fgets(cur, 4096, cache);
-		int in_lib = check_vmn_lib(lib, cur, cfg->lib_dir);
-		if (!in_lib) {
+		int match = 0;
+		int tag_exist = 0;
+		struct vmn_entry entry = create_entry(lib, cur, cfg->lib_dir, cfg->tags);
+		if (!entry.in_lib) {
 			continue;
 		}
-		if (lib->selections[0]) {
-			prev = check_vmn_cache(lib, cur, cfg->tags);
-			if (!prev) {
-				continue;
-			}
-			if (!valid_sel) {
-				valid_sel = is_sel(lib->selections[lib->depth-2], cur);
-			}
-			int prev_known = is_known(cfg->tags[lib->depth-2], cur);
-			if (!prev_known) {
-				if (unknown_pos == unknown_len) {
-					unknown_len = unknown_len*2;
-					unknown = (int *)realloc(unknown, unknown_len*sizeof(int));
-				}
-				unknown[unknown_pos] = i;
-				++unknown_pos;
-				continue;
+		int invalid = 0;
+		for (int j = 0; j < lib->depth-1; ++j) {
+			if (entry.selected[j] || !entry.known[j]) {
+				invalid = 0;
+			} else {
+				invalid = 1;
+				break;
 			}
 		}
-		int known = is_known(cfg->tags[lib->depth-1], cur);
-		char *filename = read_vmn_cache(cur, "");
-		if (!known) {
+		if (invalid) {
+			entry_destroy(&entry);
+			continue;
+		}
+		temp = read_vmn_cache(cur, cfg->tags[lib->depth-1]);
+		if (strcmp(temp, "") == 0) {
 			if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
-				metadata[0][len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
-				strcpy(metadata[0][len], filename+1);
-				metadata[1][len] = (char *)calloc(strlen(filename) + 1, sizeof(char));
-				strcpy(metadata[1][len], filename);
+				metadata[0][len] = (char *)calloc(strlen(entry.filename+1) + 1, sizeof(char));
+				strcpy(metadata[0][len], entry.filename+1);
+				metadata[1][len] = (char *)calloc(strlen(entry.filename) + 1, sizeof(char));
+				strcpy(metadata[1][len], entry.filename);
 				++len;
 			} else {
+				char *unknown_tag = (char *)calloc(strlen(cfg->tags[lib->depth-1]) + strlen("Unknown ") + 1, sizeof(char));
+				strcpy(unknown_tag, "Unknown ");
+				strcat(unknown_tag, cfg->tags[lib->depth-1]);
+				for (int j = 0; j < len; ++j) {
+					if ((strcmp(unknown_tag, metadata[0][j]) == 0)) {
+						free(unknown_tag);
+						tag_exist = 1;
+						break;
+					}
+				}
 				if (!tag_exist) {
-					metadata[0][len] = (char *)calloc(strlen(cfg->tags[lib->depth-1]) + strlen("Unknown ") + 1, sizeof(char));
-					strcpy(metadata[0][len], "Unknown ");
-					strcat(metadata[0][len], cfg->tags[lib->depth-1]);
-					tag_exist = 1;
+					metadata[0][len] = (char *)calloc(strlen(entry.filename+1) + 1, sizeof(char));
+					strcpy(metadata[0][len], unknown_tag);
+					free(unknown_tag);
 					++len;
 				}
 			}
-			free(filename);
 		} else {
-			temp = read_vmn_cache(cur, cfg->tags[lib->depth-1]);
 			for (int j = 0; j < len; ++j) {
 				if ((strcmp(temp, metadata[0][j]) == 0) && (strcmp(cfg->tags[lib->depth-1], "title") != 0)) {
 					match = 1;
@@ -412,80 +409,25 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			}
 			if (match) {
 				match = 0;
-				free(filename);
+				entry_destroy(&entry);
 				free(temp);
 				continue;
 			} else {
 				metadata[0][len] = malloc(sizeof(char *)*(strlen(temp)+1));
 				strcpy(metadata[0][len], temp);
 				if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
-					metadata[1][len] = malloc(sizeof(char *)*(strlen(filename)+1));
-					strcpy(metadata[1][len], filename);
+					metadata[1][len] = malloc(sizeof(char *)*(strlen(entry.filename)+1));
+					strcpy(metadata[1][len], entry.filename);
 				}
 				++len;
-				free(filename);
-				free(temp);
 			}
 		}
-	}
-	if (unknown_pos && !valid_sel) {
-		rewind(cache);
-		unknown_pos = 0;
-		for (int i = 0; i < file_len; ++i) {
-			fgets(cur, 4096, cache);
-			char *filename = read_vmn_cache(cur, "");
-			if (i == unknown[unknown_pos]) {
-				++unknown_pos;
-				int known = is_known(cfg->tags[lib->depth-1], cur);
-				if (!known) {
-					if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
-						metadata[0][len] = (char *)calloc(strlen(filename+1) + 1, sizeof(char));
-						strcpy(metadata[0][len], filename+1);
-						metadata[1][len] = (char *)calloc(strlen(filename) + 1, sizeof(char));
-						strcpy(metadata[1][len], filename);
-						++len;
-					} else {
-						if (!tag_exist) {
-							metadata[0][len] = (char *)calloc(strlen(cfg->tags[lib->depth-1]) + strlen("Unknown ") + 1, sizeof(char));
-							strcpy(metadata[0][len], "Unknown ");
-							strcat(metadata[0][len], cfg->tags[lib->depth-1]);
-							tag_exist = 1;
-							++len;
-						}
-					}
-					free(filename);
-				} else {
-					temp = read_vmn_cache(cur, cfg->tags[lib->depth-1]);
-					for (int j = 0; j < len; ++j) {
-						if (strcmp(temp, metadata[0][j]) == 0) {
-							match = 1;
-							break;
-						}
-					}
-					if (match) {
-						match = 0;
-						free(filename);
-						free(temp);
-						continue;
-					} else {
-						metadata[0][len] = malloc(sizeof(char *)*(strlen(temp)+1));
-						strcpy(metadata[0][len], temp);
-						if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
-							metadata[1][len] = malloc(sizeof(char *)*(strlen(filename)+1));
-							strcpy(metadata[1][len], filename);
-						}
-						++len;
-						free(filename);
-						free(temp);
-					}
-				}
-			}
-		}
+		entry_destroy(&entry);
+		free(temp);
 	}
 	fclose(cache);
 	free(cur);
 	free(path);
-	free(unknown);
 	metadata[0] = (char **)realloc(metadata[0],sizeof(char *)*(len+1));
 	metadata[1] = (char **)realloc(metadata[1],sizeof(char *)*(len+1));
 	metadata[0][len] = '\0';

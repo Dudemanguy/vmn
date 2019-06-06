@@ -58,7 +58,7 @@ char **line_split(char *str, char *delim) {
 	char *str_dup = strdup(str);
 	char *token = strtok(str_dup, delim);
 	int len = 20;
-	char **arr = (char **)calloc(len, sizeof(char*));
+	char **arr = malloc(len *sizeof(char*));
 	int i = 0;
 	while (token != NULL) {
 		if (i == len) {

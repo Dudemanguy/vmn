@@ -6,12 +6,21 @@ int is_known(char *tag, char *line);
 int is_sel(char *sel, char *line);
 char *read_vmn_cache(char *str, char *match);
 int read_vmn_cache_int(char *str, char *match);
+struct vmn_entry create_entry(struct vmn_library *lib, char *line, char *lib_dir, char **tags);
+void entry_destroy(struct vmn_entry *entry);
 void vmn_library_add(struct vmn_library *lib, char *entry);
 void vmn_library_destroy(struct vmn_library *lib);
 void vmn_library_metadata(struct vmn_library *lib);
 void vmn_library_refresh(struct vmn_library *lib, char *tag);
 void vmn_library_selections_add(struct vmn_library *lib, const char *entry);
 void vmn_library_sort(struct vmn_library *lib, char *lib_dir);
+
+struct vmn_entry {
+	char *filename;
+	int in_lib;
+	int *known;
+	int *selected;
+};
 
 struct vmn_library {
 	mpv_handle *ctx;
@@ -28,6 +37,7 @@ struct vmn_library {
 	int select_pos;
 	char **selections;
 	WINDOW *search;
+	int **unknown;
 	WINDOW *visual;
 	int vmn_quit;
 };

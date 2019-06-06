@@ -83,6 +83,65 @@ int check_vmn_lib(struct vmn_library *lib, char *line, char *lib_dir) {
 	return check;
 }
 
+struct vmn_entry create_entry(struct vmn_library *lib, char *line, char *lib_dir, char **tags) {
+	struct vmn_entry entry;
+	char **split = line_split(line, "\t");
+	int len = 0;
+	for (int i = 0; i < strlen(line); ++i) {
+		if (line[i] == '\t') {
+			++len;
+		}
+	}
+	++len;
+	int lib_dir_len = strlen(lib_dir);
+	if (strncmp(lib_dir, split[0], lib_dir_len) == 0) {
+		entry.in_lib = 1;
+	} else {
+		entry.in_lib = 0;
+	}
+	if (!entry.in_lib) {
+		for (int i = 0; i < len; ++i) {
+			free(split[i]);
+		}
+		free(split);
+		return entry;
+	}
+	entry.known = (int *)malloc(lib->depth*sizeof(int));
+	entry.selected = (int *)malloc(lib->depth*sizeof(int));
+	for (int i = 0; i < lib->depth; ++i) {
+		for (int j = 0; j < len; ++j) {
+			if (strcasecmp(tags[i], split[j]) == 0) {
+				entry.known[i] = 1;
+				break;
+			}
+			entry.known[i] = 0;
+		}
+	}
+	for (int i = 0; i < lib->depth; ++i) {
+		for (int j = 0; j < len; ++j) {
+			if (lib->selections[i]) {
+				if (strcmp(lib->selections[i], split[j]) == 0) {
+					entry.selected[i] = 1;
+					break;
+				}
+			}
+			entry.selected[i] = 0;
+		}
+	}
+	entry.filename = strdup(strrchr(split[0], '/'));
+	for (int i = 0; i < len; ++i) {
+		free(split[i]);
+	}
+	free(split);
+	return entry;
+}
+
+void entry_destroy(struct vmn_entry *entry) {
+	free(entry->filename);
+	free(entry->known);
+	free(entry->selected);
+}
+
 char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name, char *tag) {
 	char *out = (char *)calloc(1, sizeof(char));
 	char **split = line_split(line, "\t");
@@ -176,10 +235,6 @@ char *read_vmn_cache(char *str, char *match) {
 			strcpy(out, split[i+1]);
 			break;
 		}
-	}
-	if (strcmp(match, "") == 0) {
-		out = (char *)realloc(out,sizeof(char)*(strlen(split[0])+1));
-		strcpy(out, split[0]);
 	}
 	for (int i = 0; i < len; ++i) {
 		free(split[i]);
