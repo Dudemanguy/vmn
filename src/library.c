@@ -120,7 +120,8 @@ struct vmn_entry create_entry(struct vmn_library *lib, char *line, char *lib_dir
 	for (int i = 0; i < lib->depth; ++i) {
 		for (int j = 0; j < len; ++j) {
 			if (lib->selections[i]) {
-				if (strcmp(lib->selections[i], split[j]) == 0) {
+				if ((strcmp(lib->selections[i], split[j]) == 0) &&
+					(strcasecmp(tags[i], split[j-1]) == 0)) {
 					entry.selected[i] = 1;
 					break;
 				}
