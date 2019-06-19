@@ -975,12 +975,17 @@ void resize_detected() {
 
 void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len) {
 	if (cfg->sort[lib->depth-1] == S_DATA) {
-		qsort(metadata[0], len, sizeof(char *), qstrcmp);
+		if (strcmp(cfg->tags[lib->depth-1], "title") != 0) { 
+			qsort(metadata[0], len, sizeof(char *), qstrcmp);
+		}
 	} else if (cfg->sort[lib->depth-1] == S_FILE) {
+		if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
+			qsort(metadata[1], len, sizeof(char *), qstrcmp);
+		}
 	} else if (cfg->sort[lib->depth-1] == S_NONE) {
 		;
 	} else if (cfg->sort[lib->depth-1] == S_NUMB) {
-		if (strcasecmp(cfg->tags[lib->depth-1], "title") == 0) {
+		if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
 			int **order = trackorder(cfg, lib, metadata, len);
 			tracksort(metadata, order, len);
 			for (int i = 0; i < len; ++i) {
@@ -1002,7 +1007,7 @@ void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char ***metada
 			metadata[0][j] = strdup(tmp1);
 			free(tmp1);
 			free(tmp2);
-			if (strcasecmp(cfg->tags[lib->depth-1], "title") == 0) {
+			if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
 				char *tmp_title1 = strdup(metadata[1][i]);
 				char *tmp_title2 = strdup(metadata[1][j]);
 				free(metadata[1][i]);
