@@ -609,6 +609,7 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	} else {
 		closedir(dir);
 		free(cfg_dir);
+		cfg.err = 0;
 	}
 	char *cfg_file = get_cfg();
 	read_cfg_file(&cfg, cfg_file);

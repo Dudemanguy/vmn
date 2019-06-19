@@ -989,6 +989,30 @@ void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char ***metada
 			free(order);
 		}
 	} else if (cfg->sort[lib->depth-1] == S_RAND) {
+		for (int i = 0; i < len; ++i) {
+			int j = rand() % (i + 1);
+			if (i == j) {
+				continue;
+			}
+			char *tmp1 = strdup(metadata[0][i]);
+			char *tmp2 = strdup(metadata[0][j]);
+			free(metadata[0][i]);
+			free(metadata[0][j]);
+			metadata[0][i] = strdup(tmp2);
+			metadata[0][j] = strdup(tmp1);
+			free(tmp1);
+			free(tmp2);
+			if (strcasecmp(cfg->tags[lib->depth-1], "title") == 0) {
+				char *tmp_title1 = strdup(metadata[1][i]);
+				char *tmp_title2 = strdup(metadata[1][j]);
+				free(metadata[1][i]);
+				free(metadata[1][j]);
+				metadata[1][i] = strdup(tmp_title2);
+				metadata[1][j] = strdup(tmp_title1);
+				free(tmp_title1);
+				free(tmp_title2);
+			}
+		}
 	}
 }
 
