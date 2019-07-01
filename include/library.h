@@ -38,7 +38,7 @@ struct vmn_library {
 	int select_pos;
 	char **selections;
 	WINDOW *search;
-	int **unknown;
+	int *unknown;
 	WINDOW *visual;
 	int vmn_quit;
 };

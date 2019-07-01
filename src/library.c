@@ -125,6 +125,12 @@ struct vmn_entry create_entry(struct vmn_library *lib, char *line, char *lib_dir
 					entry.selected[i] = 1;
 					break;
 				}
+				if (lib->unknown[i]) {
+					if (!entry.known[i]) {
+						entry.selected[i] = 1;
+						break;
+					}
+				}
 			}
 			entry.selected[i] = 0;
 		}
@@ -629,4 +635,7 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 void vmn_library_selections_add(struct vmn_library *lib, const char *entry) {
 	lib->selections[lib->depth-1] = (char *)realloc(lib->selections[lib->depth-1], sizeof(char)*(strlen(entry) + 1));
 	strcpy(lib->selections[lib->depth-1], entry);
+	if (strncmp(entry, "Unknown ", 8) == 0) {
+		lib->unknown[lib->depth-1] = 1;
+	}
 }	

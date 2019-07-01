@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 		vmn_library_metadata(&lib);
 		vmn_library_sort(&lib, cfg.lib_dir);
 		lib.selections = (char **)calloc(cfg.tags_len, sizeof(char *));
-		lib.unknown = (int **)calloc(cfg.tags_len, sizeof(int *));
+		lib.unknown = (int *)calloc(cfg.tags_len, sizeof(int));
 		lib.entries[0] = get_metadata(&cfg, &lib);
 		lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
 		lib.items[0] = create_meta_items(lib.entries[0]);
@@ -363,7 +363,7 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 		}
 		int invalid = 0;
 		for (int j = 0; j < lib->depth-1; ++j) {
-			if (entry.selected[j] || !entry.known[j]) {
+			if (entry.selected[j]) {
 				invalid = 0;
 			} else {
 				invalid = 1;
