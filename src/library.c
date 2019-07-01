@@ -632,10 +632,15 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 	free(files);
 }
 
-void vmn_library_selections_add(struct vmn_library *lib, const char *entry) {
+void vmn_library_selections_add(struct vmn_library *lib, const char *entry, char *tag) {
 	lib->selections[lib->depth-1] = (char *)realloc(lib->selections[lib->depth-1], sizeof(char)*(strlen(entry) + 1));
 	strcpy(lib->selections[lib->depth-1], entry);
 	if (strncmp(entry, "Unknown ", 8) == 0) {
-		lib->unknown[lib->depth-1] = 1;
+		char *tmp = malloc((strlen("Unknown ") + strlen(tag) + 1)*sizeof(char));
+		strcpy(tmp, "Unknown ");
+		strcat(tmp, tag);
+		if (strcmp(tmp, lib->selections[lib->depth-1]) == 0) {
+			lib->unknown[lib->depth-1] = 1;
+		}
 	}
 }	

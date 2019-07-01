@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
 	if (cfg.view == V_DATA) {
 		ITEM *cur = current_item(lib.menu[0]);
 		const char *name = item_name(cur);
-		vmn_library_selections_add(&lib, name);
+		vmn_library_selections_add(&lib, name, cfg.tags[0]);
 	}
 	int c;
 	lib.ctx = mpv_generate(&cfg);
@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
 			ITEM *cur = current_item(lib.menu[lib.depth-1]);
 			const char *name = item_name(cur);
 			if (name) {
-				vmn_library_selections_add(&lib, name);
+				vmn_library_selections_add(&lib, name, cfg.tags[lib.depth-1]);
 			}
 		}
 		if (lib.mpv_kill) {
