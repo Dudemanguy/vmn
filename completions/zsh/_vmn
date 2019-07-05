@@ -9,14 +9,15 @@ _vmn() {
 		'--sort=[select sorting modes]':1:_sorting \
 		'--tags=[select tags]':1:_tagging \
 		'--view=[select view]:1:'"$__views"
-}
+	
+	sort_opts=('metadata' 'filename' 'tracknumber' 'random' 'none' ${sort_opts})
+	_sorting() {
+		_values -ws, opts ${sort_opts}
+	}
 
-_sorting() {
-	_values -s, opts metadata filename tracknumber random none
-}
-
-_tagging() {
-	_values -s, opts album album_artist artist date genre title track
+	_tagging() {
+		_values -s, opts album album_artist artist date genre title track
+	}
 }
 
 _vmn "$@"
