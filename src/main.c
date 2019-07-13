@@ -746,7 +746,21 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		if (lib->select) {
 			lib->select = 0;
 			lib->select_pos = 0;
+			int *selected = malloc(sizeof(int)*item_count(menu));
+			for (int i = 0; i < item_count(menu); ++i) {
+				if (item_value(items[i])) {
+					selected[i] = i;
+				} else {
+					selected[i] = -1;
+				}
+			}
 			destroy_visual_window(lib);
+			for (int i = 0; i < item_count(menu); ++i) {
+				if (selected[i] > -1) {
+					set_item_value(items[i], true);
+				}
+			}
+			free(selected);
 		} else {
 			menu_driver(menu, REQ_CLEAR_PATTERN);
 			create_visual_window(lib);
