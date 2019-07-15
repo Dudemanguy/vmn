@@ -17,12 +17,12 @@
 #endif
 
 int check_arg(struct vmn_config *cfg, char *arg) {
-	char *valid[6] = {"", "--input-mode=", "--library=", "--sort=", "--tags=", "--view="};
-	int len[6];
-	for (int i = 0; i < 6; ++i) {
+	char *valid[7] = {"", "--headless=", "--input-mode=", "--library=", "--sort=", "--tags=", "--view="};
+	int len[7];
+	for (int i = 0; i < 7; ++i) {
 		len[i] = strlen(valid[i]);
 	}
-	for (int i = 1; i < 6; ++i) {
+	for (int i = 1; i < 7; ++i) {
 		if (strncmp(arg, valid[i], len[i]) == 0) {
 			return i;
 		}
@@ -296,7 +296,7 @@ void cfg_default(struct vmn_config *cfg) {
 }
 
 void vmn_set_option(struct vmn_config *cfg, char *opt, char *value) {
-	char *opt_arr[5] = {"input-mode", "library", "tags", "sort", "view"};
+	char *opt_arr[6] = {"headless", "input-mode", "library", "tags", "sort", "view"};
 	char *key_arr[27] = {"beginning", "command", "end", "escape", "move-backward",
 		"move-down", "move-forward", "move-up", "mpv-kill", "mute", "page-down",
 		"page-up", "playnext", "playpause", "playprev", "queue", "queue-all",
@@ -304,12 +304,21 @@ void vmn_set_option(struct vmn_config *cfg, char *opt, char *value) {
 		"vmn-quit", "vmn-refresh", "voldown", "volup"};
 
 	if (strcmp(opt, opt_arr[0]) == 0) {
+		if (strcmp(value, "yes") == 0) {
+			mpv_cfg_add(cfg, "force-window", "no");
+			mpv_cfg_add(cfg, "video", "no");
+			mpv_cfg_add(cfg, "osc", "no");
+		} else if (strcmp(value, "no") == 0) {
+		} else {
+			printf("headless can be only set to 'yes' or 'no'\n");
+		}
+	} else if (strcmp(opt, opt_arr[1]) == 0) {
 		if ((strcmp(value, "yes") == 0) || strcmp(value, "no") == 0) {
 			cfg->input_mode = strdup(value);
 		} else {
 			printf("input-mode can only be set to 'yes' or 'no'\n");
 		}
-	} else if (strcmp(opt, opt_arr[1]) == 0) {
+	} else if (strcmp(opt, opt_arr[2]) == 0) {
 		char *library;
 		char *tmp;
 		if ((value[0] == '~') && (value[1] == '/')) {
@@ -330,7 +339,7 @@ void vmn_set_option(struct vmn_config *cfg, char *opt, char *value) {
 			cfg->lib_dir = strdup(library);
 			free(library);
 		}
-	} else if (strcmp(opt, opt_arr[2]) == 0) {
+	} else if (strcmp(opt, opt_arr[3]) == 0) {
 		if (strcmp(value, "") == 0) {
 			printf("No tags specified. Falling back to default.\n");
 		} else {
@@ -349,7 +358,7 @@ void vmn_set_option(struct vmn_config *cfg, char *opt, char *value) {
 			cfg->tags = parse_arg(value);
 			free(len_check);
 		}
-	} else if (strcmp(opt, opt_arr[3]) == 0) {
+	} else if (strcmp(opt, opt_arr[4]) == 0) {
 		char *len_check = strdup(value);
 		char *token = strtok(len_check, ",");
 		int valid = check_sort(token);
@@ -399,7 +408,7 @@ void vmn_set_option(struct vmn_config *cfg, char *opt, char *value) {
 			}
 			free(sort_arr);
 		}
-	} else if (strcmp(opt, opt_arr[4]) == 0) {
+	} else if (strcmp(opt, opt_arr[5]) == 0) {
 		if (strcmp(value, "file-path") == 0) {
 			cfg->view = V_PATH;
 		} else if (strcmp(value, "metadata") == 0) {
@@ -614,12 +623,14 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	char *cfg_file = get_cfg();
 	read_cfg_file(&cfg, cfg_file);
 
+	char *headless;
 	char *input;
 	char *library;
 	char *sort;
 	char *tags;
 	char *viewcfg;
 	int pos[argc];
+	int headless_arg = 0;
 	int input_arg = 0;
 	int lib_arg = 0;
 	int tags_arg = 0;
@@ -634,19 +645,37 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 
 	for (int i = 1; i < argc; ++i) {
 		if (pos[i] == 1) {
-			input_arg = i;
+			headless_arg = i;
 		}
 		if (pos[i] == 2) {
-			lib_arg = i;
+			input_arg = i;
 		}
 		if (pos[i] == 3) {
-			sort_arg = i;
+			lib_arg = i;
 		}
 		if (pos[i] == 4) {
-			tags_arg = i;
+			sort_arg = i;
 		}
 		if (pos[i] == 5) {
+			tags_arg = i;
+		}
+		if (pos[i] == 6) {
 			view_arg = i;
+		}
+	}
+
+	if (headless_arg) {
+		headless = read_arg(argv[headless_arg]);
+		if (strcmp(headless, "yes") == 0) {
+			mpv_cfg_add(&cfg, "force-window", "no");
+			mpv_cfg_add(&cfg, "video", "no");
+			mpv_cfg_add(&cfg, "osc", "no");
+		} else if (strcmp(headless, "no") == 0) {
+			mpv_cfg_add(&cfg, "force-window", "yes");
+			mpv_cfg_add(&cfg, "video", "yes");
+			mpv_cfg_add(&cfg, "osc", "yes");
+		} else {
+			printf("headless can only be set to 'yes' or 'no'\n");
 		}
 	}
 

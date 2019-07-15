@@ -14,23 +14,20 @@ Options for vmn follow the *foo=value* syntax. It\'s essentially identical to mp
 
 # OPTIONS
 
+*--headless=<yes|no>*
+	A convenience option for forcing all video output off. This is exactly the same as setting *force-window*, *video*, and *osc* all to *no* in your config. By default, this option defaults to *no*.
+
 *--input-mode=<yes|no>*
 	Show an interactive prompt for returning ASCII keycodes. Can be useful for setting keybindings. Defaults to *no*.
 	
 *--library=<path>*
 	Select the parent directory to search for audio files. If the path is omitted or invalid, this defaults to *$HOME/Music*.
 
-*--mpv-cfg=<yes|no>*
-	Tells the mpv client whether or not to accept configuration. This defaults to *yes*.
-
-*--mpv-cfg-directory=<path>*
-	Tells the mpv client which directory to search for a configuration file. It searches for a configuration file in the same manner as mpv (i.e. *config* and *mpv.conf* are both valid). By default, the path searched is *$HOME/.config/vmn* which means that mpv configuration values specified in the vmn configuration file are valid. This does nothing if *mpv-cfg* is set to *no*.
-
 *--sort=<metadata,filename,tracknumber,random,none>*
 	A comma, separated list (spaces are not allowed) of sorting modes to be used with each metadata tag. The sort array must be the same length as the tag array or it will do nothing. Metadata sorting sorts alphabetically based on the tag names. By default, metadata sorting is used for everything except the *title* tag (metadata sorting does not work on the *title* tag). Filename sorting only works on the *title* tag and sorts alphabetically based on the filename (note: this is imperfect at this time). By default, the *title* tag uses tracknumber sorting. Tracknumber sorting sorts based on both the value of the *disc* metadata tag and the *track* tag. It only works with the *title* tag. Using it on another tag will do nothing.
 
 *--tags=<metadata,tags>*
-	A comman, separated list of metadata values (spaces are not allowed). vmn will read all music files and attempt to organize the curses interface based on the entered tag values. This only has an effect if the metadata view is used. By default, the organization (from let to right) is *artist*,*album*,*title*.
+	A comma, separated list of metadata values (spaces are not allowed). vmn will read all music files and attempt to organize the curses interface based on the entered tag values. This only has an effect if the metadata view is used. By default, the organization (from let to right) is *artist*,*album*,*title*.
 
 *--view=<file-path|metadata|song-only>*
 	Controls which view to use for vmn. This defaults to *metadata* which creates navigable menus that are built via the metadata in the valid audio files. The *file-path* view organizes itself based on the directory structure, and the *song-only* view outputs the complete paths of all valid audio files found in alphabetical order. Note that initially storing metadata from a large amount of files into cache can be a tad slow.

@@ -5,6 +5,10 @@ _vmn() {
     _init_completion -s || return
 
 	case $prev in
+		--headless)
+			COMPREPLY=( $(compgen -W 'yes no' -- $cur) )
+			return
+			;;
 		--input-mode)
 			COMPREPLY=( $(compgen -W 'yes no' -- $cur) )
 			return
@@ -45,7 +49,8 @@ _vmn() {
 			;;
 	esac
 
-	opts="--input-mode=
+	opts="--headless=
+		--input-mode=
 		--library=
 		--sort=
 		--tags=

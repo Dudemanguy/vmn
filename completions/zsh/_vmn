@@ -4,6 +4,7 @@ _vmn() {
 	local __boolean="(yes no)"
 	local __views="(file-path metadata song-only)"
 	_arguments \
+		'--headless=[disable video output]:1:'"$__boolean" \
 		'--input-mode=[show keycodes]:1:'"$__boolean" \
 		'--library=[music directory]:1:_dirs' \
 		'--sort=[select sorting modes]':1:_sorting \

@@ -4,7 +4,10 @@ Options for vmn follow the `foo=value` syntax. It's essentially identical to mpv
 
 ### Main Options
 
-``--input-mode<yes|no>``\
+``--headless=<yes|no>``\
+   A convenience option for forcing all video output off. This is exactly the same as setting `force-window`, `video`, and `osc` all to `no` in your config. By default, this option defaults to `no`.
+
+``--input-mode=<yes|no>``\
    Show an interactive prompt for returning ASCII keycodes. Can be useful for setting keybindings. Defaults to `no`.
 
 ``--library=<directory>``\
