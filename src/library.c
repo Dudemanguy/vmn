@@ -642,5 +642,8 @@ void vmn_library_selections_add(struct vmn_library *lib, const char *entry, char
 		if (strcmp(tmp, lib->selections[lib->depth-1]) == 0) {
 			lib->unknown[lib->depth-1] = 1;
 		}
+		free(tmp);
+	} else {
+		lib->unknown[lib->depth-1] = 0;
 	}
 }	
