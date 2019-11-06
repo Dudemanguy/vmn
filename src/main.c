@@ -821,8 +821,11 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 			prev = check_vmn_cache(lib, cur, cfg->tags);
 		}
 		if (prev || lib->depth == 1) {
-			int known = is_known(cfg->tags[lib->depth-1], cur);
-			if (!known) {
+			if (lib->unknown[lib->depth-1]) {
+				int known = is_known(cfg->tags[lib->depth-1], cur);
+				if (known) {
+					continue;
+				}
 				if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
 					char *filename = strrchr(split[0], '/');
 					if (strcmp(filename+1, name) == 0) {
