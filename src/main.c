@@ -1087,15 +1087,10 @@ int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char ***metada
 }
 
 void tracksort(char ***metadata, int **order, int len) {
-	int swap = 1;
-	while (swap) {
-		for (int i = 0; i < len; ++i) {
-			if (i == 0) {
-				swap = 0;
-			}
-			if (i == (len - 1)) {
-				break;
-			}
+	int disc_swap = 1;
+	int track_swap = 1;
+	while (disc_swap) {
+		for (int i = 0; i < len-1; ++i) {
 			if (order[i][0] > order[i+1][0]) {
 				int disc_tmp = order[i][0];
 				int track_tmp = order[i][1];
@@ -1119,13 +1114,24 @@ void tracksort(char ***metadata, int **order, int len) {
 				free(tmp[0]);
 				free(tmp[1]);
 				free(tmp);
-				swap = 1;
-				continue;
 			}
-			if (order[i][1] > order[i+1][1]) {
-				if (order[i][0] != order[i+1][0]) {
-					continue;
+			if (i == len - 2) {
+				int increasing = 1;
+				for (int j = 0; j < len-1; ++j) {
+					if (order[j][0] > order[j+1][0]) {
+						increasing = 0;
+						break;
+					}
 				}
+				if (increasing) {
+					disc_swap = 0;
+				}
+			}
+		}
+	}
+	while (track_swap) {
+		for (int i = 0; i < len-1; ++i) {
+			if (order[i][1] > order[i+1][1] && order[i][0] == order[i+1][0]) {
 				int disc_tmp = order[i][0];
 				int track_tmp = order[i][1];
 				order[i][0] = order[i+1][0];
@@ -1148,8 +1154,18 @@ void tracksort(char ***metadata, int **order, int len) {
 				free(tmp[0]);
 				free(tmp[1]);
 				free(tmp);
-				swap = 1;
-				continue;
+			}
+			if (i == len - 2) {
+				int increasing = 1;
+				for (int j = 0; j < len-1; ++j) {
+					if (order[j][1] > order[j+1][1] && order[j][0] == order[j+1][0]) {
+						increasing = 0;
+						break;
+					}
+				}
+				if (increasing) {
+					track_swap = 0;
+				}
 			}
 		}
 	}
