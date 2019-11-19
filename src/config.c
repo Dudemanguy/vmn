@@ -356,6 +356,11 @@ void vmn_set_option(struct vmn_config *cfg, char *opt, char *value) {
 			free(cfg->tags);
 			cfg->tags_len = i;
 			cfg->tags = parse_arg(value);
+			free(cfg->sort);
+			cfg->sort = (enum vmn_config_sort *)calloc(cfg->tags_len, sizeof(enum vmn_config_sort));
+			for (int i = 0; i < cfg->tags_len; ++i) {
+				cfg->sort[i] = default_sort(cfg->tags[i]);
+			}
 			free(len_check);
 		}
 	} else if (strcmp(opt, opt_arr[4]) == 0) {
@@ -730,6 +735,11 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 			}
 			cfg.tags_len = j;
 			cfg.tags = parse_arg(tags);
+			free(cfg.sort);
+			cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
+			for (int i = 0; i < cfg.tags_len; ++i) {
+				cfg.sort[i] = default_sort(cfg.tags[i]);
+			}
 			free(len_check);
 		}
 
