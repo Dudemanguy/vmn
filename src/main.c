@@ -1089,6 +1089,9 @@ int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char ***metada
 void tracksort(char ***metadata, int **order, int len) {
 	int disc_swap = 1;
 	int track_swap = 1;
+	if (len == 1) {
+		return;
+	}
 	while (disc_swap) {
 		for (int i = 0; i < len-1; ++i) {
 			if (order[i][0] > order[i+1][0]) {
