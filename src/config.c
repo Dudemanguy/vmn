@@ -226,7 +226,7 @@ int parse_modifier(char *key) {
 	char *str = strdup(key);
 	char *token = strtok(str, "+");
 	while (token != NULL) {
-		if (!strcmp(token, "Ctrl") == 0) {
+		if (!(strcmp(token, "Ctrl") == 0)) {
 			int macro = check_macro(token);
 			int func = check_func(token);
 			if (macro || func) {

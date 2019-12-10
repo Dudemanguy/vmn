@@ -86,7 +86,7 @@ const char *mpv_err_msg(int err_index) {
 
 const char *execute_command(struct vmn_config *cfg, struct vmn_library *lib, char **parse_arr, int len) {
 	if (strcmp(parse_arr[0], "mpv") == 0) {
-		int mpv_err;
+		int mpv_err = 0;
 		if (strcmp(parse_arr[1], "cmd") == 0) {
 			const char *cmd[len-1];
 			for (int i = 0; i < len - 2; ++i) {
