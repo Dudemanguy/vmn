@@ -366,7 +366,7 @@ char **vmn_library_check(struct vmn_library *lib) {
 		free(files[i]);
 	}
 	free(files);
-	new[new_pos] = '\0';
+	new[new_pos] = 0;
 	return new;
 }
 
@@ -530,8 +530,8 @@ void vmn_library_refresh(struct vmn_library *lib, char *tag) {
 			strcpy(files[cache_len], cur);
 			++cache_len;
 		}
-		for (int i = 0; i < len; ++i) {
-			free(split[i]);
+		for (int j = 0; j < len; ++j) {
+			free(split[j]);
 		}
 		free(split);
 	}

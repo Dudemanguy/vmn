@@ -327,8 +327,8 @@ char ***get_lib_dir(const char *library, struct vmn_library *lib) {
 	qsort(dir_info[1], i, sizeof(char *), qstrcmp);
 	dir_info[0] = (char **)realloc(dir_info[0],sizeof(char *)*(i+1));
 	dir_info[1] = (char **)realloc(dir_info[1],sizeof(char *)*(i+1));
-	dir_info[0][i] = '\0';
-	dir_info[1][i] = '\0';
+	dir_info[0][i] = 0;
+	dir_info[1][i] = 0;
 	return dir_info;
 }
 
@@ -430,8 +430,8 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	free(path);
 	metadata[0] = (char **)realloc(metadata[0],sizeof(char *)*(len+1));
 	metadata[1] = (char **)realloc(metadata[1],sizeof(char *)*(len+1));
-	metadata[0][len] = '\0';
-	metadata[1][len] = '\0';
+	metadata[0][len] = 0;
+	metadata[1][len] = 0;
 	sort_select(cfg, lib, metadata, len);
 	return metadata;
 }
@@ -711,7 +711,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				}
 			}
 			if (!n) {
-				ITEM *cur = current_item(menu);
+				cur = current_item(menu);
 				path = item_description(cur);
 				mpv_queue(lib->ctx, path);
 			}
@@ -731,7 +731,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				}
 			}
 			if (!n) {
-				ITEM *cur = current_item(menu);
+				cur = current_item(menu);
 				int index = item_index(cur);
 				if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
 					path = item_description(cur);
@@ -810,7 +810,7 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 		fgets(cur, 4096, cache);
 		split = line_split(cur, "\t");
 		int len = 0;
-		for (int i = 0; i < strlen(cur); ++i) {
+		for (int j = 0; j < strlen(cur); ++j) {
 			if (cur[i] == '\t') {
 				++len;
 			}

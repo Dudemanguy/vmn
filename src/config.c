@@ -358,8 +358,8 @@ void vmn_set_option(struct vmn_config *cfg, char *opt, char *value) {
 			cfg->tags = parse_arg(value);
 			free(cfg->sort);
 			cfg->sort = (enum vmn_config_sort *)calloc(cfg->tags_len, sizeof(enum vmn_config_sort));
-			for (int i = 0; i < cfg->tags_len; ++i) {
-				cfg->sort[i] = default_sort(cfg->tags[i]);
+			for (int j = 0; j < cfg->tags_len; ++j) {
+				cfg->sort[j] = default_sort(cfg->tags[j]);
 			}
 			free(len_check);
 		}
