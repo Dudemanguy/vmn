@@ -811,7 +811,7 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 		split = line_split(cur, "\t");
 		int len = 0;
 		for (int j = 0; j < strlen(cur); ++j) {
-			if (cur[i] == '\t') {
+			if (cur[j] == '\t') {
 				++len;
 			}
 		}
