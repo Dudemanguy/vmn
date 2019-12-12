@@ -42,5 +42,10 @@ endif
 
 subdir('include')
 inc =  include_directories('include')
-vmn_sources = files('src/command.c', 'src/config.c', 'src/library.c', 'src/main.c', 'src/utils.c')
+vmn_sources = files('src/command.c',
+		  			'src/config.c',
+					'src/library.c',
+					'src/main.c',
+					'src/render.c',
+					'src/utils.c')
 executable('vmn', vmn_sources, dependencies: [libavformat, libavutil, menu, mpv, ncurses], include_directories: inc, install: true)
