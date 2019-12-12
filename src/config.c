@@ -27,7 +27,7 @@ int check_arg(struct vmn_config *cfg, char *arg) {
 			return i;
 		}
 	}
-	return 0;
+	return -1;
 }
 
 int check_func(char *func) {
@@ -646,6 +646,11 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	//these take priority over any config file options
 	for (int i = 1; i < argc; ++i) {
 		pos[i] = check_arg(&cfg, argv[i]);
+		if (pos[i] == -1) {
+			printf("Error: invalid argument specified.\n");
+			cfg.err = 1;
+			return cfg;
+		}
 	}
 
 	for (int i = 1; i < argc; ++i) {
