@@ -23,7 +23,7 @@
 
 void input_mode(struct vmn_config *cfg);
 char ***get_lib_dir(const char *library, struct vmn_library *lib);
-char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib);
+char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib, int index);
 int get_music_files(const char *library, struct vmn_library *lib);
 void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib);
 void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name, int index);
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 		vmn_library_sort(&lib, cfg.lib_dir);
 		lib.selections = (char **)calloc(cfg.tags_len, sizeof(char *));
 		lib.unknown = (int *)calloc(cfg.tags_len, sizeof(int));
-		lib.entries[0] = get_metadata(&cfg, &lib);
+		lib.entries[0] = get_metadata(&cfg, &lib, 0);
 		lib.items = (ITEM ***)calloc(1, sizeof(ITEM **));
 		lib.items[0] = create_meta_items(lib.entries[0]);
 	}
@@ -254,7 +254,7 @@ char ***get_lib_dir(const char *library, struct vmn_library *lib) {
 	return dir_info;
 }
 
-char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
+char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib, int index) {
 	char *home = getenv("HOME"); 
 	const char *cfg_path = "/.config/vmn/cache";
 	char *path = malloc(strlen(home) + strlen(cfg_path) + 1);
@@ -275,6 +275,7 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 	metadata[0] = (char **)calloc(lib->length+1, sizeof(char *));
 	metadata[1] = (char **)calloc(lib->length+1, sizeof(char *));
 	char *temp;
+	char *tag_name = cfg->tags[index];
 	for (int i = 0; i < file_len; ++i) {
 		fgets(cur, 4096, cache);
 		int match = 0;
@@ -296,18 +297,18 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			entry_destroy(&entry);
 			continue;
 		}
-		temp = read_vmn_cache(cur, cfg->tags[lib->depth-1]);
+		temp = read_vmn_cache(cur, tag_name);
 		if (strcmp(temp, "") == 0) {
-			if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
+			if (strcmp(tag_name, "title") == 0) {
 				metadata[0][len] = (char *)calloc(strlen(entry.filename+1) + 1, sizeof(char));
 				strcpy(metadata[0][len], entry.filename+1);
 				metadata[1][len] = (char *)calloc(strlen(entry.path) + 1, sizeof(char));
 				strcpy(metadata[1][len], entry.path);
 				++len;
 			} else {
-				char *unknown_tag = (char *)calloc(strlen(cfg->tags[lib->depth-1]) + strlen("Unknown ") + 1, sizeof(char));
+				char *unknown_tag = (char *)calloc(strlen(tag_name) + strlen("Unknown ") + 1, sizeof(char));
 				strcpy(unknown_tag, "Unknown ");
-				strcat(unknown_tag, cfg->tags[lib->depth-1]);
+				strcat(unknown_tag, tag_name);
 				for (int j = 0; j < len; ++j) {
 					if ((strcmp(unknown_tag, metadata[0][j]) == 0)) {
 						free(unknown_tag);
@@ -324,7 +325,7 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			}
 		} else {
 			for (int j = 0; j < len; ++j) {
-				if ((strcmp(temp, metadata[0][j]) == 0) && (strcmp(cfg->tags[lib->depth-1], "title") != 0)) {
+				if ((strcmp(temp, metadata[0][j]) == 0) && (strcmp(tag_name, "title") != 0)) {
 					match = 1;
 					break;
 				}
@@ -337,7 +338,7 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib) {
 			} else {
 				metadata[0][len] = malloc(sizeof(char *)*(strlen(temp)+1));
 				strcpy(metadata[0][len], temp);
-				if (strcmp(cfg->tags[lib->depth-1], "title") == 0) {
+				if (strcmp(tag_name, "title") == 0) {
 					metadata[1][len] = malloc(sizeof(char *)*(strlen(entry.path)+1));
 					strcpy(metadata[1][len], entry.path);
 				}
@@ -831,7 +832,7 @@ int move_menu_meta_forward(struct vmn_config *cfg, struct vmn_library *lib) {
 		return 0;
 	}
 	lib->entries = (char ****)realloc(lib->entries, sizeof(char ***)*(lib->depth));
-	lib->entries[lib->depth-1] = get_metadata(cfg, lib);
+	lib->entries[lib->depth-1] = get_metadata(cfg, lib, lib->depth-1);
 	int maxx = getmaxx(stdscr);
 	for (int i = 1; i < lib->depth-1; ++i) {
 		mvwin(menu_win(lib->menu[i]), 0, (int)(maxx*i)/(lib->depth));
