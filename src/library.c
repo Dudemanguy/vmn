@@ -304,6 +304,9 @@ char **vmn_library_check(struct vmn_library *lib) {
 	FILE *cache = fopen(path, "r");
 	char **new;
 	if (!cache) {
+		if (lib->length > 999) {
+			printf("Storing a large amount of metadata into cache. This may take some time.\n");
+		}
 		new = (char **)calloc(lib->length+1, sizeof(char *));
 		for (int i = 0; i < lib->length; ++i) {
 			new[i] = (char *)malloc(sizeof(char)*(strlen(lib->files[i])+1));
@@ -336,6 +339,9 @@ char **vmn_library_check(struct vmn_library *lib) {
 	free(path);
 	free(cur);
 	if (!files[0]) {
+		if (lib->length > 999) {
+			printf("Storing a large amount of metadata into cache. This may take some time.\n");
+		}
 		new = (char **)calloc(lib->length+1, sizeof(char *));
 		for (int i = 0; i < lib->length; ++i) {
 			new[i] = (char *)malloc(sizeof(char)*(strlen(lib->files[i])+1));
@@ -359,6 +365,9 @@ char **vmn_library_check(struct vmn_library *lib) {
 				new[new_pos] = (char *)malloc(sizeof(char)*(strlen(lib->files[i])+1));
 				strcpy(new[new_pos], lib->files[i]);
 				++new_pos;
+				if (new_pos == 1000) {
+					printf("Storing a large amount of metadata into cache. This may take some time.\n");
+				}
 			}
 		}
 	}
@@ -424,9 +433,6 @@ void vmn_library_metadata(struct vmn_library *lib) {
 	size_t buffer_size;
 	int i = 0;
 	while (new[i]) {
-		if (i == 1000) {
-			printf("Storing a large amount of metadata into cache. This may take some time.\n");
-		}
 		struct stat st;
 		stat(new[i], &st);
 		buffer_size = st.st_size;
