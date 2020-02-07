@@ -253,7 +253,7 @@ char *read_vmn_cache(char *str, char *match) {
 }
 
 int read_vmn_cache_int(char *str, char *match) {
-	int out;
+	int out = 0;
 	char **split = line_split(str, "\t");
 	int len = 0;
 	for (int i = 0; i < strlen(str); ++i) {
@@ -325,7 +325,10 @@ char **vmn_library_check(struct vmn_library *lib) {
 	char *cur = (char *)calloc(4096, sizeof(char));
 	char **files = (char **)calloc(file_len, sizeof(char *));
 	for (int i = 0; i < file_len; ++i) {
-		fgets(cur, 4096, cache);
+		if (fgets(cur, 4096, cache) == NULL) {
+			printf("An error occured while trying read the cache. Make sure your permissions are correct.\n");
+			exit(1);
+		}
 		int j = 0;
 		while(cur[j] != '\t') { 
 			++j;
@@ -514,7 +517,10 @@ void vmn_library_refresh(struct vmn_library *lib, char *tag) {
 	char **files = (char **)calloc(file_len, sizeof(char *));
 	rewind(cache);
 	for (int i = 0; i < file_len; ++i) {
-		fgets(cur, 4096, cache);
+		if (fgets(cur, 4096, cache) == NULL) {
+			printf("An error occured while trying read the cache. Make sure your permissions are correct.\n");
+			exit(1);
+		}
 		char **split = line_split(cur, "\t");
 		int len = 0;
 		for (int j = 0; j < strlen(cur); ++j) {
@@ -586,7 +592,10 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 	rewind(cache);
 	char **files = (char **)calloc(file_len, sizeof(char *));
 	for (int i = 0; i < file_len; ++i) {
-		fgets(cur, 4096, cache);
+		if (fgets(cur, 4096, cache) == NULL) {
+			printf("An error occured while trying read the cache. Make sure your permissions are correct.\n");
+			exit(1);
+		}
 		char **split = line_split(cur, "\t");
 		int len = 0;
 		for (int j = 0; j < strlen(cur); ++j) {

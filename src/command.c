@@ -18,7 +18,7 @@ void destroy_command_window(struct vmn_library *lib) {
 }
 
 const char *mpv_err_msg(int err_index) {
-	const char *err_msg;
+	const char *err_msg = "";
 	switch(err_index) {
 		case -1:
 			err_msg = "Error: The event ringbuffer is full.";

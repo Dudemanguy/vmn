@@ -66,7 +66,10 @@ int main(int argc, char *argv[]) {
 		printf("No audio files were found.\n");
 		return 0;
 	}
-	freopen("/dev/null", "w", stderr);
+	if (freopen("/dev/null", "w", stderr) == NULL) {
+		printf("Error while trying to write to stderr.\n");
+		exit(1);
+	}
 	initscr();
 	cbreak();
 	noecho();
@@ -277,7 +280,10 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib, int index)
 	char *temp;
 	char *tag_name = cfg->tags[index];
 	for (int i = 0; i < file_len; ++i) {
-		fgets(cur, 4096, cache);
+		if (fgets(cur, 4096, cache) == NULL) {
+			printf("An error occured while trying read the cache. Make sure your permissions are correct.\n");
+			exit(1);
+		}
 		int match = 0;
 		int tag_exist = 0;
 		struct vmn_entry entry = create_entry(lib, cur, cfg->lib_dir, cfg->tags);
@@ -418,7 +424,7 @@ void input_mode(struct vmn_config *cfg) {
 }
 
 void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct vmn_library *lib) {
-	int init_pos;
+	int init_pos = 0;
 	int end_pos;
 	ITEM *cur;
 	const char *name;
@@ -730,7 +736,10 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 	FILE *cache = fopen(path, "r");
 	char *name_dup = strdup(name);
 	for (int i = 0; i < lib->length; ++i) {
-		fgets(cur, 4096, cache);
+		if (fgets(cur, 4096, cache) == NULL) {
+			printf("An error occured while trying read the cache. Make sure your permissions are correct.\n");
+			exit(1);
+		}
 		split = line_split(cur, "\t");
 		int len = 0;
 		for (int j = 0; j < strlen(cur); ++j) {
@@ -975,7 +984,10 @@ int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char ***metada
 	}
 	int n = 0;
 	for (int i = 0; i < lib->length; ++i) {
-		fgets(cur, 4096, cache);
+		if (fgets(cur, 4096, cache) == NULL) {
+			printf("An error occured while trying read the cache. Make sure your permissions are correct.\n");
+			exit(1);
+		}
 		int match = is_known(metadata[0][n], cur);
 		if (match) {
 			int prev = check_vmn_cache(lib, cur, cfg->tags);

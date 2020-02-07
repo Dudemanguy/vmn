@@ -560,7 +560,10 @@ void read_cfg_file(struct vmn_config *cfg, char *cfg_file) {
 	rewind(file);
 	char *cur = (char *)calloc(4096, sizeof(char));
 	for (int i = 0; i < file_len; ++i) {
-		fgets(cur, 4096, file);
+		if (fgets(cur, 4096, file) == NULL) {
+			cfg->err = 1;
+			printf("An error occured while trying to read the config file. Make sure your permissions are correct.\n");
+		}
 		if (cur[0] == '#') {
 			continue;
 		}
