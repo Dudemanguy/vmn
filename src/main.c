@@ -727,7 +727,6 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 
 void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name, int index) {
 	char *cur = malloc(4096*sizeof(char));
-	char **split;
 	char *home = getenv("HOME"); 
 	const char *cfg_path = "/.config/vmn/cache";
 	char *path = malloc(strlen(home) + strlen(cfg_path) + 1);
@@ -740,7 +739,6 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 			printf("An error occured while trying read the cache. Make sure your permissions are correct.\n");
 			exit(1);
 		}
-		split = line_split(cur, "\t");
 		int len = 0;
 		for (int j = 0; j < strlen(cur); ++j) {
 			if (cur[j] == '\t') {
@@ -748,6 +746,7 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 			}
 		}
 		++len;
+		char **split = line_split(cur, '\t');
 		int prev = 0;
 		if (lib->depth-1) {
 			prev = check_vmn_cache(lib, cur, cfg->tags);
@@ -782,9 +781,6 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 				}
 				free(file);
 			}
-		}
-		for (int j = 0; j < len; ++j) {
-			free(split[j]);
 		}
 		free(split);
 	}

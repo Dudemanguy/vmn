@@ -109,16 +109,13 @@ const char *execute_command(struct vmn_config *cfg, struct vmn_library *lib, cha
 }
 
 char **parse_command(char *entry, int len) {
-	char **split = line_split(entry, " ");
+	char **split = line_split(entry, ' ');
 	char **parse_arr = (char **)calloc(len, sizeof(char*));
 	for (int i = 0; i < len; ++i) {
 		char *tmp = remove_spaces(split[i]);
 		parse_arr[i] = malloc(sizeof(char)*(strlen(split[i])+1));
 		strcpy(parse_arr[i], tmp);
 		free(tmp);
-	}
-	for (int i = 0; i < len; ++i) {
-		free(split[i]);
 	}
 	free(split);
 	return parse_arr;
