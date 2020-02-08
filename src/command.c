@@ -152,6 +152,8 @@ void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
 				}
 				free(parse_arr);
 				if (strlen(err_msg)) {
+					entry = "";
+					pos = 0;
 					destroy_command_window(lib);
 					lib->command = newwin(1, 0, LINES - 1, 0);
 					mvwprintw(lib->command, 0, 0, err_msg);
