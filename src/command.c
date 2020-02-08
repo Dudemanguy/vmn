@@ -109,13 +109,16 @@ const char *execute_command(struct vmn_config *cfg, struct vmn_library *lib, cha
 }
 
 char **parse_command(char *entry, int len) {
-	char **split = line_split(entry, ' ');
+	char **split = line_split(entry, " ");
 	char **parse_arr = (char **)calloc(len, sizeof(char*));
 	for (int i = 0; i < len; ++i) {
 		char *tmp = remove_spaces(split[i]);
 		parse_arr[i] = malloc(sizeof(char)*(strlen(split[i])+1));
 		strcpy(parse_arr[i], tmp);
 		free(tmp);
+	}
+	for (int i = 0; i < len; ++i) {
+		free(split[i]);
 	}
 	free(split);
 	return parse_arr;
@@ -152,8 +155,6 @@ void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
 				}
 				free(parse_arr);
 				if (strlen(err_msg)) {
-					entry = "";
-					pos = 0;
 					destroy_command_window(lib);
 					lib->command = newwin(1, 0, LINES - 1, 0);
 					mvwprintw(lib->command, 0, 0, err_msg);

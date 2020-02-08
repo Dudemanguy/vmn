@@ -54,23 +54,24 @@ char **cfg_split(char *str) {
 	return arr;
 }
 
-char **line_split(char *str, char delim) {
+char **line_split(char *str, char *delim) {
 	char *str_dup = strdup(str);
-	int delim_num = 0;
-	for (int i = 0; i < strlen(str_dup); ++i) {
-		if (str_dup[i] == '\t') {
-			++delim_num;
+	char *token = strtok(str_dup, delim);
+	int len = 20;
+	char **arr = malloc(len *sizeof(char*));
+	int i = 0;
+	while (token != NULL) {
+		if (i == len) {
+			len = len*2;
+			arr = (char **)realloc(arr,sizeof(char*)*len);
 		}
+		arr[i] = malloc(strlen(token) + 1);
+		strcpy(arr[i], token);
+		token = strtok(NULL, delim);
+		++i;
 	}
-	++delim_num;
-	char **arr = (char **)malloc(delim_num * sizeof(char *));
-	arr[0] = str_dup;
-	int i = 1;
-	char *hit = str_dup;
-	while ((hit = strchr(hit, delim)) != NULL) {
-		*hit++ = 0;
-		arr[i++] = hit;
-	}
+	arr = (char **)realloc(arr, sizeof(char*)*i);
+	free(str_dup);
 	return arr;
 }
 
