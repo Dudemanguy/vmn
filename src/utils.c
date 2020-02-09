@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils.h"
 
 void append_char(char *str, char c) {
 	while(*str) {
@@ -54,25 +55,35 @@ char **cfg_split(char *str) {
 	return arr;
 }
 
-char **line_split(char *str, char *delim) {
+struct char_split line_split(char *str, char *delim) {
 	char *str_dup = strdup(str);
+	int len = 0;
+	for (int i = 0; i < strlen(str_dup); ++i) {
+		if (str_dup[i] == '\t') {
+			++len;
+		}
+	}
+	++len;
 	char *token = strtok(str_dup, delim);
-	int len = 20;
-	char **arr = malloc(len *sizeof(char*));
+	struct char_split split;
+	split.arr = malloc(len*sizeof(char*));
 	int i = 0;
 	while (token != NULL) {
-		if (i == len) {
-			len = len*2;
-			arr = (char **)realloc(arr,sizeof(char*)*len);
-		}
-		arr[i] = malloc(strlen(token) + 1);
-		strcpy(arr[i], token);
+		split.arr[i] = malloc((strlen(token) + 1)*sizeof(char));
+		strcpy(split.arr[i], token);
 		token = strtok(NULL, delim);
 		++i;
 	}
-	arr = (char **)realloc(arr, sizeof(char*)*i);
+	split.len = i;
 	free(str_dup);
-	return arr;
+	return split;
+}
+
+void char_split_destroy(struct char_split *split) {
+	for (int i = 0; i < split->len; ++i) {
+		free(split->arr[i]);
+	}
+	free(split->arr);
 }
 
 int qstrcmp(const void *a, const void *b) {

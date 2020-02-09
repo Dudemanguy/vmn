@@ -24,14 +24,7 @@ AVInputFormat *get_input_format(const char *file) {
 }
 
 int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
-	char **split = line_split(str, "\t");
-	int len = 0;
-	for (int i = 0; i < strlen(str); ++i) {
-		if (str[i] == '\t') {
-			++len;
-		}
-	}
-	++len;
+	struct char_split split = line_split(str, "\t");
 	int match;
 	int known;
 	for (int i = 0; i < lib->depth-1; ++i) {
@@ -41,8 +34,8 @@ int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
 			match = 1;
 			continue;
 		}
-		for (int j = 0; j < len; ++j) {
-			if ((strcmp(lib->selections[i], split[j]) == 0) && (strcasecmp(tags[i], split[j-1]) == 0)) {
+		for (int j = 0; j < split.len; ++j) {
+			if ((strcmp(lib->selections[i], split.arr[j]) == 0) && (strcasecmp(tags[i], split.arr[j-1]) == 0)) {
 				match = 1;
 				break;
 			}
@@ -51,10 +44,7 @@ int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
 			break;
 		}
 	}
-	for (int i = 0; i < len; ++i) {
-		free(split[i]);
-	}
-	free(split);
+	char_split_destroy(&split);
 	if (match) {
 		return 1;
 	} else {
@@ -63,7 +53,7 @@ int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
 }
 
 int check_vmn_lib(struct vmn_library *lib, char *line, char *lib_dir) {
-	char **split = line_split(line, "\t");
+	struct char_split split = line_split(line, "\t");
 	int len = 0;
 	for (int i = 0; i < strlen(line); ++i) {
 		if (line[i] == '\t') {
@@ -73,44 +63,31 @@ int check_vmn_lib(struct vmn_library *lib, char *line, char *lib_dir) {
 	++len;
 	int check = 0;
 	int lib_dir_len = strlen(lib_dir);
-	if (strncmp(lib_dir, split[0], lib_dir_len) == 0) {
+	if (strncmp(lib_dir, split.arr[0], lib_dir_len) == 0) {
 		check = 1;
 	}
-	for (int i = 0; i < len; ++i) {
-		free(split[i]);
-	}
-	free(split);
+	char_split_destroy(&split);
 	return check;
 }
 
 struct vmn_entry create_entry(struct vmn_library *lib, char *line, char *lib_dir, char **tags) {
 	struct vmn_entry entry;
-	char **split = line_split(line, "\t");
-	int len = 0;
-	for (int i = 0; i < strlen(line); ++i) {
-		if (line[i] == '\t') {
-			++len;
-		}
-	}
-	++len;
+	struct char_split split = line_split(line, "\t");
 	int lib_dir_len = strlen(lib_dir);
-	if (strncmp(lib_dir, split[0], lib_dir_len) == 0) {
+	if (strncmp(lib_dir, split.arr[0], lib_dir_len) == 0) {
 		entry.in_lib = 1;
 	} else {
 		entry.in_lib = 0;
 	}
 	if (!entry.in_lib) {
-		for (int i = 0; i < len; ++i) {
-			free(split[i]);
-		}
-		free(split);
+		char_split_destroy(&split);
 		return entry;
 	}
 	entry.known = (int *)malloc(lib->depth*sizeof(int));
 	entry.selected = (int *)malloc(lib->depth*sizeof(int));
 	for (int i = 0; i < lib->depth; ++i) {
-		for (int j = 0; j < len; ++j) {
-			if (strcasecmp(tags[i], split[j]) == 0) {
+		for (int j = 0; j < split.len; ++j) {
+			if (strcasecmp(tags[i], split.arr[j]) == 0) {
 				entry.known[i] = 1;
 				break;
 			}
@@ -118,10 +95,10 @@ struct vmn_entry create_entry(struct vmn_library *lib, char *line, char *lib_dir
 		}
 	}
 	for (int i = 0; i < lib->depth; ++i) {
-		for (int j = 0; j < len; ++j) {
+		for (int j = 0; j < split.len; ++j) {
 			if (lib->selections[i]) {
-				if ((strcmp(lib->selections[i], split[j]) == 0) &&
-					(strcasecmp(tags[i], split[j-1]) == 0)) {
+				if ((strcmp(lib->selections[i], split.arr[j]) == 0) &&
+					(strcasecmp(tags[i], split.arr[j-1]) == 0)) {
 					entry.selected[i] = 1;
 					break;
 				}
@@ -135,12 +112,9 @@ struct vmn_entry create_entry(struct vmn_library *lib, char *line, char *lib_dir
 			entry.selected[i] = 0;
 		}
 	}
-	entry.path = strdup(split[0]);
-	entry.filename = strdup(strrchr(split[0], '/'));
-	for (int i = 0; i < len; ++i) {
-		free(split[i]);
-	}
-	free(split);
+	entry.path = strdup(split.arr[0]);
+	entry.filename = strdup(strrchr(split.arr[0], '/'));
+	char_split_destroy(&split);
 	return entry;
 }
 
@@ -153,47 +127,27 @@ void entry_destroy(struct vmn_entry *entry) {
 
 char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name, char *tag) {
 	char *out = (char *)calloc(1, sizeof(char));
-	char **split = line_split(line, "\t");
-	int len = 0;
-	for (int i = 0; i < strlen(line); ++i) {
-		if (line[i] == '\t') {
-			++len;
+	struct char_split split = line_split(line, "\t");
+	for (int i = 0; i < split.len; ++i) {
+		if ((strcmp(split.arr[i], name) == 0) && (strcasecmp(tag, split.arr[i-1]) == 0)) {
+			out = (char *)realloc(out,sizeof(char)*(strlen(split.arr[0])+1));
+			strcpy(out, split.arr[0]);
 		}
 	}
-	++len;
-	for (int i = 0; i < len; ++i) {
-		if ((strcmp(split[i], name) == 0) && (strcasecmp(tag, split[i-1]) == 0)) {
-			out = (char *)realloc(out,sizeof(char)*(strlen(split[0])+1));
-			strcpy(out, split[0]);
-		}
-	}
-	for (int i = 0; i < len; ++i) {
-		free(split[i]);
-	}
-	free(split);
+	char_split_destroy(&split);
 	return out;
 }
 
 int is_known(char *tag, char *line) {
-	char **split = line_split(line, "\t");
+	struct char_split split = line_split(line, "\t");
 	int known = 0;
-	int len = 0;
-	for (int i = 0; i < strlen(line); ++i) {
-		if (line[i] == '\t') {
-			++len;
-		}
-	}
-	++len;
-	for (int i = 0; i < len; ++i) {
-		if (strcasecmp(split[i], tag) == 0) {
+	for (int i = 0; i < split.len; ++i) {
+		if (strcasecmp(split.arr[i], tag) == 0) {
 			known = 1;
 			break;
 		}
 	}
-	for (int i = 0; i < len; ++i) {
-		free(split[i]);
-	}
-	free(split);
+	char_split_destroy(&split);
 	if (known) {
 		return 1;
 	} else {
@@ -202,25 +156,15 @@ int is_known(char *tag, char *line) {
 }
 
 int is_sel(char *sel, char *line) {
-	char **split = line_split(line, "\t");
+	struct char_split split = line_split(line, "\t");
 	int valid = 0;
-	int len = 0;
-	for (int i = 0; i < strlen(line); ++i) {
-		if (line[i] == '\t') {
-			++len;
-		}
-	}
-	++len;
-	for (int i = 0; i < len; ++i) {
-		if (strcmp(split[i], sel) == 0) {
+	for (int i = 0; i < split.len; ++i) {
+		if (strcmp(split.arr[i], sel) == 0) {
 			valid = 1;
 			break;
 		}
 	}
-	for (int i = 0; i < len; ++i) {
-		free(split[i]);
-	}
-	free(split);
+	char_split_destroy(&split);
 	if (valid) {
 		return 1;
 	} else {
@@ -230,48 +174,28 @@ int is_sel(char *sel, char *line) {
 
 char *read_vmn_cache(char *str, char *match) {
 	char *out = (char *)calloc(1, sizeof(char));
-	char **split = line_split(str, "\t");
-	int len = 0;
-	for (int i = 0; i < strlen(str); ++i) {
-		if (str[i] == '\t') {
-			++len;
-		}
-	}
-	++len;
-	for (int i = 0; i < len; ++i) {
-		if (strcasecmp(split[i], match) == 0) {
-			out = (char *)realloc(out,sizeof(char)*(strlen(split[i+1])+1));
-			strcpy(out, split[i+1]);
+	struct char_split split = line_split(str, "\t");
+	for (int i = 0; i < split.len; ++i) {
+		if (strcasecmp(split.arr[i], match) == 0) {
+			out = (char *)realloc(out,sizeof(char)*(strlen(split.arr[i+1])+1));
+			strcpy(out, split.arr[i+1]);
 			break;
 		}
 	}
-	for (int i = 0; i < len; ++i) {
-		free(split[i]);
-	}
-	free(split);
+	char_split_destroy(&split);
 	return out;
 }
 
 int read_vmn_cache_int(char *str, char *match) {
 	int out = 0;
-	char **split = line_split(str, "\t");
-	int len = 0;
-	for (int i = 0; i < strlen(str); ++i) {
-		if (str[i] == '\t') {
-			++len;
-		}
-	}
-	++len;
-	for (int i = 0; i < len; ++i) {
-		if (strcasecmp(split[i], match) == 0) {
-			out = atoi(split[i+1]);
+	struct char_split split = line_split(str, "\t");
+	for (int i = 0; i < split.len; ++i) {
+		if (strcasecmp(split.arr[i], match) == 0) {
+			out = atoi(split.arr[i+1]);
 			break;
 		}
 	}
-	for (int i = 0; i < len; ++i) {
-		free(split[i]);
-	}
-	free(split);
+	char_split_destroy(&split);
 	return out;
 }
 
@@ -312,6 +236,8 @@ char **vmn_library_check(struct vmn_library *lib) {
 			new[i] = (char *)malloc(sizeof(char)*(strlen(lib->files[i])+1));
 			strcpy(new[i], lib->files[i]);
 		}
+		fclose(cache);
+		free(path);
 		return new;
 	}
 	char c;
@@ -521,17 +447,10 @@ void vmn_library_refresh(struct vmn_library *lib, char *tag) {
 			printf("An error occured while trying read the cache. Make sure your permissions are correct.\n");
 			exit(1);
 		}
-		char **split = line_split(cur, "\t");
-		int len = 0;
-		for (int j = 0; j < strlen(cur); ++j) {
-			if (cur[j] == '\t') {
-				++len;
-			}
-		}
-		++len;
+		struct char_split split = line_split(cur, "\t");
 		int skip = 0;
-		for (int j = 0; j < len; ++j) {
-			if ((strcasecmp(split[j], tag) == 0) && (strcmp(split[j+1], lib->selections[lib->depth-1]) == 0)) {
+		for (int j = 0; j < split.len; ++j) {
+			if ((strcasecmp(split.arr[j], tag) == 0) && (strcmp(split.arr[j+1], lib->selections[lib->depth-1]) == 0)) {
 				skip = 1;
 				++n;
 				break;
@@ -542,10 +461,7 @@ void vmn_library_refresh(struct vmn_library *lib, char *tag) {
 			strcpy(files[cache_len], cur);
 			++cache_len;
 		}
-		for (int j = 0; j < len; ++j) {
-			free(split[j]);
-		}
-		free(split);
+		char_split_destroy(&split);
 	}
 	fclose(cache);
 	const char *temp = "/.config/vmn/cache_tmp";
@@ -596,19 +512,12 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 			printf("An error occured while trying read the cache. Make sure your permissions are correct.\n");
 			exit(1);
 		}
-		char **split = line_split(cur, "\t");
-		int len = 0;
-		for (int j = 0; j < strlen(cur); ++j) {
-			if (cur[j] == '\t') {
-				++len;
-			}
-		}
-		++len;
+		struct char_split split = line_split(cur, "\t");
 		int match = 0;
 		int in_lib = check_vmn_lib(lib, cur, lib_dir);
 		if (in_lib) {
 			for (int j = 0; j < lib->length; ++j) {
-				if (strcmp(split[0], lib->files[j]) == 0) {
+				if (strcmp(split.arr[0], lib->files[j]) == 0) {
 					match = 1;
 					break;
 				}
@@ -620,10 +529,7 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 		files[file_newlen] = (char *)malloc(sizeof(char)*(strlen(cur)+1));
 		strcpy(files[file_newlen], cur);
 		++file_newlen;
-		for (int j = 0; j < len; ++j) {
-			free(split[j]);
-		}
-		free(split);
+		char_split_destroy(&split);
 	}
 	fclose(cache);
 	qsort(files, file_newlen, sizeof(char *), qstrcmp);
