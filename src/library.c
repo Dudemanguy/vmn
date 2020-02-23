@@ -236,7 +236,6 @@ char **vmn_library_check(struct vmn_library *lib) {
 			new[i] = (char *)malloc(sizeof(char)*(strlen(lib->files[i])+1));
 			strcpy(new[i], lib->files[i]);
 		}
-		fclose(cache);
 		free(path);
 		return new;
 	}
