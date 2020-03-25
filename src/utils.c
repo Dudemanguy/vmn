@@ -66,10 +66,10 @@ struct char_split line_split(char *str, char *delim) {
 	++len;
 	char *token = strtok(str_dup, delim);
 	struct char_split split;
-	split.arr = malloc(len*sizeof(char*));
+	split.arr = (char **)malloc(len*sizeof(char*));
 	int i = 0;
 	while (token != NULL) {
-		split.arr[i] = malloc((strlen(token) + 1)*sizeof(char));
+		split.arr[i] = (char *)malloc((strlen(token) + 1)*sizeof(char));
 		strcpy(split.arr[i], token);
 		token = strtok(NULL, delim);
 		++i;
