@@ -122,22 +122,29 @@ enum vmn_config_sort default_sort(char *tags) {
 	}
 }
 
-char *get_cfg() {
-	char *home = getenv("HOME"); 
-	const char *cfg = "/.config/vmn/config";
-	char *path = malloc(strlen(home) + strlen(cfg) + 1);
-	strcpy(path, home);
-	strcat(path, cfg);
-	return path;
-}
-
-char *get_cfg_dir() {
+void get_cfg_file(struct vmn_config *cfg) {
 	char *home = getenv("HOME");
-	const char *cfgdir = "/.config/vmn";
-	char *path = malloc(strlen(home) + strlen(cfgdir) + 1);
-	strcpy(path, home);
-	strcat(path, cfgdir);
-	return path;
+	const char *path = "/.config/vmn";
+	char *cfg_dir = malloc(strlen(home) + strlen(path) + 1);
+	strcpy(cfg_dir, home);
+	strcat(cfg_dir, path);
+	DIR *dir = opendir(cfg_dir);
+	if (!dir) {
+		int err = mkdir(cfg_dir, 0755);
+		if (err) {
+			printf("An error occured while trying to create the config directory. Make sure your permissions are correct.\n");
+			free(cfg_dir);
+			cfg->err = 1;
+		}
+	}
+	closedir(dir);
+	const char *file = "/config";
+	char *cfg_file = malloc(strlen(cfg_dir) + strlen(file) + 1);
+	strcpy(cfg_file, cfg_dir);
+	strcat(cfg_file, file);
+	free(cfg_dir);
+	cfg->cfg_file = cfg_file;
+	cfg->err = 0;
 }
 
 char *get_default_lib() {
@@ -545,8 +552,8 @@ void vmn_set_option(struct vmn_config *cfg, char *opt, char *value) {
 	mpv_terminate_destroy(test_ctx);
 }
 
-void read_cfg_file(struct vmn_config *cfg, char *cfg_file) {
-	FILE *file = fopen(cfg_file, "r");
+void read_cfg_file(struct vmn_config *cfg) {
+	FILE *file = fopen(cfg->cfg_file, "r");
 	if (!file) {
 		return;
 	}
@@ -613,24 +620,12 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 	struct vmn_config cfg;
 	cfg_default(&cfg);
 	cfg.key = key_default();
-	char *cfg_dir = get_cfg_dir();
-	DIR *dir = opendir(cfg_dir);
-	if (!dir) {
-		int err = mkdir(cfg_dir, 0755);
-		free(cfg_dir);
-		if (err) {
-			printf("An error occured while trying to create the config directory. Make sure your permissions are correct.\n");
-			cfg.err = 1;
-			return cfg;
-		}
-	} else {
-		closedir(dir);
-		free(cfg_dir);
-		cfg.err = 0;
+	get_cfg_file(&cfg);
+	if (cfg.err) {
+		printf("An error occured while trying to create the config directory. Make sure your permissions to ~/.config are correct.\n");
+		return cfg;
 	}
-	char *cfg_file = get_cfg();
-	read_cfg_file(&cfg, cfg_file);
-
+	read_cfg_file(&cfg);
 	char *headless;
 	char *input;
 	char *library;
@@ -805,12 +800,11 @@ struct vmn_config cfg_init(int argc, char *argv[]) {
 			}
 		}
 	}
-
-	free(cfg_file);
 	return cfg;
 }
 
 void vmn_config_destroy(struct vmn_config *cfg) {
+	free(cfg->cfg_file);
 	free(cfg->input_mode);
 	free(cfg->lib_dir);
 	for (int i = 0; i < cfg->mpv_opts_len; ++i) {

@@ -48,6 +48,7 @@ enum vmn_config_view {
 };
 
 struct vmn_config {
+	char *cfg_file;
 	int err;
 	char *input_mode;
 	char *lib_dir;
