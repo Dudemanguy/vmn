@@ -477,7 +477,7 @@ void vmn_library_refresh(struct vmn_library *lib, char *tag) {
 	}
 	fclose(cache);
 	char *home = getenv("HOME");
-	const char *temp = "/.config/vmn/cache_tmp";
+	const char *temp = "/.local/share/vmn/cache_tmp";
 	char *temp_path = malloc(strlen(home) + strlen(temp) + 1);
 	strcpy(temp_path, home);
 	strcat(temp_path, temp);
@@ -540,7 +540,7 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 	fclose(cache);
 	qsort(files, file_newlen, sizeof(char *), qstrcmp);
 	char *home = getenv("HOME");
-	const char *temp = "/.config/vmn/cache_tmp";
+	const char *temp = "/.local/share/vmn/cache_tmp";
 	char *temp_path = malloc(strlen(home) + strlen(temp) + 1);
 	strcpy(temp_path, home);
 	strcat(temp_path, temp);
