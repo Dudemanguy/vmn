@@ -24,9 +24,11 @@ struct vmn_entry {
 };
 
 struct vmn_library {
+	char *cache_file;
 	mpv_handle *ctx;
 	WINDOW *command;
 	int depth;
+	int err;
 	char **files;
 	char ****entries;
 	ITEM ***items;

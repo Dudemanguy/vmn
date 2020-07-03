@@ -49,6 +49,9 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 	struct vmn_library lib = lib_init();
+	if (lib.err)  {
+		return 0;
+	}
 	if (strcmp(cfg.input_mode, "yes") == 0) {
 		input_mode(&cfg);
 	}
@@ -258,12 +261,7 @@ char ***get_lib_dir(const char *library, struct vmn_library *lib) {
 }
 
 char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib, int index) {
-	char *home = getenv("HOME"); 
-	const char *cfg_path = "/.config/vmn/cache";
-	char *path = malloc(strlen(home) + strlen(cfg_path) + 1);
-	strcpy(path, home);
-	strcat(path, cfg_path);
-	FILE *cache = fopen(path, "r");
+	FILE *cache = fopen(lib->cache_file, "r");
 	char c;
 	int file_len = 0;
 	while ((c = fgetc(cache)) != EOF) {
@@ -356,7 +354,6 @@ char ***get_metadata(struct vmn_config *cfg, struct vmn_library *lib, int index)
 	}
 	fclose(cache);
 	free(cur);
-	free(path);
 	metadata[0] = (char **)realloc(metadata[0],sizeof(char *)*(len+1));
 	metadata[1] = (char **)realloc(metadata[1],sizeof(char *)*(len+1));
 	metadata[0][len] = 0;
@@ -727,12 +724,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 
 void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char *name, int index) {
 	char *cur = malloc(4096*sizeof(char));
-	char *home = getenv("HOME"); 
-	const char *cfg_path = "/.config/vmn/cache";
-	char *path = malloc(strlen(home) + strlen(cfg_path) + 1);
-	strcpy(path, home);
-	strcat(path, cfg_path);
-	FILE *cache = fopen(path, "r");
+	FILE *cache = fopen(lib->cache_file, "r");
 	char *name_dup = strdup(name);
 	for (int i = 0; i < lib->length; ++i) {
 		if (fgets(cur, 4096, cache) == NULL) {
@@ -780,7 +772,6 @@ void meta_path_find(struct vmn_config *cfg, struct vmn_library *lib, const char 
 	fclose(cache);
 	free(cur);
 	free(name_dup);
-	free(path);
 }
 
 int move_menu_meta_backward(struct vmn_library *lib) {
@@ -961,12 +952,7 @@ void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char ***metada
 
 int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len) {
 	char *cur = malloc(4096*sizeof(char));
-	char *home = getenv("HOME"); 
-	const char *cfg_path = "/.config/vmn/cache";
-	char *path = malloc(strlen(home) + strlen(cfg_path) + 1);
-	strcpy(path, home);
-	strcat(path, cfg_path);
-	FILE *cache = fopen(path, "r");
+	FILE *cache = fopen(lib->cache_file, "r");
 	int **positions = (int **)malloc(sizeof(int *)*len);
 	for (int i = 0; i < len; ++i) {
 		positions[i] = (int *)malloc(sizeof(int)*2);
@@ -1006,7 +992,6 @@ int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char ***metada
 	}
 	fclose(cache);
 	free(cur);
-	free(path);
 	return positions;
 }
 

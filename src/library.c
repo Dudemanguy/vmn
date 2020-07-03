@@ -125,6 +125,31 @@ void entry_destroy(struct vmn_entry *entry) {
 	free(entry->selected);
 }
 
+void get_cache_file(struct vmn_library *lib) {
+	char *home = getenv("HOME");
+	const char *cache_dir = "/.local/share/vmn";
+	char *path = malloc(strlen(home) + strlen(cache_dir) + 1);
+	strcpy(path, home);
+	strcat(path, cache_dir);
+	DIR *dir = opendir(path);
+	if (!dir) {
+		int err = mkdir(path, 0755);
+		if (err) {
+			printf("An error occured while trying to create the cache directory. Make sure your permissions to ~/.local/share are correct.\n");
+			free(path);
+			lib->err = 1;
+		}
+	}
+	closedir(dir);
+	const char *cache = "/cache";
+	char *cache_file = malloc(strlen(path) + strlen(cache) + 1);
+	strcpy(cache_file, path);
+	strcat(cache_file, cache);
+	free(path);
+	lib->cache_file = cache_file;
+	lib->err = 0;
+}
+
 char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name, char *tag) {
 	char *out = (char *)calloc(1, sizeof(char));
 	struct char_split split = line_split(line, "\t");
@@ -172,6 +197,24 @@ int is_sel(char *sel, char *line) {
 	}
 }
 
+struct vmn_library lib_init() {
+	struct vmn_library lib;
+	get_cache_file(&lib);
+	if (lib.err) {
+		printf("An error occured while trying to create the cache directory. Make sure your permissions to ~/.local/share are correct.\n");
+		return lib;
+	}
+	lib.depth = 1;
+	lib.files = NULL;
+	lib.length = 0;
+	lib.mpv_active = 0;
+	lib.mpv_kill = 0;
+	lib.select = 0;
+	lib.select_pos = 0;
+	lib.vmn_quit = 0;
+	return lib;
+}
+
 char *read_vmn_cache(char *str, char *match) {
 	char *out = (char *)calloc(1, sizeof(char));
 	struct char_split split = line_split(str, "\t");
@@ -199,19 +242,6 @@ int read_vmn_cache_int(char *str, char *match) {
 	return out;
 }
 
-struct vmn_library lib_init() {
-	struct vmn_library lib;
-	lib.depth = 1;
-	lib.files = NULL;
-	lib.length = 0;
-	lib.mpv_active = 0;
-	lib.mpv_kill = 0;
-	lib.select = 0;
-	lib.select_pos = 0;
-	lib.vmn_quit = 0;
-	return lib;
-}
-
 void vmn_library_add(struct vmn_library *lib, char *entry) {
 	lib->files = (char **)realloc(lib->files,sizeof(char*)*(lib->length + 1));
 	lib->files[lib->length] = malloc(strlen(entry) + 1);
@@ -220,12 +250,7 @@ void vmn_library_add(struct vmn_library *lib, char *entry) {
 }
 
 char **vmn_library_check(struct vmn_library *lib) {
-	char *home = getenv("HOME"); 
-	const char *cfg = "/.config/vmn/cache";
-	char *path = malloc(strlen(home) + strlen(cfg) + 1);
-	strcpy(path, home);
-	strcat(path, cfg);
-	FILE *cache = fopen(path, "r");
+	FILE *cache = fopen(lib->cache_file, "r");
 	char **new;
 	if (!cache) {
 		if (lib->length > 999) {
@@ -236,7 +261,6 @@ char **vmn_library_check(struct vmn_library *lib) {
 			new[i] = (char *)malloc(sizeof(char)*(strlen(lib->files[i])+1));
 			strcpy(new[i], lib->files[i]);
 		}
-		free(path);
 		return new;
 	}
 	char c;
@@ -264,7 +288,6 @@ char **vmn_library_check(struct vmn_library *lib) {
 		files[i][j-1] = '\0';
 	}
 	fclose(cache);
-	free(path);
 	free(cur);
 	if (!files[0]) {
 		if (lib->length > 999) {
@@ -308,6 +331,7 @@ char **vmn_library_check(struct vmn_library *lib) {
 }
 
 void vmn_library_destroy(struct vmn_library *lib) {
+	free(lib->cache_file);
 	for (int i = 0; i < lib->length; ++i) {
 		free(lib->files[i]);
 	}
@@ -347,13 +371,8 @@ void vmn_library_destroy(struct vmn_library *lib) {
 }
 
 void vmn_library_metadata(struct vmn_library *lib) {
-	char *home = getenv("HOME"); 
-	const char *cfg = "/.config/vmn/cache";
-	char *path = malloc(strlen(home) + strlen(cfg) + 1);
-	strcpy(path, home);
-	strcat(path, cfg);
 	char **new = vmn_library_check(lib);
-	FILE *cache = fopen(path, "a");
+	FILE *cache = fopen(lib->cache_file, "a");
 	av_log_set_level(AV_LOG_QUIET);
 	AVFormatContext *fmt_ctx = NULL;
 	AVInputFormat *format = NULL;
@@ -412,7 +431,6 @@ void vmn_library_metadata(struct vmn_library *lib) {
 		++i;
 	}
 	fclose(cache);
-	free(path);
 	avformat_free_context(fmt_ctx);
 	i = 0;
 	while (new[i]) {
@@ -423,12 +441,7 @@ void vmn_library_metadata(struct vmn_library *lib) {
 }
 
 void vmn_library_refresh(struct vmn_library *lib, char *tag) {
-	char *home = getenv("HOME"); 
-	const char *cfg = "/.config/vmn/cache";
-	char *path = malloc(strlen(home) + strlen(cfg) + 1);
-	strcpy(path, home);
-	strcat(path, cfg);
-	FILE *cache = fopen(path, "r");
+	FILE *cache = fopen(lib->cache_file, "r");
 	char *cur = (char *)calloc(4096, sizeof(char));
 	int n = 0;
 	int cache_len = 0;
@@ -463,6 +476,7 @@ void vmn_library_refresh(struct vmn_library *lib, char *tag) {
 		char_split_destroy(&split);
 	}
 	fclose(cache);
+	char *home = getenv("HOME");
 	const char *temp = "/.config/vmn/cache_tmp";
 	char *temp_path = malloc(strlen(home) + strlen(temp) + 1);
 	strcpy(temp_path, home);
@@ -472,10 +486,9 @@ void vmn_library_refresh(struct vmn_library *lib, char *tag) {
 		fprintf(cache_temp, "%s", files[i]);
 	}
 	fclose(cache_temp);
-	remove(path);
-	rename(temp_path, path);
+	remove(lib->cache_file);
+	rename(temp_path, lib->cache_file);
 	free(cur);
-	free(path);
 	free(temp_path);
 	for (int i = 0; i < file_len; ++i) {
 		free(files[i]);
@@ -485,14 +498,8 @@ void vmn_library_refresh(struct vmn_library *lib, char *tag) {
 }
 
 void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
-	char *home = getenv("HOME"); 
-	const char *cfg = "/.config/vmn/cache";
-	char *path = malloc(strlen(home) + strlen(cfg) + 1);
-	strcpy(path, home);
-	strcat(path, cfg);
-	FILE *cache = fopen(path, "r");
+	FILE *cache = fopen(lib->cache_file, "r");
 	if (!cache) {
-		free(path);
 		return;
 	}
 	char *cur = (char *)calloc(4096, sizeof(char));
@@ -532,6 +539,7 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 	}
 	fclose(cache);
 	qsort(files, file_newlen, sizeof(char *), qstrcmp);
+	char *home = getenv("HOME");
 	const char *temp = "/.config/vmn/cache_tmp";
 	char *temp_path = malloc(strlen(home) + strlen(temp) + 1);
 	strcpy(temp_path, home);
@@ -541,10 +549,9 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 		fprintf(cache_temp, "%s", files[i]);
 	}
 	fclose(cache_temp);
-	remove(path);
-	rename(temp_path, path);
+	remove(lib->cache_file);
+	rename(temp_path, lib->cache_file);
 	free(cur);
-	free(path);
 	free(temp_path);
 	for (int i = 0; i < file_len; ++i) {
 		free(files[i]);
