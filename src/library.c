@@ -127,25 +127,25 @@ void entry_destroy(struct vmn_entry *entry) {
 
 void get_cache_file(struct vmn_library *lib) {
 	char *home = getenv("HOME");
-	const char *cache_dir = "/.local/share/vmn";
-	char *path = malloc(strlen(home) + strlen(cache_dir) + 1);
-	strcpy(path, home);
-	strcat(path, cache_dir);
-	DIR *dir = opendir(path);
+	const char *path = "/.local/share/vmn";
+	char *cache_dir = malloc(strlen(home) + strlen(path) + 1);
+	strcpy(cache_dir, home);
+	strcat(cache_dir, path);
+	DIR *dir = opendir(cache_dir);
 	if (!dir) {
-		int err = mkdir(path, 0755);
+		int err = mkdir(cache_dir, 0755);
 		if (err) {
 			printf("An error occured while trying to create the cache directory. Make sure your permissions to ~/.local/share are correct.\n");
-			free(path);
+			free(cache_dir);
 			lib->err = 1;
 		}
 	}
 	closedir(dir);
-	const char *cache = "/cache";
-	char *cache_file = malloc(strlen(path) + strlen(cache) + 1);
-	strcpy(cache_file, path);
-	strcat(cache_file, cache);
-	free(path);
+	const char *file = "/cache";
+	char *cache_file = malloc(strlen(cache_dir) + strlen(file) + 1);
+	strcpy(cache_file, cache_dir);
+	strcat(cache_file, file);
+	free(cache_dir);
 	lib->cache_file = cache_file;
 	lib->err = 0;
 }
