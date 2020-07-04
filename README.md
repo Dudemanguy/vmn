@@ -2,10 +2,13 @@
 **v**im **m**usic **n**avigator is a simple, barebones commandline music player. vmn aims to provide a highly customizable, configurable interface to handle massive music libraries with ease. One feature of vmn is that it makes use of mpv's client API for playback which gives you all of the power of mpv's options integrated into a nice interface for browsing and listening to your music.
 
 ## Installation
+There is an [AUR](https://aur.archlinux.org/packages/vmn-git/) package available for arch users.
+
+#### Building from source
 Make sure you have the following dependencies installed.
 
 * ffmpeg
-* meson (0.47 or higher)
+* meson (0.54 or higher)
 * mpv
 * ncurses
 * [scdoc](https://git.sr.ht/~sircmpwn/scdoc) (optional: for man pages)
@@ -13,8 +16,8 @@ Make sure you have the following dependencies installed.
 After checking out the source, navigate to the directory, and then simply run.
 ```
 meson build
-ninja -C build
-sudo ninja -C build install
+meson compile -C build
+sudo meson install -C build
 ```
 
 ## Configuration
