@@ -85,7 +85,7 @@ void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
 			}
 			destroy_command_window(lib);
 			break;
-		} else if (key == cfg->key.escape || key == 27) {
+		} else if (key == cfg->keys[ESCAPE] || key == 27) {
 			if (strlen(entry)) {
 				free(entry);
 			}

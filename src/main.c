@@ -403,7 +403,7 @@ void input_mode(struct vmn_config *cfg) {
 			mvprintw(0, 0, "Input mode is enabled. Keycodes will be returned on the screen. Use ESC or ctrl+[ to exit.\n");
 			key = getch();
 			mvprintw(1, 0, "Key = %d\n", key);
-			if (key == cfg->key.escape) {
+			if (key == cfg->keys[ESCAPE]) {
 				clear();
 				mvprintw(0, 0, "Are you sure you want to quit input mode? Hit 'y' to confirm.\n");
 				int quit = getch();
@@ -427,7 +427,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 	const char *name;
 	const char *path;
 
-	if (c == cfg->key.beginning) {
+	if (c == cfg->keys[BEGINNING]) {
 		menu_driver(menu, REQ_FIRST_ITEM);
 		if (lib->select) {
 			for (int i = 0; i < item_count(menu); ++i) {
@@ -439,9 +439,9 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				}
 			}
 		}
-	} else if (c == cfg->key.command) {
+	} else if (c == cfg->keys[COMMAND]) {
 		init_command_mode(cfg, lib);
-	} else if (c == cfg->key.end) {
+	} else if (c == cfg->keys[END]) {
 		menu_driver(menu, REQ_LAST_ITEM);
 		if (lib->select) {
 			for (int i = 0; i < item_count(menu); ++i) {
@@ -453,7 +453,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				}
 			}
 		}
-	} else if (c == cfg->key.move_backward) {
+	} else if (c == cfg->keys[MOVE_BACKWARD]) {
 		if (cfg->view == V_PATH) {
 			cur = current_item(menu);
 			path = item_description(cur);
@@ -461,7 +461,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		} else if (cfg->view == V_DATA) {
 			move_menu_meta_backward(lib);
 		}
-	} else if (c == cfg->key.move_down) {
+	} else if (c == cfg->keys[MOVE_DOWN]) {
 		if (lib->select) {
 			cur = current_item(menu);
 			int cur_pos = item_index(cur);
@@ -477,7 +477,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
-	} else if (c == cfg->key.move_forward) {
+	} else if (c == cfg->keys[MOVE_FORWARD]) {
 		cur = current_item(menu);
 		if (cfg->view == V_PATH) {
 			path = item_description(cur);
@@ -485,7 +485,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		} else if (cfg->view == V_DATA) {
 			move_menu_meta_forward(cfg, lib);
 		}
-	} else if (c == cfg->key.move_up) {
+	} else if (c == cfg->keys[MOVE_UP]) {
 		if (lib->select) {
 			cur = current_item(menu);
 			int cur_pos = item_index(cur);
@@ -501,13 +501,13 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			cur = current_item(menu);
 			set_item_value(cur, true);
 		}
-	} else if (c == cfg->key.mpv_kill) {
+	} else if (c == cfg->keys[MPV_KILL]) {
 		++lib->mpv_kill;
-	} else if (c == cfg->key.mute) {
+	} else if (c == cfg->keys[MUTE]) {
 		if (lib->mpv_active) {
 			mpv_command_string(lib->ctx, "cycle mute");
 		}
-	} else if (c == cfg->key.page_down) {
+	} else if (c == cfg->keys[PAGE_DOWN]) {
 		if (lib->select) {
 			cur = current_item(menu);
 			init_pos = item_index(cur);
@@ -525,7 +525,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				}
 			}
 		}
-	} else if (c == cfg->key.page_up) {
+	} else if (c == cfg->keys[PAGE_UP]) {
 		if (lib->select) {
 			cur = current_item(menu);
 			init_pos = item_index(cur);
@@ -543,22 +543,22 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				}
 			}
 		}
-	} else if (c == cfg->key.playnext) {
+	} else if (c == cfg->keys[PLAYNEXT]) {
 		if (lib->mpv_active) {
 			mpv_command_string(lib->ctx, "playlist-next");
 		}
-	} else if (c == cfg->key.playpause) {
+	} else if (c == cfg->keys[PLAYPAUSE]) {
 		if (lib->mpv_active) {
 			mpv_command_string(lib->ctx, "cycle pause");
 		}
-	} else if (c == cfg->key.playprev) {
+	} else if (c == cfg->keys[PLAYPREV]) {
 		if (lib->mpv_active) {
 			mpv_command_string(lib->ctx, "playlist-prev");
 		}
-	} else if (c == cfg->key.queue) {
+	} else if (c == cfg->keys[QUEUE]) {
 		cur = current_item(menu);
 		menu_driver(menu, REQ_TOGGLE_ITEM);
-	} else if (c == cfg->key.queue_all) {
+	} else if (c == cfg->keys[QUEUE_ALL]) {
 		lib->select = 1;
 		cur = current_item(menu);
 		lib->select_pos = item_index(cur);
@@ -568,7 +568,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			}
 		}
 		create_visual_window(lib);
-	} else if (c == cfg->key.queue_clear || c == cfg->key.escape) {
+	} else if (c == cfg->keys[QUEUE_CLEAR] || c == cfg->keys[ESCAPE]) {
 		for (int i = 0; i < item_count(menu); ++i) {
 			if (item_value(items[i])) {
 				set_item_value(items[i], false);
@@ -577,7 +577,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 		destroy_visual_window(lib);
 		lib->select = 0;
 		lib->select_pos = 0;
-	} else if (c == cfg->key.search) {
+	} else if (c == cfg->keys[SEARCH]) {
 		menu_driver(menu, REQ_CLEAR_PATTERN);
 		if (lib->select) {
 			destroy_visual_window(lib);
@@ -604,7 +604,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				++pos;
 			}
 			wrefresh(menu_win(lib->menu[lib->depth-1]));
-			if (key == cfg->key.escape || key == 10 || key == 27) {
+			if (key == cfg->keys[ESCAPE] || key == 10 || key == 27) {
 				free(entry);
 				delwin(lib->search);
 				for (int i = 0; i < lib->depth; ++i) {
@@ -618,11 +618,11 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				break;
 			}
 		}
-	} else if (c == cfg->key.search_next) {
+	} else if (c == cfg->keys[SEARCH_NEXT]) {
 		menu_driver(menu, REQ_NEXT_MATCH);
-	} else if (c == cfg->key.search_prev) {
+	} else if (c == cfg->keys[SEARCH_PREV]) {
 		menu_driver(menu, REQ_PREV_MATCH);
-	} else if (c == cfg->key.start) {
+	} else if (c == cfg->keys[START]) {
 		int n = 0;
 		if (!lib->mpv_active) {
 			++lib->mpv_active;
@@ -668,7 +668,7 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 				}
 			}
 		}
-	} else if (c == cfg->key.visual) {
+	} else if (c == cfg->keys[VISUAL]) {
 		if (lib->select) {
 			lib->select = 0;
 			lib->select_pos = 0;
@@ -695,19 +695,19 @@ void key_event(int c, MENU *menu, ITEM **items, struct vmn_config *cfg, struct v
 			set_item_value(cur, true);
 			lib->select_pos = item_index(cur);
 		}
-	} else if (c == cfg->key.vmn_quit) {
+	} else if (c == cfg->keys[VMN_QUIT]) {
 		++lib->vmn_quit;
-	} else if (c == cfg->key.vmn_refresh) {
+	} else if (c == cfg->keys[VMN_REFRESH]) {
 		if (cfg->view == V_DATA) {
 			vmn_library_refresh(lib, cfg->tags[lib->depth-1]);
 			vmn_library_sort(lib, cfg->lib_dir);
 		}
-	} else if (c == cfg->key.voldown) {
+	} else if (c == cfg->keys[VOLDOWN]) {
 		if (lib->mpv_active) {
 			const char *cmd[] = {"add", "volume", "-2", NULL};
 			mpv_command(lib->ctx, cmd);
 		}
-	} else if (c == cfg->key.volup) {
+	} else if (c == cfg->keys[VOLUP]) {
 		if (lib->mpv_active) {
 			const char *cmd[] = {"add", "volume", "2", NULL};
 			mpv_command(lib->ctx, cmd);
