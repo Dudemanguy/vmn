@@ -41,20 +41,6 @@ char *get_file_ext(const char *file) {
 	return dot + 1;
 }
 
-char **cfg_split(char *str) {
-	char *str_dup = strdup(str);
-	char *token = strtok(str_dup, "=");
-	char **arr = (char **)calloc(2, sizeof(char*));
-	arr[0] = malloc(strlen(token) + 1);
-	strcpy(arr[0], token);
-	token = strtok(NULL, "=");
-	arr[1] = malloc(strlen(token) + 1);
-	strcpy(arr[1], token);
-	arr[1][strcspn(arr[1], "\n")] = 0;
-	free(str_dup);
-	return arr;
-}
-
 struct char_split line_split(char *str, char *delim) {
 	char *str_dup = strdup(str);
 	char delim_char = delim[0];
@@ -73,6 +59,7 @@ struct char_split line_split(char *str, char *delim) {
 		split.arr[i] = (char *)malloc((strlen(token) + 1)*sizeof(char));
 		strcpy(split.arr[i], token);
 		token = strtok(NULL, delim);
+		split.arr[i][strcspn(split.arr[i], "\n")] = 0;
 		++i;
 	}
 	split.len = i;

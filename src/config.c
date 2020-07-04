@@ -574,11 +574,9 @@ void read_cfg_file(struct vmn_config *cfg) {
 		if (cur[0] == '#') {
 			continue;
 		}
-		char **split = cfg_split(cur);
-		vmn_set_option(cfg, split[0], split[1]);
-		free(split[0]);
-		free(split[1]);
-		free(split);
+		struct char_split split = line_split(cur, "=");
+		vmn_set_option(cfg, split.arr[0], split.arr[1]);
+		char_split_destroy(&split);
 	}
 	free(cur);
 	fclose(file);
