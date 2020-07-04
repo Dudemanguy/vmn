@@ -57,9 +57,10 @@ char **cfg_split(char *str) {
 
 struct char_split line_split(char *str, char *delim) {
 	char *str_dup = strdup(str);
+	char delim_char = delim[0];
 	int len = 0;
 	for (int i = 0; i < strlen(str_dup); ++i) {
-		if (str_dup[i] == '\t') {
+		if (str_dup[i] == delim_char) {
 			++len;
 		}
 	}
