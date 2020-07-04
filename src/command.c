@@ -8,12 +8,103 @@
 #include "library.h"
 #include "utils.h"
 
+const char *mpv_err_msg(int err_index);
+void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib);
+char **parse_command(char *entry, int len);
+
 void destroy_command_window(struct vmn_library *lib) {
 	delwin(lib->command);
 	for (int i = 0; i < lib->depth; ++i) {
 		unpost_menu(lib->menu[i]);
 		post_menu(lib->menu[i]);
 		wrefresh(menu_win(lib->menu[i]));
+	}
+}
+
+const char *execute_command(struct vmn_config *cfg, struct vmn_library *lib, char **parse_arr, int len) {
+	if (strcmp(parse_arr[0], "mpv") == 0) {
+		int mpv_err = 0;
+		if (strcmp(parse_arr[1], "cmd") == 0) {
+			const char *cmd[len-1];
+			for (int i = 0; i < len - 2; ++i) {
+				cmd[i] = parse_arr[i+2];
+			}
+			cmd[len-2] = NULL;
+			mpv_err = mpv_command(lib->ctx, cmd);
+		} else if (strcmp(parse_arr[1], "set") == 0) {
+			mpv_err = mpv_set_option_string(lib->ctx, parse_arr[2], parse_arr[3]);
+			if (!mpv_err) {
+				mpv_cfg_add(cfg, parse_arr[2], parse_arr[3]);
+			}
+		}
+		if (mpv_err < 0) {
+			const char *err_msg = mpv_err_msg(mpv_err);
+			return err_msg;
+		}
+	}
+	return "";
+}
+
+void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
+	lib->command = newwin(1, 0, LINES - 1, 0);
+	char *entry = strdup("");
+	int pos = 0;
+	const char *err_msg = "";
+	while (1) {
+		mvwprintw(lib->command, 0, 0, ":%s\n", entry);
+		char key = wgetch(lib->command);
+		if (key == 127) {
+			if (pos) {
+				--pos;
+				remove_char(entry);
+				entry = realloc(entry, sizeof(char)*(pos+1));
+			}
+		} else if (key == 10) {
+			if (strlen(entry) && (entry[0] != ' ')) {
+				int len = 0;
+				for (int i = 0; i < strlen(entry); ++i) {
+					if ((entry[i] == ' ') && (entry[i-1] != ' ')) {
+						++len;
+					}
+				}
+				++len;
+				char **parse_arr = parse_command(entry, len);
+				err_msg = execute_command(cfg, lib, parse_arr, len);
+				free(entry);
+				for (int i = 0; i < len; ++i) {
+					free(parse_arr[i]);
+				}
+				free(parse_arr);
+				if (strlen(err_msg)) {
+					destroy_command_window(lib);
+					lib->command = newwin(1, 0, LINES - 1, 0);
+					mvwprintw(lib->command, 0, 0, err_msg);
+					wrefresh(lib->command);
+					break;
+				}
+			}
+			destroy_command_window(lib);
+			break;
+		} else if (key == cfg->key.escape || key == 27) {
+			if (strlen(entry)) {
+				free(entry);
+			}
+			destroy_command_window(lib);
+			break;
+		} else {
+			entry = realloc(entry, sizeof(char)*(pos+2));
+			append_char(entry, key);
+			++pos;
+		}
+	}
+	if (!(strcmp(err_msg, "") == 0)) {
+		while (1) {
+			char key = wgetch(lib->command);
+			if (key) {
+				destroy_command_window(lib);
+				break;
+			}
+		}
 	}
 }
 
@@ -84,30 +175,6 @@ const char *mpv_err_msg(int err_index) {
 	return err_msg;
 }
 
-const char *execute_command(struct vmn_config *cfg, struct vmn_library *lib, char **parse_arr, int len) {
-	if (strcmp(parse_arr[0], "mpv") == 0) {
-		int mpv_err = 0;
-		if (strcmp(parse_arr[1], "cmd") == 0) {
-			const char *cmd[len-1];
-			for (int i = 0; i < len - 2; ++i) {
-				cmd[i] = parse_arr[i+2];
-			}
-			cmd[len-2] = NULL;
-			mpv_err = mpv_command(lib->ctx, cmd);
-		} else if (strcmp(parse_arr[1], "set") == 0) {
-			mpv_err = mpv_set_option_string(lib->ctx, parse_arr[2], parse_arr[3]);
-			if (!mpv_err) {
-				mpv_cfg_add(cfg, parse_arr[2], parse_arr[3]);
-			}
-		}
-		if (mpv_err < 0) {
-			const char *err_msg = mpv_err_msg(mpv_err);
-			return err_msg;
-		}
-	}
-	return "";
-}
-
 char **parse_command(char *entry, int len) {
 	struct char_split split = line_split(entry, " ");
 	char **parse_arr = (char **)calloc(len, sizeof(char*));
@@ -119,67 +186,4 @@ char **parse_command(char *entry, int len) {
 	}
 	char_split_destroy(&split);
 	return parse_arr;
-}
-
-void init_command_mode(struct vmn_config *cfg, struct vmn_library *lib) {
-	lib->command = newwin(1, 0, LINES - 1, 0);
-	char *entry = strdup("");
-	int pos = 0;
-	const char *err_msg = "";
-	while (1) {
-		mvwprintw(lib->command, 0, 0, ":%s\n", entry);
-		char key = wgetch(lib->command);
-		if (key == 127) {
-			if (pos) {
-				--pos;
-				remove_char(entry);
-				entry = realloc(entry, sizeof(char)*(pos+1));
-			}
-		} else if (key == 10) {
-			if (strlen(entry) && (entry[0] != ' ')) {
-				int len = 0;
-				for (int i = 0; i < strlen(entry); ++i) {
-					if ((entry[i] == ' ') && (entry[i-1] != ' ')) {
-						++len;
-					}
-				}
-				++len;
-				char **parse_arr = parse_command(entry, len);
-				err_msg = execute_command(cfg, lib, parse_arr, len);
-				free(entry);
-				for (int i = 0; i < len; ++i) {
-					free(parse_arr[i]);
-				}
-				free(parse_arr);
-				if (strlen(err_msg)) {
-					destroy_command_window(lib);
-					lib->command = newwin(1, 0, LINES - 1, 0);
-					mvwprintw(lib->command, 0, 0, err_msg);
-					wrefresh(lib->command);
-					break;
-				}
-			}
-			destroy_command_window(lib);
-			break;
-		} else if (key == cfg->key.escape || key == 27) {
-			if (strlen(entry)) {
-				free(entry);
-			}
-			destroy_command_window(lib);
-			break;
-		} else {
-			entry = realloc(entry, sizeof(char)*(pos+2));
-			append_char(entry, key);
-			++pos;
-		}
-	}
-	if (!(strcmp(err_msg, "") == 0)) {
-		while (1) {
-			char key = wgetch(lib->command);
-			if (key) {
-				destroy_command_window(lib);
-				break;
-			}
-		}
-	}
 }

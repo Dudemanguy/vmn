@@ -16,6 +16,230 @@
 #define CTRL(c) ((c) & 037)
 #endif
 
+int check_arg(struct vmn_config *cfg, char *arg);
+int check_sort(char *str);
+enum vmn_config_sort default_sort(char *tags);
+void get_cfg_file(struct vmn_config *cfg);
+char *get_default_lib();
+struct vmn_key key_default();
+char **parse_arg(char *arg);
+char *read_arg(char *arg);
+void read_cfg_file(struct vmn_config *cfg);
+char *read_dir_arg(char *arg);
+void vmn_set_option(struct vmn_config *cfg, char *opt, char *value);
+
+void cfg_default(struct vmn_config *cfg) {
+	cfg->input_mode = strdup("no");
+	cfg->lib_dir = get_default_lib();
+	cfg->tags_len = 3;
+	char *default_tags = "artist,album,title";
+	cfg->tags = parse_arg(default_tags);
+	cfg->sort = (enum vmn_config_sort *)calloc(cfg->tags_len, sizeof(enum vmn_config_sort));
+	for (int i = 0; i < cfg->tags_len; ++i) {
+		cfg->sort[i] = default_sort(cfg->tags[i]);
+	}
+	cfg->view = V_DATA;
+
+	//create default mpv_opts array
+	cfg->mpv_opts_len = 8;
+	cfg->mpv_opts = malloc(cfg->mpv_opts_len*sizeof(char*));
+	cfg->mpv_opts[0] = strdup("input-default-bindings");
+	cfg->mpv_opts[1] = strdup("yes");
+	cfg->mpv_opts[2] = strdup("input-vo-keyboard");
+	cfg->mpv_opts[3] = strdup("yes");
+	cfg->mpv_opts[4] = strdup("force-window");
+	cfg->mpv_opts[5] = strdup("yes");
+	cfg->mpv_opts[6] = strdup("osc");
+	cfg->mpv_opts[7] = strdup("yes");
+}
+
+struct vmn_config cfg_init(int argc, char *argv[]) {
+	struct vmn_config cfg;
+	cfg_default(&cfg);
+	cfg.key = key_default();
+	get_cfg_file(&cfg);
+	if (cfg.err) {
+		printf("An error occured while trying to create the config directory. Make sure your permissions to ~/.config are correct.\n");
+		return cfg;
+	}
+	read_cfg_file(&cfg);
+	char *headless;
+	char *input;
+	char *library;
+	char *sort;
+	char *tags;
+	char *viewcfg;
+	int pos[argc];
+	int headless_arg = 0;
+	int input_arg = 0;
+	int lib_arg = 0;
+	int tags_arg = 0;
+	int sort_arg = 0;
+	int view_arg = 0;
+	
+	//check for any command line arguments
+	//these take priority over any config file options
+	for (int i = 1; i < argc; ++i) {
+		pos[i] = check_arg(&cfg, argv[i]);
+		if (pos[i] == -1) {
+			printf("Error: invalid argument specified.\n");
+			cfg.err = 1;
+			return cfg;
+		}
+	}
+
+	for (int i = 1; i < argc; ++i) {
+		if (pos[i] == 1) {
+			headless_arg = i;
+		}
+		if (pos[i] == 2) {
+			input_arg = i;
+		}
+		if (pos[i] == 3) {
+			lib_arg = i;
+		}
+		if (pos[i] == 4) {
+			sort_arg = i;
+		}
+		if (pos[i] == 5) {
+			tags_arg = i;
+		}
+		if (pos[i] == 6) {
+			view_arg = i;
+		}
+	}
+
+	if (headless_arg) {
+		headless = read_arg(argv[headless_arg]);
+		if (strcmp(headless, "yes") == 0) {
+			mpv_cfg_add(&cfg, "force-window", "no");
+			mpv_cfg_add(&cfg, "video", "no");
+			mpv_cfg_add(&cfg, "osc", "no");
+		} else if (strcmp(headless, "no") == 0) {
+			mpv_cfg_add(&cfg, "force-window", "yes");
+			mpv_cfg_add(&cfg, "video", "yes");
+			mpv_cfg_add(&cfg, "osc", "yes");
+		} else {
+			printf("headless can only be set to 'yes' or 'no'\n");
+		}
+	}
+
+	if (input_arg) {
+		input = read_arg(argv[input_arg]);
+		if ((strcmp(input, "yes") == 0) || (strcmp(input, "no") == 0)) {
+			free(cfg.input_mode);
+			cfg.input_mode = strdup(input);
+		} else {
+			printf("input-mode can only be set to 'yes' or 'no'\n");
+		}
+	}
+
+	if (lib_arg) {
+		library = read_dir_arg(argv[lib_arg]);
+		if (strcmp(library, "") == 0) {
+			printf("Library directory not found. Falling back to default.\n");
+		} else {
+			free(cfg.lib_dir);
+			cfg.lib_dir = strdup(library);
+			free(library);
+		}
+	}
+
+	if (view_arg) {
+		viewcfg = read_arg(argv[view_arg]);
+		if (strcmp(viewcfg, "file-path") == 0) {
+			cfg.view = V_PATH;
+		} else if (strcmp(viewcfg, "metadata") == 0) {
+			cfg.view = V_DATA;
+		} else if (strcmp(viewcfg, "song-only") == 0) {
+			cfg.view = V_SONG;
+		} else {
+			cfg.view = V_DATA;
+			printf("Invalid view specified. Falling back to default.\n");
+		}
+	}
+
+	if (cfg.view == V_DATA) {
+		if (tags_arg) {
+			for (int i = 0; i < cfg.tags_len; ++i) {
+				free(cfg.tags[i]);
+			}
+			free(cfg.tags);
+			tags = read_arg(argv[tags_arg]);
+			char *len_check = strdup(tags);
+			char *token = strtok(len_check, ",");
+			int j = 0;
+			while (token != NULL) {
+				token = strtok(NULL, ",");
+				++j;
+			}
+			cfg.tags_len = j;
+			cfg.tags = parse_arg(tags);
+			free(cfg.sort);
+			cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
+			for (int i = 0; i < cfg.tags_len; ++i) {
+				cfg.sort[i] = default_sort(cfg.tags[i]);
+			}
+			free(len_check);
+		}
+
+		if (sort_arg) {
+			sort = read_arg(argv[sort_arg]);
+			char *len_check = strdup(sort);
+			char *token = strtok(len_check, ",");
+			int valid = check_sort(token);
+			int j = 0;
+			while (token != NULL) {
+				if (!valid) {
+					break;
+				}
+				token = strtok(NULL, ",");
+				++j;
+			}
+			free(len_check);
+			if (!valid) {
+				printf("Invalid sort argument specified. Resetting to default. \n");
+				free(cfg.sort);
+				cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
+				for (int i = 0; i < cfg.tags_len; ++i) {
+					cfg.sort[i] = default_sort(cfg.tags[i]);
+				}
+			} else {
+				if (cfg.tags_len != j) {
+					printf("The length of the sort argument must be exactly equal to the length of the tags argument. Resetting to default. \n");
+					free(cfg.sort);
+					cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
+					for (int i = 0; i < cfg.tags_len; ++i) {
+						cfg.sort[i] = default_sort(cfg.tags[i]);
+					}
+				} else {
+					char **sort_arr = parse_arg(sort);
+					free(cfg.sort);
+					cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
+					for (int i = 0; i < cfg.tags_len; ++i) {
+						if (strcmp(sort_arr[i], "metadata") == 0) {
+							cfg.sort[i] = S_DATA;
+						} else if (strcmp(sort_arr[i], "filename") == 0) {
+							cfg.sort[i] = S_FILE;
+						} else if (strcmp(sort_arr[i], "none") == 0) {
+							cfg.sort[i] = S_NONE;
+						} else if (strcmp(sort_arr[i], "tracknumber") == 0) {
+							cfg.sort[i] = S_NUMB;
+						} else if (strcmp(sort_arr[i], "random") == 0) {
+							cfg.sort[i] = S_RAND;
+						}
+					}
+					for (int i = 0; i < cfg.tags_len; ++i) {
+						free(sort_arr[i]);
+					}
+					free(sort_arr);
+				}
+			}
+		}
+	}
+	return cfg;
+}
+
 int check_arg(struct vmn_config *cfg, char *arg) {
 	char *valid[7] = {"", "--headless=", "--input-mode=", "--library=", "--sort=", "--tags=", "--view="};
 	int len[7];
@@ -156,6 +380,38 @@ char *get_default_lib() {
 	return path;
 }
 
+struct vmn_key key_default() {
+	struct vmn_key key;
+	key.beginning = 'g';
+	key.command = ':';
+	key.end = 'G';
+	key.escape = CTRL('[');
+	key.move_backward = 'h';
+	key.move_down = 'j';
+	key.move_forward = 'l';
+	key.move_up = 'k';
+	key.mute = 'm';
+	key.mpv_kill = 'Q';
+	key.page_down = CTRL('f');
+	key.page_up = CTRL('b');
+	key.playnext = '>';
+	key.playpause = ' ';
+	key.playprev = '<';
+	key.queue = 'i';
+	key.queue_all = 'y';
+	key.queue_clear = 'u';
+	key.search = '/';
+	key.search_next = 'n';
+	key.search_prev = 'N';
+	key.start = 10;
+	key.visual = 'v';
+	key.vmn_quit = 'q';
+	key.vmn_refresh = 'a';
+	key.voldown = '9';
+	key.volup = '0';
+	return key;
+}
+
 void mpv_cfg_add(struct vmn_config *cfg, char *opt, char *value) {
 	int pos;
 	int match = 0;
@@ -180,35 +436,6 @@ void mpv_cfg_add(struct vmn_config *cfg, char *opt, char *value) {
 void mpv_set_opts(mpv_handle *ctx, struct vmn_config *cfg) {
 	for (int i = 0; i < cfg->mpv_opts_len; i=i+2) {
 		mpv_set_option_string(ctx, cfg->mpv_opts[i], cfg->mpv_opts[i+1]);
-	}
-}
-
-char *read_arg(char *arg) {
-	char *out = strtok(arg, "=");
-	out = strtok(NULL, "");
-	return out;
-}
-
-char *read_dir_arg(char *arg) {
-	char *path;
-	char *tmp;
-	char *out = strtok(arg, "=");
-	out = strtok(NULL, "");
-	if ((out[0] == '~') && (out[1] == '/')) {
-		char *out_shift = out + 1;
-		char *home = getenv("HOME");
-		tmp = malloc(strlen(home) + strlen(out_shift) + 1);
-		strcpy(tmp, home);
-		strcat(tmp, out_shift);
-	} else {
-		tmp = strdup(out);
-	}
-	path = realpath(tmp, NULL);
-	free(tmp);
-	if (!path) {
-		return "";
-	} else {
-		return path;
 	}
 }
 
@@ -253,6 +480,43 @@ int parse_modifier(char *key) {
 	return parsed_key;
 }
 
+
+char *read_arg(char *arg) {
+	char *out = strtok(arg, "=");
+	out = strtok(NULL, "");
+	return out;
+}
+
+void read_cfg_file(struct vmn_config *cfg) {
+	FILE *file = fopen(cfg->cfg_file, "r");
+	if (!file) {
+		return;
+	}
+	int file_len = 0;
+	char c;
+	while ((c = fgetc(file)) != EOF) {
+		if (c == '\n') {
+			++file_len;
+		}
+	}
+	rewind(file);
+	char *cur = (char *)calloc(4096, sizeof(char));
+	for (int i = 0; i < file_len; ++i) {
+		if (fgets(cur, 4096, file) == NULL) {
+			cfg->err = 1;
+			printf("An error occured while trying to read the config file. Make sure your permissions are correct.\n");
+		}
+		if (cur[0] == '#') {
+			continue;
+		}
+		struct char_split split = line_split(cur, "=");
+		vmn_set_option(cfg, split.arr[0], split.arr[1]);
+		char_split_destroy(&split);
+	}
+	free(cur);
+	fclose(file);
+}
+
 int read_cfg_key(char *opt) {
 	int macro = check_macro(opt);
 	if (macro) {
@@ -277,29 +541,44 @@ int read_cfg_key(char *opt) {
 	}
 }
 
-void cfg_default(struct vmn_config *cfg) {
-	cfg->input_mode = strdup("no");
-	cfg->lib_dir = get_default_lib();
-	cfg->tags_len = 3;
-	char *default_tags = "artist,album,title";
-	cfg->tags = parse_arg(default_tags);
-	cfg->sort = (enum vmn_config_sort *)calloc(cfg->tags_len, sizeof(enum vmn_config_sort));
-	for (int i = 0; i < cfg->tags_len; ++i) {
-		cfg->sort[i] = default_sort(cfg->tags[i]);
+char *read_dir_arg(char *arg) {
+	char *path;
+	char *tmp;
+	char *out = strtok(arg, "=");
+	out = strtok(NULL, "");
+	if ((out[0] == '~') && (out[1] == '/')) {
+		char *out_shift = out + 1;
+		char *home = getenv("HOME");
+		tmp = malloc(strlen(home) + strlen(out_shift) + 1);
+		strcpy(tmp, home);
+		strcat(tmp, out_shift);
+	} else {
+		tmp = strdup(out);
 	}
-	cfg->view = V_DATA;
+	path = realpath(tmp, NULL);
+	free(tmp);
+	if (!path) {
+		return "";
+	} else {
+		return path;
+	}
+}
 
-	//create default mpv_opts array
-	cfg->mpv_opts_len = 8;
-	cfg->mpv_opts = malloc(cfg->mpv_opts_len*sizeof(char*));
-	cfg->mpv_opts[0] = strdup("input-default-bindings");
-	cfg->mpv_opts[1] = strdup("yes");
-	cfg->mpv_opts[2] = strdup("input-vo-keyboard");
-	cfg->mpv_opts[3] = strdup("yes");
-	cfg->mpv_opts[4] = strdup("force-window");
-	cfg->mpv_opts[5] = strdup("yes");
-	cfg->mpv_opts[6] = strdup("osc");
-	cfg->mpv_opts[7] = strdup("yes");
+void vmn_config_destroy(struct vmn_config *cfg) {
+	free(cfg->cfg_file);
+	free(cfg->input_mode);
+	free(cfg->lib_dir);
+	for (int i = 0; i < cfg->mpv_opts_len; ++i) {
+		free(cfg->mpv_opts[i]);
+	}
+	free(cfg->mpv_opts);
+	if (cfg->view == V_DATA) {
+		for (int i = 0; i < cfg->tags_len; ++i) {
+			free(cfg->tags[i]);
+		}
+	}
+	free(cfg->tags);
+	free(cfg->sort);
 }
 
 void vmn_set_option(struct vmn_config *cfg, char *opt, char *value) {
@@ -550,270 +829,4 @@ void vmn_set_option(struct vmn_config *cfg, char *opt, char *value) {
 		mpv_cfg_add(cfg, opt, value);
 	}
 	mpv_terminate_destroy(test_ctx);
-}
-
-void read_cfg_file(struct vmn_config *cfg) {
-	FILE *file = fopen(cfg->cfg_file, "r");
-	if (!file) {
-		return;
-	}
-	int file_len = 0;
-	char c;
-	while ((c = fgetc(file)) != EOF) {
-		if (c == '\n') {
-			++file_len;
-		}
-	}
-	rewind(file);
-	char *cur = (char *)calloc(4096, sizeof(char));
-	for (int i = 0; i < file_len; ++i) {
-		if (fgets(cur, 4096, file) == NULL) {
-			cfg->err = 1;
-			printf("An error occured while trying to read the config file. Make sure your permissions are correct.\n");
-		}
-		if (cur[0] == '#') {
-			continue;
-		}
-		struct char_split split = line_split(cur, "=");
-		vmn_set_option(cfg, split.arr[0], split.arr[1]);
-		char_split_destroy(&split);
-	}
-	free(cur);
-	fclose(file);
-}
-
-struct vmn_key key_default() {
-	struct vmn_key key;
-	key.beginning = 'g';
-	key.command = ':';
-	key.end = 'G';
-	key.escape = CTRL('[');
-	key.move_backward = 'h';
-	key.move_down = 'j';
-	key.move_forward = 'l';
-	key.move_up = 'k';
-	key.mute = 'm';
-	key.mpv_kill = 'Q';
-	key.page_down = CTRL('f');
-	key.page_up = CTRL('b');
-	key.playnext = '>';
-	key.playpause = ' ';
-	key.playprev = '<';
-	key.queue = 'i';
-	key.queue_all = 'y';
-	key.queue_clear = 'u';
-	key.search = '/';
-	key.search_next = 'n';
-	key.search_prev = 'N';
-	key.start = 10;
-	key.visual = 'v';
-	key.vmn_quit = 'q';
-	key.vmn_refresh = 'a';
-	key.voldown = '9';
-	key.volup = '0';
-	return key;
-}
-
-struct vmn_config cfg_init(int argc, char *argv[]) {
-	struct vmn_config cfg;
-	cfg_default(&cfg);
-	cfg.key = key_default();
-	get_cfg_file(&cfg);
-	if (cfg.err) {
-		printf("An error occured while trying to create the config directory. Make sure your permissions to ~/.config are correct.\n");
-		return cfg;
-	}
-	read_cfg_file(&cfg);
-	char *headless;
-	char *input;
-	char *library;
-	char *sort;
-	char *tags;
-	char *viewcfg;
-	int pos[argc];
-	int headless_arg = 0;
-	int input_arg = 0;
-	int lib_arg = 0;
-	int tags_arg = 0;
-	int sort_arg = 0;
-	int view_arg = 0;
-	
-	//check for any command line arguments
-	//these take priority over any config file options
-	for (int i = 1; i < argc; ++i) {
-		pos[i] = check_arg(&cfg, argv[i]);
-		if (pos[i] == -1) {
-			printf("Error: invalid argument specified.\n");
-			cfg.err = 1;
-			return cfg;
-		}
-	}
-
-	for (int i = 1; i < argc; ++i) {
-		if (pos[i] == 1) {
-			headless_arg = i;
-		}
-		if (pos[i] == 2) {
-			input_arg = i;
-		}
-		if (pos[i] == 3) {
-			lib_arg = i;
-		}
-		if (pos[i] == 4) {
-			sort_arg = i;
-		}
-		if (pos[i] == 5) {
-			tags_arg = i;
-		}
-		if (pos[i] == 6) {
-			view_arg = i;
-		}
-	}
-
-	if (headless_arg) {
-		headless = read_arg(argv[headless_arg]);
-		if (strcmp(headless, "yes") == 0) {
-			mpv_cfg_add(&cfg, "force-window", "no");
-			mpv_cfg_add(&cfg, "video", "no");
-			mpv_cfg_add(&cfg, "osc", "no");
-		} else if (strcmp(headless, "no") == 0) {
-			mpv_cfg_add(&cfg, "force-window", "yes");
-			mpv_cfg_add(&cfg, "video", "yes");
-			mpv_cfg_add(&cfg, "osc", "yes");
-		} else {
-			printf("headless can only be set to 'yes' or 'no'\n");
-		}
-	}
-
-	if (input_arg) {
-		input = read_arg(argv[input_arg]);
-		if ((strcmp(input, "yes") == 0) || (strcmp(input, "no") == 0)) {
-			free(cfg.input_mode);
-			cfg.input_mode = strdup(input);
-		} else {
-			printf("input-mode can only be set to 'yes' or 'no'\n");
-		}
-	}
-
-	if (lib_arg) {
-		library = read_dir_arg(argv[lib_arg]);
-		if (strcmp(library, "") == 0) {
-			printf("Library directory not found. Falling back to default.\n");
-		} else {
-			free(cfg.lib_dir);
-			cfg.lib_dir = strdup(library);
-			free(library);
-		}
-	}
-
-	if (view_arg) {
-		viewcfg = read_arg(argv[view_arg]);
-		if (strcmp(viewcfg, "file-path") == 0) {
-			cfg.view = V_PATH;
-		} else if (strcmp(viewcfg, "metadata") == 0) {
-			cfg.view = V_DATA;
-		} else if (strcmp(viewcfg, "song-only") == 0) {
-			cfg.view = V_SONG;
-		} else {
-			cfg.view = V_DATA;
-			printf("Invalid view specified. Falling back to default.\n");
-		}
-	}
-
-	if (cfg.view == V_DATA) {
-		if (tags_arg) {
-			for (int i = 0; i < cfg.tags_len; ++i) {
-				free(cfg.tags[i]);
-			}
-			free(cfg.tags);
-			tags = read_arg(argv[tags_arg]);
-			char *len_check = strdup(tags);
-			char *token = strtok(len_check, ",");
-			int j = 0;
-			while (token != NULL) {
-				token = strtok(NULL, ",");
-				++j;
-			}
-			cfg.tags_len = j;
-			cfg.tags = parse_arg(tags);
-			free(cfg.sort);
-			cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
-			for (int i = 0; i < cfg.tags_len; ++i) {
-				cfg.sort[i] = default_sort(cfg.tags[i]);
-			}
-			free(len_check);
-		}
-
-		if (sort_arg) {
-			sort = read_arg(argv[sort_arg]);
-			char *len_check = strdup(sort);
-			char *token = strtok(len_check, ",");
-			int valid = check_sort(token);
-			int j = 0;
-			while (token != NULL) {
-				if (!valid) {
-					break;
-				}
-				token = strtok(NULL, ",");
-				++j;
-			}
-			free(len_check);
-			if (!valid) {
-				printf("Invalid sort argument specified. Resetting to default. \n");
-				free(cfg.sort);
-				cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
-				for (int i = 0; i < cfg.tags_len; ++i) {
-					cfg.sort[i] = default_sort(cfg.tags[i]);
-				}
-			} else {
-				if (cfg.tags_len != j) {
-					printf("The length of the sort argument must be exactly equal to the length of the tags argument. Resetting to default. \n");
-					free(cfg.sort);
-					cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
-					for (int i = 0; i < cfg.tags_len; ++i) {
-						cfg.sort[i] = default_sort(cfg.tags[i]);
-					}
-				} else {
-					char **sort_arr = parse_arg(sort);
-					free(cfg.sort);
-					cfg.sort = (enum vmn_config_sort *)calloc(cfg.tags_len, sizeof(enum vmn_config_sort));
-					for (int i = 0; i < cfg.tags_len; ++i) {
-						if (strcmp(sort_arr[i], "metadata") == 0) {
-							cfg.sort[i] = S_DATA;
-						} else if (strcmp(sort_arr[i], "filename") == 0) {
-							cfg.sort[i] = S_FILE;
-						} else if (strcmp(sort_arr[i], "none") == 0) {
-							cfg.sort[i] = S_NONE;
-						} else if (strcmp(sort_arr[i], "tracknumber") == 0) {
-							cfg.sort[i] = S_NUMB;
-						} else if (strcmp(sort_arr[i], "random") == 0) {
-							cfg.sort[i] = S_RAND;
-						}
-					}
-					for (int i = 0; i < cfg.tags_len; ++i) {
-						free(sort_arr[i]);
-					}
-					free(sort_arr);
-				}
-			}
-		}
-	}
-	return cfg;
-}
-
-void vmn_config_destroy(struct vmn_config *cfg) {
-	free(cfg->cfg_file);
-	free(cfg->input_mode);
-	free(cfg->lib_dir);
-	for (int i = 0; i < cfg->mpv_opts_len; ++i) {
-		free(cfg->mpv_opts[i]);
-	}
-	free(cfg->mpv_opts);
-	if (cfg->view == V_DATA) {
-		for (int i = 0; i < cfg->tags_len; ++i) {
-			free(cfg->tags[i]);
-		}
-	}
-	free(cfg->tags);
-	free(cfg->sort);
 }

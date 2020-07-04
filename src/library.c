@@ -11,18 +11,6 @@
 #include "library.h"
 #include "utils.h"
 
-AVInputFormat *get_input_format(const char *file) {
-	char *ext = get_file_ext(file);
-	AVInputFormat *format = NULL;
-	if (strcmp(ext, "opus") == 0) {
-		format = av_find_input_format("ogg");
-		return format;
-	} else {
-		format = av_find_input_format(ext);
-		return format;
-	}
-}
-
 int check_vmn_cache(struct vmn_library *lib, char *str, char **tags) {
 	struct char_split split = line_split(str, "\t");
 	int match;
@@ -148,6 +136,18 @@ void get_cache_file(struct vmn_library *lib) {
 	free(cache_dir);
 	lib->cache_file = cache_file;
 	lib->err = 0;
+}
+
+AVInputFormat *get_input_format(const char *file) {
+	char *ext = get_file_ext(file);
+	AVInputFormat *format = NULL;
+	if (strcmp(ext, "opus") == 0) {
+		format = av_find_input_format("ogg");
+		return format;
+	} else {
+		format = av_find_input_format(ext);
+		return format;
+	}
 }
 
 char *get_vmn_cache_path(struct vmn_library *lib, char *line, char *name, char *tag) {
@@ -497,6 +497,22 @@ void vmn_library_refresh(struct vmn_library *lib, char *tag) {
 	vmn_library_metadata(lib);
 }
 
+void vmn_library_selections_add(struct vmn_library *lib, const char *entry, char *tag) {
+	lib->selections[lib->depth-1] = (char *)realloc(lib->selections[lib->depth-1], sizeof(char)*(strlen(entry) + 1));
+	strcpy(lib->selections[lib->depth-1], entry);
+	if (strncmp(entry, "Unknown ", 8) == 0) {
+		char *tmp = malloc((strlen("Unknown ") + strlen(tag) + 1)*sizeof(char));
+		strcpy(tmp, "Unknown ");
+		strcat(tmp, tag);
+		if (strcmp(tmp, lib->selections[lib->depth-1]) == 0) {
+			lib->unknown[lib->depth-1] = 1;
+		}
+		free(tmp);
+	} else {
+		lib->unknown[lib->depth-1] = 0;
+	}
+}	
+
 void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 	FILE *cache = fopen(lib->cache_file, "r");
 	if (!cache) {
@@ -558,19 +574,3 @@ void vmn_library_sort(struct vmn_library *lib, char *lib_dir) {
 	}
 	free(files);
 }
-
-void vmn_library_selections_add(struct vmn_library *lib, const char *entry, char *tag) {
-	lib->selections[lib->depth-1] = (char *)realloc(lib->selections[lib->depth-1], sizeof(char)*(strlen(entry) + 1));
-	strcpy(lib->selections[lib->depth-1], entry);
-	if (strncmp(entry, "Unknown ", 8) == 0) {
-		char *tmp = malloc((strlen("Unknown ") + strlen(tag) + 1)*sizeof(char));
-		strcpy(tmp, "Unknown ");
-		strcat(tmp, tag);
-		if (strcmp(tmp, lib->selections[lib->depth-1]) == 0) {
-			lib->unknown[lib->depth-1] = 1;
-		}
-		free(tmp);
-	} else {
-		lib->unknown[lib->depth-1] = 0;
-	}
-}	

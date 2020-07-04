@@ -22,6 +22,13 @@ int char_count(char *str, char c) {
 	return count;
 }
 
+void char_split_destroy(struct char_split *split) {
+	for (int i = 0; i < split->len; ++i) {
+		free(split->arr[i]);
+	}
+	free(split->arr);
+}
+
 int ext_valid(char *ext) {
 	const char *file_type[] = { "aac", "aiff", "alac", "ape", "flac", "m4a", "mp3", "ogg", "opus", "wav" };
 	int len = 10;
@@ -65,13 +72,6 @@ struct char_split line_split(char *str, char *delim) {
 	split.len = i;
 	free(str_dup);
 	return split;
-}
-
-void char_split_destroy(struct char_split *split) {
-	for (int i = 0; i < split->len; ++i) {
-		free(split->arr[i]);
-	}
-	free(split->arr);
 }
 
 int qstrcmp(const void *a, const void *b) {
