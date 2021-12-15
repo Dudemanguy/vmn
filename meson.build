@@ -1,4 +1,8 @@
 project('vmn', 'c')
+
+cc = meson.get_compiler('c')
+add_project_arguments(cc.get_supported_arguments('-Wno-format-security'), language: 'c')
+
 libavformat = dependency('libavformat')
 libavutil = dependency('libavutil')
 menu = dependency('menu')
