@@ -1,4 +1,4 @@
-project('vmn', 'c')
+project('vmn', 'c', meson_version: '>=0.59.0')
 
 cc = meson.get_compiler('c')
 add_project_arguments(cc.get_supported_arguments('-Wno-format-security'), language: 'c')
@@ -23,7 +23,7 @@ endif
 
 scdoc = dependency('scdoc', native: true, required: get_option('man-pages'))
 if scdoc.found()
-    scdoc_prog = find_program(scdoc.get_pkgconfig_variable('scdoc'), native: true)
+    scdoc_prog = find_program(scdoc.get_variable(pkgconfig: 'scdoc'), native: true)
     sh = find_program('sh')
     mandir = get_option('mandir')
     man_files = ['docs/vmn.1.scd']
@@ -36,9 +36,9 @@ if scdoc.found()
                 output,
                 input: filename,
                 output: output,
-                command: [
-                    sh, '-c', '@0@ < @INPUT@ > @1@'.format(scdoc_prog.path(), output)
-                ],
+                command: scdoc_prog,
+                feed: true,
+                capture: true,
                 install: true,
                 install_dir: '@0@/man@1@'.format(mandir, section)
         )
