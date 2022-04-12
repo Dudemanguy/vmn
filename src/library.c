@@ -138,9 +138,9 @@ void get_cache_file(struct vmn_library *lib) {
 	lib->err = 0;
 }
 
-AVInputFormat *get_input_format(const char *file) {
+const AVInputFormat *get_input_format(const char *file) {
 	char *ext = get_file_ext(file);
-	AVInputFormat *format = NULL;
+	const AVInputFormat *format = NULL;
 	if (strcmp(ext, "opus") == 0) {
 		format = av_find_input_format("ogg");
 		return format;
@@ -375,7 +375,7 @@ void vmn_library_metadata(struct vmn_library *lib) {
 	FILE *cache = fopen(lib->cache_file, "a");
 	av_log_set_level(AV_LOG_QUIET);
 	AVFormatContext *fmt_ctx = NULL;
-	AVInputFormat *format = NULL;
+	const AVInputFormat *format = NULL;
 	uint8_t *buffer = NULL;
 	size_t buffer_size;
 	int i = 0;
