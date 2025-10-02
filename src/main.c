@@ -34,7 +34,7 @@ int move_menu_path_forward(const char *path, struct vmn_config *cfg, struct vmn_
 mpv_handle *mpv_generate(struct vmn_config *cfg);
 void mpv_queue(mpv_handle *ctx, const char *audio);
 int path_in_lib(char *path, struct vmn_library *lib);
-void resize_detected();
+void resize_detected(int signal);
 void sort_select(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len);
 int **trackorder(struct vmn_config *cfg, struct vmn_library *lib, char ***metadata, int len);
 void tracksort(char ***metadata, int **order, int len);
@@ -898,7 +898,7 @@ int path_in_lib(char *path, struct vmn_library *lib) {
 	return 0;
 }
 
-void resize_detected() {
+void resize_detected(int signal) {
 	resize = 1;
 }
 
